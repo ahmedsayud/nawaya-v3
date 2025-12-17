@@ -407,3 +407,38 @@ export interface Cart {
     items: CartItem[];
     total_price: number;
 }
+
+export interface OrderSummaryResponse {
+    key: string;
+    msg: string;
+    data: {
+        products: any[];
+        prices: {
+            products_price: number;
+            tax: number;
+            total_price: number;
+        };
+        payment_options: {
+            online_payment: boolean;
+            bank_transfer: boolean;
+        };
+        bank_account?: {
+            account_name: string;
+            bank_name: string;
+            IBAN_number: string;
+            account_number: string;
+            swift: string;
+        };
+    };
+}
+
+export interface CreateOrderResponse {
+    key: string;
+    msg: string;
+    data: {
+        order_id: number;
+        invoice_url?: string;
+        invoice_id?: string;
+        message?: string;
+    } | any[];
+}

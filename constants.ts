@@ -21,10 +21,14 @@ export const API_ENDPOINTS = {
         SUPPORT: '/api/drhope/support',
     },
     CART: {
-        ADD: '/api/cart/add-to-cart', // Updated based on Postman collection naming
+        ADD: '/api/cart/add',
         SUMMARY: '/api/cart/summary',
-        UPDATE: '/api/cart/update-cart', // Updated based on Postman collection naming
-        REMOVE_ITEM: '/api/cart/delete-item', // VISIBLE in Screenshot
+        UPDATE: '/api/cart/update',
+        REMOVE_ITEM: '/api/cart/delete-item',
+    },
+    ORDERS: {
+        SUMMARY: '/api/orders/summary',
+        CREATE: '/api/orders/create',
     }
 };
 

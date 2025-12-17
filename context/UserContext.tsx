@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, createContext, useContext } from 'react';
 import { API_BASE_URL, API_ENDPOINTS } from '../constants';
-import { User, Workshop, DrhopeData, Notification, SubscriptionStatus, Subscription, Product, Order, OrderStatus, Partner, ConsultationRequest, Theme, ThemeColors, CreditTransaction, PendingGift, Expense, BroadcastCampaign, Review, Country, Cart, CartItem } from '../types';
+import { User, Workshop, DrhopeData, Notification, SubscriptionStatus, Subscription, Product, Order, OrderStatus, Partner, ConsultationRequest, Theme, ThemeColors, CreditTransaction, PendingGift, Expense, BroadcastCampaign, Review, Country, Cart, CartItem, OrderSummaryResponse, CreateOrderResponse } from '../types';
 import { normalizePhoneNumber } from '../utils';
 import { trackEvent } from '../analytics';
 
@@ -316,6 +316,8 @@ interface UserContextType {
     addToCart: (productId: number, quantity?: number) => Promise<boolean>;
     updateCartItem: (cartItemId: number, quantity: number) => Promise<boolean>;
     removeFromCart: (cartItemId: number) => Promise<boolean>;
+    fetchOrderSummary: () => Promise<OrderSummaryResponse | null>;
+    createOrder: (paymentMethod: 'online' | 'bank_transfer') => Promise<CreateOrderResponse>;
 }
 
 
@@ -327,56 +329,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const stored = localStorage.getItem('currentUser');
         return stored ? JSON.parse(stored) : null;
     });
-    const [users, setUsers] = useState<User[]>(() => {
-        const stored = localStorage.getItem('users');
-        return stored ? (JSON.parse(stored) || []).filter(Boolean) : initialUsers;
-    });
-    const [workshops, setWorkshops] = useState<Workshop[]>(() => {
-        const stored = localStorage.getItem('workshops');
-        return stored ? (JSON.parse(stored) || []).filter(Boolean) : initialWorkshops;
-    });
-    const [products, setProducts] = useState<Product[]>(() => {
-        const stored = localStorage.getItem('products');
-        return stored ? (JSON.parse(stored) || []).filter(Boolean) : initialProducts;
-    });
-    const [partners, setPartners] = useState<Partner[]>(() => {
-        const stored = localStorage.getItem('partners');
-        return stored ? (JSON.parse(stored) || []).filter(Boolean) : initialPartners;
-    });
-    const [pendingGifts, setPendingGifts] = useState<PendingGift[]>(() => {
-        const stored = localStorage.getItem('pendingGifts');
-        return stored ? (JSON.parse(stored) || []).filter(Boolean) : [];
-    });
-    const [drhopeData, setDrhopeData] = useState<DrhopeData>(() => {
-        const stored = localStorage.getItem('drhopeData');
-        return stored ? JSON.parse(stored) : initialDrhopeData;
-    });
-    const [consultationRequests, setConsultationRequests] = useState<ConsultationRequest[]>(() => {
-        const stored = localStorage.getItem('consultationRequests');
-        return stored ? (JSON.parse(stored) || []).filter(Boolean) : [];
-    });
-    const [expenses, setExpenses] = useState<Expense[]>(() => {
-        const stored = localStorage.getItem('expenses');
-        return stored ? (JSON.parse(stored) || []).filter(Boolean) : [];
-    });
-    const [broadcastHistory, setBroadcastHistory] = useState<BroadcastCampaign[]>(() => {
-        const stored = localStorage.getItem('broadcastHistory');
-        return stored ? (JSON.parse(stored) || []).filter(Boolean) : [];
-    });
+    const [users, setUsers] = useState<User[]>(initialUsers);
+    const [workshops, setWorkshops] = useState<Workshop[]>(initialWorkshops);
+    const [products, setProducts] = useState<Product[]>(initialProducts);
+    const [partners, setPartners] = useState<Partner[]>(initialPartners);
+    const [pendingGifts, setPendingGifts] = useState<PendingGift[]>([]);
+    const [drhopeData, setDrhopeData] = useState<DrhopeData>(initialDrhopeData);
+    const [consultationRequests, setConsultationRequests] = useState<ConsultationRequest[]>([]);
+    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [broadcastHistory, setBroadcastHistory] = useState<BroadcastCampaign[]>([]);
 
     // Server-Side Cart State
     const [cart, setCart] = useState<Cart | null>(null);
 
     useEffect(() => { localStorage.setItem('currentUser', JSON.stringify(currentUser)); }, [currentUser]);
-    useEffect(() => { localStorage.setItem('users', JSON.stringify(users)); }, [users]);
-    useEffect(() => { localStorage.setItem('workshops', JSON.stringify(workshops)); }, [workshops]);
-    useEffect(() => { localStorage.setItem('products', JSON.stringify(products)); }, [products]);
-    useEffect(() => { localStorage.setItem('partners', JSON.stringify(partners)); }, [partners]);
-    useEffect(() => { localStorage.setItem('pendingGifts', JSON.stringify(pendingGifts)); }, [pendingGifts]);
-    useEffect(() => { localStorage.setItem('consultationRequests', JSON.stringify(consultationRequests)); }, [consultationRequests]);
-    useEffect(() => { localStorage.setItem('expenses', JSON.stringify(expenses)); }, [expenses]);
-    useEffect(() => { localStorage.setItem('broadcastHistory', JSON.stringify(broadcastHistory)); }, [broadcastHistory]);
-    useEffect(() => { localStorage.setItem('drhopeData', JSON.stringify(drhopeData)); }, [drhopeData]);
+    // Removed localStorage caching for other data types as requested
 
     const [countries, setCountries] = useState<Country[]>([]);
     const [countriesDebugInfo, setCountriesDebugInfo] = useState<string>('');
@@ -723,6 +690,61 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Remove from cart failed', error);
             if (previousCart) setCart(previousCart);
             return false;
+        }
+    };
+
+    const fetchOrderSummary = async (): Promise<OrderSummaryResponse | null> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return null;
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ORDERS.SUMMARY}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Failed to fetch order summary', error);
+            return null;
+        }
+    };
+
+    const createOrder = async (paymentMethod: 'online' | 'bank_transfer'): Promise<CreateOrderResponse> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token) throw new Error('No auth token');
+
+            const body = new URLSearchParams();
+            body.append('payment_type', paymentMethod);
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ORDERS.CREATE}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: body.toString()
+            });
+
+            const data = await response.json();
+            
+            if (data.key === 'success') {
+                // Refresh cart state to ensure it's empty
+                await fetchCart();
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Create order failed', error);
+            return {
+                key: 'failure',
+                msg: 'حدث خطأ غير متوقع أثناء إنشاء الطلب',
+                data: []
+            };
         }
     };
 
@@ -1490,7 +1512,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchCart,
         addToCart,
         updateCartItem,
-        removeFromCart
+        removeFromCart,
+        fetchOrderSummary,
+        createOrder
     }), [currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, pendingGifts, expenses, broadcastHistory, cart]);
 
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

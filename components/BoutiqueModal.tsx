@@ -8,14 +8,15 @@ interface BoutiqueModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCheckout: () => void;
+  onRequestLogin: () => void;
   initialView?: 'products' | 'cart';
 }
 
 const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
-  isOpen, onClose, onCheckout, initialView = 'products'
+  isOpen, onClose, onCheckout, onRequestLogin, initialView = 'products'
 }) => {
   const [view, setView] = useState<'products' | 'cart'>(initialView);
-  const { products, cart, addToCart, updateCartItem, removeFromCart } = useUser();
+  const { products, cart, addToCart, updateCartItem, removeFromCart, currentUser } = useUser();
   const visibleProducts = products.filter(p => !p.isDeleted);
 
   const cartItemCount = useMemo(() => {
@@ -96,7 +97,13 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
             visibleProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {visibleProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onAddToCart={() => addToCart(product.id)} />
+                  <ProductCard key={product.id} product={product} onAddToCart={async () => {
+                    const success = await addToCart(product.id);
+                    if (!success && !currentUser) {
+                      onRequestLogin();
+                    }
+                    return success;
+                  }} />
                 ))}
               </div>
             ) : (

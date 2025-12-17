@@ -15,7 +15,7 @@ interface ProductCheckoutModalProps {
 type PaymentMethod = 'CARD' | 'BANK_TRANSFER';
 
 const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onClose, onConfirm, onCardPaymentConfirm, onRequestLogin, currentUser }) => {
-  const { products, drhopeData, cart } = useUser();
+  const { products, drhopeData, cart, createOrder } = useUser();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('CARD');
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -58,7 +58,7 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
     setCardNumber(formattedValue);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setCardError('');
 
@@ -67,18 +67,33 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
       return;
     }
 
-    if (selectedMethod === 'BANK_TRANSFER') {
-      onConfirm();
-    } else if (selectedMethod === 'CARD') {
+    if (selectedMethod === 'CARD') {
       if (!cardName.trim() || cardNumber.replace(/\s/g, '').length !== 16 || cardExpiry.length !== 7 || cardCvv.length < 3) {
         setCardError('يرجى ملء جميع بيانات البطاقة بشكل صحيح.');
         return;
       }
-      setIsProcessing(true);
-      setTimeout(() => {
-        setIsProcessing(false);
-        onCardPaymentConfirm();
-      }, 1500);
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const paymentMethod = selectedMethod === 'CARD' ? 'online' : 'bank_transfer';
+      const response = await createOrder(paymentMethod);
+
+      setIsProcessing(false);
+
+      if (response.key === 'success') {
+        // Success
+        if (paymentMethod === 'online' && response.data.invoice_url) {
+          window.open(response.data.invoice_url, '_blank', 'noopener,noreferrer');
+        }
+        onConfirm();
+      } else {
+        setCardError(response.msg || 'حدث خطأ أثناء إنشاء الطلب');
+      }
+    } catch (error) {
+      setIsProcessing(false);
+      setCardError('حدث خطأ في الاتصال بالخادم');
     }
   };
 
