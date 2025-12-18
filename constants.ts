@@ -10,6 +10,8 @@ export const API_ENDPOINTS = {
         COUNTRIES: '/api/countries',
         PROFILE: '/api/profile/details',
         SETTINGS: '/api/home/settings',
+        WORKSHOPS: '/api/workshops',
+        EARLIEST_WORKSHOP: '/api/home/earliest-workshop',
     },
     DRHOPE: {
         VIDEOS: '/api/drhope/videos',
@@ -29,6 +31,12 @@ export const API_ENDPOINTS = {
     ORDERS: {
         SUMMARY: '/api/orders/summary',
         CREATE: '/api/orders/create',
+    },
+    SUBSCRIPTIONS: {
+        CREATE: '/api/subscriptions/create',
+        PROCESS: '/api/subscriptions/process-payment',
+        BUY_CHARITY: '/api/subscriptions/buy-charity',
+        PROCESS_CHARITY: '/api/subscriptions/process-charity-payment',
     }
 };
 

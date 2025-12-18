@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useUser } from '../context/UserContext';
-import { Page, Workshop, Package, User, Subscription, ConsultationRequest, NoteResource, Recording, PaymentIntent, OrderStatus } from '../types';
+import { Page, Workshop, Package, User, Subscription, ConsultationRequest, NoteResource, Recording, PaymentIntent, OrderStatus, SubscriptionCreateResponse, CharityCreateResponse } from '../types';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import IntroAnimation from '../components/IntroAnimation';
@@ -34,7 +34,10 @@ import { PrivacyPolicyContent, TermsContent, ShippingPolicyContent, AboutContent
 import { isWorkshopExpired } from '../utils';
 
 const PublicApp: React.FC = () => {
-    const { currentUser, workshops, products, placeOrder, addSubscription, addPendingGift, donateToPayItForward, cart } = useUser();
+    const {
+        currentUser, workshops, products, placeOrder, addSubscription, addPendingGift, donateToPayItForward, cart,
+        createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment
+    } = useUser();
 
     // Navigation State
     const [currentPage, setCurrentPage] = useState<Page>(Page.WORKSHOPS);
@@ -75,6 +78,11 @@ const PublicApp: React.FC = () => {
     const [watchData, setWatchData] = useState<{ workshop: Workshop, recording: Recording } | null>(null);
     const [paymentModalIntent, setPaymentModalIntent] = useState<PaymentIntent | null>(null);
     const [giftModalIntent, setGiftModalIntent] = useState<{ workshop: Workshop, pkg: Package | null } | null>(null);
+
+    // Dynamic Payment Info from Subscription API
+    const [subscriptionApiResponse, setSubscriptionApiResponse] = useState<SubscriptionCreateResponse | null>(null);
+    const [charityApiResponse, setCharityApiResponse] = useState<CharityCreateResponse | null>(null);
+    const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
 
     // Authentication & Navigation Flow State
     const [postLoginPaymentIntent, setPostLoginPaymentIntent] = useState<PaymentIntent | null>(null);
@@ -231,10 +239,36 @@ const PublicApp: React.FC = () => {
         // Actually API placeOrder should clear cart on backend.
     };
 
-    const handleEnrollRequest = (workshop: Workshop, selectedPackage: Package | null) => {
+    const handleEnrollRequest = async (workshop: Workshop, selectedPackage: Package | null) => {
+        if (!selectedPackage) return;
         setOpenedWorkshopId(null);
-        const intent: PaymentIntent = { type: 'workshop', item: workshop, pkg: selectedPackage || undefined };
-        if (currentUser) { setPaymentModalIntent(intent); setIsPaymentModalOpen(true); } else { setPostLoginPaymentIntent(intent); handleLoginClick(false); }
+
+        if (!currentUser) {
+            setPostLoginPaymentIntent({ type: 'workshop', item: workshop, pkg: selectedPackage });
+            handleLoginClick(false);
+            return;
+        }
+
+        setIsCreatingSubscription(true);
+        const result = await createSubscription({
+            package_id: selectedPackage.id,
+            subscription_type: 'myself'
+        });
+        setIsCreatingSubscription(false);
+
+        if (result) {
+            setSubscriptionApiResponse(result);
+            const intent: PaymentIntent = {
+                type: 'workshop',
+                item: workshop,
+                pkg: selectedPackage,
+                amount: result.subscriptions[0]?.subscription_details.price || selectedPackage.price
+            };
+            setPaymentModalIntent(intent);
+            setIsPaymentModalOpen(true);
+        } else {
+            showToast('فشل إنشاء طلب الاشتراك، يرجى المحاولة لاحقاً.', 'error');
+        }
     };
 
     const handleGiftRequest = (workshop: Workshop, selectedPackage: Package | null) => {
@@ -243,35 +277,121 @@ const PublicApp: React.FC = () => {
         setIsGiftModalOpen(true);
     };
 
-    const handlePaymentSubmit = (method: 'CARD' | 'BANK_TRANSFER') => {
-        if (!paymentModalIntent || !currentUser) return;
+    const handlePaymentSubmit = async (method: 'CARD' | 'BANK_TRANSFER') => {
+        if (!paymentModalIntent || !currentUser || !subscriptionApiResponse) return;
         const { type, item, pkg, amount, recipientDetails } = paymentModalIntent;
-        if (type === 'workshop') {
-            const price = amount || pkg?.discountPrice || pkg?.price || item.price || 0;
-            addSubscription(currentUser.id, { workshopId: item.id, packageId: pkg?.id, pricePaid: price, paymentMethod: method === 'CARD' ? 'LINK' : 'BANK', attendanceType: pkg?.attendanceType }, method === 'CARD', true);
-            showToast('تم الاشتراك بنجاح!', 'success');
-        } else if (type === 'gift' && recipientDetails) {
-            const { recipients, giftMessage } = recipientDetails;
-            const pricePerGift = (amount || 0) / recipients.length;
-            recipients.forEach((recipient: any) => {
-                addPendingGift({ workshopId: item.id, packageId: pkg?.id, attendanceType: pkg?.attendanceType, gifterName: currentUser.fullName, gifterPhone: currentUser.phone, gifterEmail: currentUser.email, gifterUserId: currentUser.id, giftMessage: giftMessage || 'هدية من ' + currentUser.fullName, recipientName: recipient.name, recipientWhatsapp: recipient.whatsapp, pricePaid: pricePerGift });
-            });
-            showToast(`تم إرسال ${recipients.length} هدية بنجاح!`, 'success');
-        } else if (type === 'payItForward' && recipientDetails) {
-            const { seats, totalAmount } = recipientDetails;
-            donateToPayItForward(item.id, totalAmount, seats, currentUser.id);
-            showToast('شكراً لمساهمتك!', 'success');
+
+        const subscriptionId = subscriptionApiResponse.subscriptions[0]?.subscription_id;
+        if (!subscriptionId) {
+            showToast('خطأ في بيانات الاشتراك.', 'error');
+            return;
         }
-        setIsPaymentModalOpen(false);
-        setPaymentModalIntent(null);
+
+        const paymentResult = await processSubscriptionPayment({
+            subscription_id: subscriptionId,
+            payment_type: method === 'CARD' ? 'online' : 'bank_transfer'
+        });
+
+        if (paymentResult?.key === 'success') {
+            if (method === 'CARD' && paymentResult.data.invoice_url) {
+                window.location.href = paymentResult.data.invoice_url;
+                return;
+            }
+
+            showToast(paymentResult.msg || 'تم الاشتراك بنجاح!', 'success');
+            setIsPaymentModalOpen(false);
+            setPaymentModalIntent(null);
+            setSubscriptionApiResponse(null);
+        } else {
+            showToast(paymentResult?.msg || 'فشل إتمام العملية لبدء الدفع.', 'error');
+        }
     };
 
-    const handleGiftProceed = (data: { type: 'friend' | 'fund'; recipients?: any[]; giftMessage?: string; seats?: number; totalAmount: number }) => {
+    const handleCharityPaymentSubmit = async (method: 'CARD' | 'BANK_TRANSFER') => {
+        if (!paymentModalIntent || !currentUser || !charityApiResponse) return;
+
+        const charityId = charityApiResponse.charity_id;
+
+        const paymentResult = await processCharityPayment({
+            charity_id: charityId,
+            payment_type: method === 'CARD' ? 'online' : 'bank_transfer'
+        });
+
+        if (paymentResult?.key === 'success') {
+            if (method === 'CARD' && paymentResult.data.invoice_url) {
+                window.location.href = paymentResult.data.invoice_url;
+                return;
+            }
+
+            showToast(paymentResult.msg || 'تمت المساهمة بنجاح!', 'success');
+            setIsPaymentModalOpen(false);
+            setPaymentModalIntent(null);
+            setCharityApiResponse(null);
+        } else {
+            showToast(paymentResult?.msg || 'فشل إتمام العملية.', 'error');
+        }
+    };
+
+    const handleGiftProceed = async (data: { type: 'friend' | 'fund'; recipients?: any[]; giftMessage?: string; seats?: number; totalAmount: number }) => {
         setIsGiftModalOpen(false);
         if (!giftModalIntent) return;
         const { workshop, pkg } = giftModalIntent;
-        const intent: PaymentIntent = { type: data.type === 'fund' ? 'payItForward' : 'gift', item: workshop, pkg: pkg || undefined, amount: data.totalAmount, recipientDetails: data };
-        if (currentUser) { setPaymentModalIntent(intent); setIsPaymentModalOpen(true); } else { setPostLoginPaymentIntent(intent); handleLoginClick(false); }
+
+        if (!currentUser) {
+            setPostLoginGiftIntent({ workshop, pkg });
+            handleLoginClick(false);
+            return;
+        }
+
+        if (!pkg) return;
+
+        setIsCreatingSubscription(true);
+        if (data.type === 'friend') {
+            const createResult = await createSubscription({
+                package_id: pkg.id,
+                subscription_type: 'gift',
+                recipient_name: data.recipients?.map(r => r.name),
+                recipient_phone: data.recipients?.map(r => r.whatsapp),
+                country_id: data.recipients?.map(r => 1) // Default for now
+            });
+            setIsCreatingSubscription(false);
+
+            if (createResult) {
+                setSubscriptionApiResponse(createResult);
+                const intent: PaymentIntent = {
+                    type: 'gift',
+                    item: workshop,
+                    pkg: pkg,
+                    amount: createResult.subscriptions.reduce((sum, s) => sum + s.subscription_details.price, 0),
+                    recipientDetails: data
+                };
+                setPaymentModalIntent(intent);
+                setIsPaymentModalOpen(true);
+            } else {
+                showToast('فشل إنشاء طلب الإهداء.', 'error');
+            }
+        } else if (data.type === 'fund') {
+            const createResult = await buyCharitySeats({
+                package_id: pkg.id,
+                number_of_seats: data.seats || 1
+            });
+            setIsCreatingSubscription(false);
+
+            if (createResult) {
+                setCharityApiResponse(createResult);
+                const intent: PaymentIntent = {
+                    type: 'payItForward',
+                    item: workshop,
+                    pkg: pkg,
+                    amount: createResult.charity_details.price,
+                    recipientDetails: data
+                };
+                setPaymentModalIntent(intent);
+                setIsPaymentModalOpen(true);
+            } else {
+                showToast('فشل إنشاء طلب مساهمة خيرية.', 'error');
+            }
+        }
     };
 
     const isHomePage = currentPage === Page.WORKSHOPS;
@@ -330,7 +450,22 @@ const PublicApp: React.FC = () => {
                 showRegisterView={!authModalHideRegister}
             />
             {openedWorkshopId && <WorkshopDetailsModal workshop={workshops.find(w => w.id === openedWorkshopId)!} onClose={() => setOpenedWorkshopId(null)} onEnrollRequest={handleEnrollRequest} onGiftRequest={handleGiftRequest} showToast={showToast} />}
-            {isPaymentModalOpen && paymentModalIntent && <PaymentModal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)} onCardPaymentSubmit={() => handlePaymentSubmit('CARD')} onBankPaymentSubmit={() => handlePaymentSubmit('BANK_TRANSFER')} itemTitle={paymentModalIntent.item.title || paymentModalIntent.item.subject} itemPackageName={paymentModalIntent.pkg?.name} amount={paymentModalIntent.amount || 0} currentUser={currentUser} onRequestLogin={() => { setIsPaymentModalOpen(false); handleLoginClick(false); setPostLoginPaymentIntent(paymentModalIntent); }} paymentType={paymentModalIntent.type} />}
+            {isPaymentModalOpen && paymentModalIntent && (
+                <PaymentModal
+                    isOpen={isPaymentModalOpen}
+                    onClose={() => { setIsPaymentModalOpen(false); setSubscriptionApiResponse(null); setCharityApiResponse(null); }}
+                    onCardPaymentSubmit={() => paymentModalIntent.type === 'payItForward' ? handleCharityPaymentSubmit('CARD') : handlePaymentSubmit('CARD')}
+                    onBankPaymentSubmit={() => paymentModalIntent.type === 'payItForward' ? handleCharityPaymentSubmit('BANK_TRANSFER') : handlePaymentSubmit('BANK_TRANSFER')}
+                    itemTitle={paymentModalIntent.item.title || paymentModalIntent.item.subject}
+                    itemPackageName={paymentModalIntent.pkg?.name}
+                    amount={paymentModalIntent.amount || 0}
+                    currentUser={currentUser}
+                    onRequestLogin={() => { setIsPaymentModalOpen(false); handleLoginClick(false); setPostLoginPaymentIntent(paymentModalIntent); }}
+                    paymentType={paymentModalIntent.type}
+                    paymentOptions={paymentModalIntent.type === 'payItForward' ? charityApiResponse?.payment_options : subscriptionApiResponse?.payment_options}
+                    bankAccount={paymentModalIntent.type === 'payItForward' ? charityApiResponse?.bank_account : subscriptionApiResponse?.bank_account}
+                />
+            )}
             {isGiftModalOpen && giftModalIntent && <UnifiedGiftModal workshop={giftModalIntent.workshop} selectedPackage={giftModalIntent.pkg} onClose={() => setIsGiftModalOpen(false)} onProceed={handleGiftProceed} />}
             {isBoutiqueModalOpen && <BoutiqueModal isOpen={isBoutiqueModalOpen} onClose={() => setIsBoutiqueModalOpen(false)} onCheckout={handleCheckout} onRequestLogin={() => handleLoginClick(false)} initialView={boutiqueInitialView} />}
             {isProductCheckoutOpen && <ProductCheckoutModal isOpen={isProductCheckoutOpen} onClose={() => setIsProductCheckoutOpen(false)} onConfirm={() => handleProductOrderConfirm(false)} onCardPaymentConfirm={() => handleProductOrderConfirm(true)} onRequestLogin={() => { setIsProductCheckoutOpen(false); handleLoginClick(false); }} currentUser={currentUser} />}

@@ -6,132 +6,190 @@ import { isWorkshopExpired } from '../utils';
 interface HeroProps {
     onExploreClick: () => void;
     onOpenWorkshopDetails: (workshopId: number) => void;
+    onLoginRequest: () => void;
 }
 
 const CountdownUnit: React.FC<{ value: number; label: string }> = ({ value, label }) => (
-    <div className="flex flex-col items-center mx-1.5 sm:mx-2">
-        <span className="text-lg sm:text-xl font-bold text-black tracking-tight">
+    <div className="flex flex-col items-center">
+        <span className="text-3xl sm:text-4xl font-black text-slate-900 leading-none tracking-tighter">
             {value.toString().padStart(2, '0')}
         </span>
-        <span className="text-[8px] text-slate-500 uppercase tracking-wide mt-0.5 font-bold">{label}</span>
+        <span className="text-[10px] sm:text-[11px] text-slate-500 font-bold mt-2 uppercase tracking-wide">{label}</span>
     </div>
 );
 
-const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails }) => {
-    const { workshops, drhopeData } = useUser();
+const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLoginRequest }) => {
+    const { workshops, earliestWorkshop } = useUser();
 
-    const nextWorkshop = useMemo(() => {
-        const upcomingWorkshops = workshops
+    const displayWorkshop = useMemo(() => {
+        // High priority: Normalized earliest workshop from API
+        if (earliestWorkshop) {
+            return earliestWorkshop;
+        }
+
+        // Fallback: First upcoming workshop from general list (already mapped in fetchWorkshops)
+        const upcoming = workshops
             .filter(w => w.isVisible && !w.isRecorded && !isWorkshopExpired(w))
-            .sort((a, b) => new Date(`${a.startDate}T${a.startTime}:00Z`).getTime() - new Date(`${b.startDate}T${b.startTime}:00Z`).getTime());
-        return upcomingWorkshops[0];
-    }, [workshops]);
+            .sort((a, b) => new Date(`${a.startDate}T${a.startTime}:00Z`).getTime() - new Date(`${b.startDate}T${b.startTime}:00Z`).getTime())[0];
 
-    const calculateTimeLeft = () => {
-        if (!nextWorkshop) return null;
+        if (upcoming) {
+            return {
+                ...upcoming,
+                start_date: upcoming.startDate,
+                start_time: upcoming.startTime,
+            };
+        }
 
-        const targetDate = new Date(`${nextWorkshop.startDate}T${nextWorkshop.startTime}:00Z`);
+        // Ultimate fallback: Placeholder (Only if API fails completely)
+        return {
+            id: 0,
+            title: "رحلة اكتشاف الذات: بوصلة الحياة",
+            instructor: "د. هوب",
+            start_date: "2025-12-25",
+            start_time: "20:00",
+            is_subscribed: false,
+            requires_authentication: false
+        };
+    }, [workshops, earliestWorkshop]);
+
+    const calculateDiff = (targetDate: Date) => {
         const difference = +targetDate - +new Date();
-
-        let timeLeft: { days?: number; hours?: number; minutes?: number; seconds?: number } | null = {};
-
         if (difference > 0) {
-            timeLeft = {
+            return {
                 days: Math.floor(difference / (1000 * 60 * 60 * 24)),
                 hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
                 minutes: Math.floor((difference / 1000 / 60) % 60),
                 seconds: Math.floor((difference / 1000) % 60)
             };
-        } else {
-            timeLeft = null; // Countdown finished
         }
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    };
 
-        return timeLeft;
+    const calculateTimeLeft = () => {
+        const datePart = displayWorkshop.start_date || (displayWorkshop as any).startDate || "";
+        const timePart = displayWorkshop.start_time || (displayWorkshop as any).startTime || "";
+
+        if (!datePart || !timePart) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+        try {
+            // 1. Get raw components
+            const dParts = datePart.split(/[-/]/).map(p => parseInt(p));
+            const tParts = timePart.split(':').map(p => parseInt(p));
+
+            if (dParts.some(isNaN) || tParts.some(isNaN)) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+            let year, month, day;
+            if (dParts[0] > 1000) { [year, month, day] = dParts; }
+            else { [day, month, year] = dParts; }
+
+            // 2. Create target variable
+            const target = new Date(year, month - 1, day, tParts[0], tParts[1], tParts[2] || 0);
+
+            // 3. Current time variable
+            const now = new Date();
+
+            // 4. Difference in milliseconds -> seconds
+            const diffMs = target.getTime() - now.getTime();
+
+            if (diffMs > 0) {
+                // Convert to total duration components
+                return {
+                    days: Math.floor(diffMs / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((diffMs / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((diffMs / (1000 * 60)) % 60),
+                    seconds: Math.floor((diffMs / 1000) % 60)
+                };
+            }
+            return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+        } catch (e) {
+            return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+        }
     };
 
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
     useEffect(() => {
-        if (!nextWorkshop) return;
-
+        // Explicitly update every 1000ms (1 second)
         const timer = setInterval(() => {
-            setTimeLeft(calculateTimeLeft());
+            const nextTime = calculateTimeLeft();
+            setTimeLeft(nextTime);
         }, 1000);
-
         return () => clearInterval(timer);
-    }, [nextWorkshop]);
+    }, [displayWorkshop]);
 
-    const btnClasses = "bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-1.5 px-5 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-[10px] sm:text-xs flex items-center justify-center gap-2 group mx-auto";
+    const handleAction = () => {
+        if (displayWorkshop.is_subscribed && (displayWorkshop as any).online_link) {
+            window.open((displayWorkshop as any).online_link, '_blank');
+        } else if (displayWorkshop.requires_authentication) {
+            onLoginRequest();
+        } else if (displayWorkshop.id) {
+            onOpenWorkshopDetails(displayWorkshop.id);
+        } else {
+            onExploreClick();
+        }
+    };
+
+    const btnClasses = "bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-2.5 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg text-xs sm:text-sm flex items-center justify-center gap-2 group mx-auto font-bold";
 
     return (
-        <section className="hero-section relative text-center pt-24 pb-8 overflow-hidden min-h-[40vh] flex flex-col justify-center">
-
+        <section className="hero-section relative text-center pt-24 pb-8 overflow-hidden flex flex-col justify-center min-h-[45vh]">
             <div className="container mx-auto px-4 relative z-10">
-                {nextWorkshop && timeLeft ? (
-                    <div className="animate-fade-in-up max-w-xl mx-auto">
-                        {/* White Card Container for Black Text visibility */}
-                        <div className="bg-white rounded-xl p-4 shadow-xl relative overflow-hidden text-slate-900 border border-slate-100">
-
-                            <div className="relative z-10">
-                                <div className="inline-block mb-2">
-                                    <span className="bg-fuchsia-100 text-fuchsia-700 text-[8px] font-bold px-2 py-0.5 rounded-full tracking-wide">
-                                        ✨ الورشة القادمة
-                                    </span>
-                                </div>
-
-                                <h1 className="text-lg sm:text-xl font-black text-black mb-1 leading-snug">
-                                    {nextWorkshop.title}
-                                </h1>
-
-                                <p className="text-[10px] sm:text-xs text-slate-600 mb-4 font-bold flex items-center justify-center gap-1">
-                                    <span className="text-fuchsia-600">تقديم:</span>
-                                    {nextWorkshop.instructor}
-                                </p>
-
-                                {/* Countdown with Black Numbers and Small Font */}
-                                <div className="flex justify-center items-start gap-2 sm:gap-3 mb-4" dir="ltr">
-                                    <CountdownUnit value={timeLeft.days || 0} label="أيام" />
-                                    <span className="text-lg sm:text-xl font-light text-slate-300 mt-[-2px]">:</span>
-                                    <CountdownUnit value={timeLeft.hours || 0} label="ساعات" />
-                                    <span className="text-lg sm:text-xl font-light text-slate-300 mt-[-2px]">:</span>
-                                    <CountdownUnit value={timeLeft.minutes || 0} label="دقائق" />
-                                    <span className="text-lg sm:text-xl font-light text-slate-300 mt-[-2px]">:</span>
-                                    <CountdownUnit value={timeLeft.seconds || 0} label="ثواني" />
-                                </div>
-
-                                <button
-                                    onClick={() => onOpenWorkshopDetails(nextWorkshop.id)}
-                                    className={btnClasses}
-                                >
-                                    <span>احجز مقعدك الآن</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 transform transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                                    </svg>
-                                </button>
+                <div className="animate-fade-in-up max-w-xl mx-auto px-4">
+                    <div className="bg-white rounded-2xl p-8 sm:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] relative overflow-hidden text-slate-900 border border-slate-100">
+                        <div className="relative z-10">
+                            <div className="inline-block mb-4">
+                                <span className="bg-fuchsia-100/50 text-fuchsia-600 text-[10px] font-extrabold px-3 py-1 rounded-full border border-fuchsia-100 uppercase tracking-widest flex items-center gap-1.5">
+                                    ✨ الورشة القادمة
+                                </span>
                             </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="py-4 max-w-xl mx-auto">
-                        <div className="bg-white rounded-xl p-5 shadow-xl border border-slate-100">
-                            <h1 className="text-xl sm:text-2xl font-black mb-2 text-black leading-tight">
-                                {drhopeData?.introText || "نوايا.. حيث يبدأ الأثر"}
+
+                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 leading-tight tracking-tight">
+                                {displayWorkshop.title}
                             </h1>
-                            <p className="text-[10px] sm:text-xs text-slate-600 max-w-md mx-auto mb-4 font-medium leading-relaxed">
-                                اكتشف ورش عمل مباشرة ومسجلة تمنحك المهارات والمعرفة لتحقيق أهدافك.
-                            </p>
+
+                            {displayWorkshop.instructor && (
+                                <p className="text-xs sm:text-sm text-slate-500 mb-10 font-bold">
+                                    <span className="text-fuchsia-600 ml-1">تقديم:</span>
+                                    {displayWorkshop.instructor}
+                                </p>
+                            )}
+
+                            <div className="flex justify-center items-center gap-6 sm:gap-10 mb-10" dir="ltr">
+                                <CountdownUnit value={timeLeft.days || 0} label="أيام" />
+                                <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                <CountdownUnit value={timeLeft.hours || 0} label="ساعات" />
+                                <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                <CountdownUnit value={timeLeft.minutes || 0} label="دقائق" />
+                                <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                <CountdownUnit value={timeLeft.seconds || 0} label="ثواني" />
+                            </div>
+
                             <button
-                                onClick={onExploreClick}
+                                onClick={handleAction}
                                 className={btnClasses}
                             >
-                                <span>تصفح جميع الورش</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 transform transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                                </svg>
+                                <span>{displayWorkshop.is_subscribed ? 'انضم للورشة الآن' : 'احجز مقعدك الآن'}</span>
+                                {displayWorkshop.is_subscribed ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                                    </svg>
+                                )}
                             </button>
+
+                            {/* Commented out as per user's manual edit */}
+                            {/* <div className="mt-8">
+                                <button className="text-[10px] sm:text-xs text-slate-400 hover:text-fuchsia-600 transition-colors flex items-center justify-center gap-1.5 mx-auto font-bold group">
+                                    <span className="bg-slate-100 text-slate-500 w-5 h-5 rounded-full flex items-center justify-center text-[10px] group-hover:bg-fuchsia-100 group-hover:text-fuchsia-600 transition-colors">؟</span>
+                                    <span>كيف أدخل؟</span>
+                                </button>
+                            </div> */}
                         </div>
                     </div>
-                )}
+                </div>
             </div>
         </section>
     );

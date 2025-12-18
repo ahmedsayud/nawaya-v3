@@ -1,172 +1,36 @@
 import React, { useState, useEffect, useMemo, createContext, useContext } from 'react';
 import { API_BASE_URL, API_ENDPOINTS } from '../constants';
-import { User, Workshop, DrhopeData, Notification, SubscriptionStatus, Subscription, Product, Order, OrderStatus, Partner, ConsultationRequest, Theme, ThemeColors, CreditTransaction, PendingGift, Expense, BroadcastCampaign, Review, Country, Cart, CartItem, OrderSummaryResponse, CreateOrderResponse } from '../types';
+import { User, Workshop, DrhopeData, Notification, SubscriptionStatus, Subscription, Product, Order, OrderStatus, Partner, ConsultationRequest, Theme, ThemeColors, CreditTransaction, PendingGift, Expense, BroadcastCampaign, Review, Country, Cart, CartItem, OrderSummaryResponse, CreateOrderResponse, PaginationMeta, Package, SubscriptionCreateResponse, SubscriptionCreateInput, PaymentProcessResponse, PaymentProcessInput, CharityCreateResponse, CharityCreateInput, CharityProcessInput, EarliestWorkshopData, EarliestWorkshopResponse } from '../types';
 import { normalizePhoneNumber } from '../utils';
 import { trackEvent } from '../analytics';
 
 // Initial Data (Simulated Database)
-const initialWorkshops: Workshop[] = [
-    {
-        id: 999,
-        title: '🔴 ورشة بث مباشر (تجربة النظام)',
-        instructor: 'فريق التطوير',
-        startDate: '2025-10-18',
-        startTime: '21:00',
-        location: 'أونلاين',
-        country: 'الإمارات العربية المتحدة',
-        isRecorded: false,
-        zoomLink: '', // Removed link
-        isVisible: true,
-        price: 50,
-        paymentLink: 'https://example.com/payment',
-        description: 'هذه الورشة مخصصة لاختبار نظام البث المباشر الجديد. يمكنك الاشتراك بها لتجربة تدفق الدخول إلى Zoom والتأكد من عمل الميزات الجديدة (العداد التنازلي، التحقق من الاشتراك، التوجيه التلقائي).',
-        topics: ['اختبار العداد التنازلي', 'زر الدخول المباشر', 'حماية الرابط'],
-        packages: [
-            { id: 9991, name: 'تذكرة تجريبية', price: 50, features: ['دخول البث', 'تجربة النظام'] }
-        ],
-        reviews: [],
-        certificatesIssued: false,
-        payItForwardBalance: 0,
-    },
-    {
-        id: 1,
-        title: 'ورشة فنون الكتابة الإبداعية',
-        instructor: 'دكتورة أمل العتيبي',
-        startDate: '2025-10-19',
-        startTime: '11:00',
-        location: 'أونلاين',
-        country: 'المملكة العربية السعودية',
-        isRecorded: false,
-        zoomLink: '', // Removed link
-        isVisible: true,
-        price: 350,
-        paymentLink: 'https://example.com/payment',
-        description: 'ورشة تفاعلية لتطوير مهارات الكتابة الإبداعية واستكشاف عوالم الخيال.',
-        topics: ['أساسيات السرد', 'بناء الشخصيات', 'الحبكة القصصية'],
-        packages: [
-            { id: 1, name: 'الباقة الأساسية', price: 350, features: ['حضور مباشر للورشة', 'تسجيل الورشة لمدة شهر'] },
-            { id: 2, name: 'الباقة المميزة', price: 500, discountPrice: 450, features: ['حضور مباشر للورشة', 'تسجيل الورشة لمدة شهر', 'متابعة خاصة مع المدربة'], availability: { endDate: '2025-10-15' } },
-        ],
-        reviews: [
-            { id: 'rev1', workshopId: 1, fullName: 'نورة عبدالله', rating: 5, comment: 'ورشة رائعة ومفيدة جداً!', date: '2025-09-01T10:00:00Z' }
-        ],
-        certificatesIssued: true,
-        payItForwardBalance: 3150,
-    },
-    {
-        id: 2,
-        title: 'ورشة الذكاء العاطفي',
-        instructor: 'DRHOPE',
-        startDate: '2025-11-05',
-        startTime: '18:00',
-        location: 'حضوري',
-        country: 'الإمارات العربية المتحدة',
-        city: 'دبي',
-        hotelName: 'فندق أرماني',
-        hallName: 'قاعة الألماس',
-        isRecorded: false,
-        zoomLink: '', // Removed link
-        isVisible: true,
-        description: 'تعلم كيفية فهم وإدارة مشاعرك ومشاعر الآخرين لتحقيق النجاح في الحياة الشخصية والمهنية.',
-        topics: ['مفهوم الذكاء العاطفي', 'الوعي الذاتي', 'إدارة العلاقات'],
-        packages: [
-            { id: 3, name: 'تسجيل مبكر', price: 1200, discountPrice: 1000, features: ['مقعد حضوري', 'شهادة معتمدة'], availability: { endDate: '2025-10-20' } },
-            { id: 4, name: 'المقعد العادي', price: 1200, features: ['مقعد حضوري', 'شهادة معتمدة'] }
-        ],
-        reviews: [],
-        certificatesIssued: false,
-        payItForwardBalance: 0,
-    },
-    {
-        id: 3,
-        title: 'ورشة أساسيات التصوير الفوتوغرافي (مسجلة)',
-        instructor: 'أحمد علي',
-        startDate: '2025-01-01',
-        startTime: '00:00',
-        location: 'مسجلة',
-        country: 'عالمي',
-        isRecorded: true,
-        zoomLink: '',
-        isVisible: true,
-        price: 250,
-        paymentLink: 'https://example.com/payment-photo',
-        description: 'تعلم أساسيات التصوير من الصفر، من إعدادات الكاميرا إلى تكوين الصور بشكل احترافي.',
-        topics: ['مقدمة للكاميرات', 'التعريض والمثلث', 'قواعد التكوين'],
-        recordings: [
-            { name: 'الجزء الأول: الأساسيات', url: 'https://player.vimeo.com/video/824804225' },
-            { name: 'الجزء الثاني: التطبيق العملي', url: 'https://player.vimeo.com/video/824804225' }
-        ],
-        notes: [
-            { type: 'link', name: 'مذكرة الورشة PDF', value: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' }
-        ],
-        reviews: [],
-        certificatesIssued: true,
-        payItForwardBalance: 0,
-    },
-    {
-        id: 7,
-        title: 'رحلة اكتشاف الذات: بوصلة الحياة',
-        instructor: 'د. هوب',
-        startDate: '2026-01-15',
-        startTime: '17:00',
-        location: 'أونلاين',
-        country: 'عالمي',
-        isRecorded: false,
-        zoomLink: '', // Removed link
-        isVisible: true,
-        price: 450,
-        description: 'رحلة عميقة لاكتشاف شغفك، تحديد قيمك العليا، ورسم خريطة طريق واضحة لمستقبلك الشخصي والمهني.',
-        topics: ['تحليل القيم الشخصية', 'تحديد نقاط القوة', 'رسم خطة الحياة'],
-        certificatesIssued: true,
-        payItForwardBalance: 450,
-    },
-    {
-        id: 9,
-        title: 'التسويق الرقمي للمشاريع الصغيرة (مسجلة)',
-        instructor: 'أ. خالد المحمد',
-        startDate: '2025-02-01',
-        startTime: '00:00',
-        location: 'مسجلة',
-        country: 'عالمي',
-        isRecorded: true,
-        zoomLink: '',
-        isVisible: true,
-        price: 299,
-        description: 'تعلم كيف تطلق حملات إعلانية ناجحة وتدير حسابات التواصل الاجتماعي لمشروعك بذكاء.',
-        topics: ['إعلانات انستجرام', 'كتابة المحتوى', 'تحليل البيانات'],
-        recordings: [
-            { name: 'مقدمة في التسويق', url: 'https://player.vimeo.com/video/123456789' },
-            { name: 'إطلاق الحملات', url: 'https://player.vimeo.com/video/987654321' }
-        ],
-        certificatesIssued: true,
-        payItForwardBalance: 0,
-    }
-];
+const initialWorkshops: Workshop[] = [];
 
 const initialUsers: User[] = [];
 
 const initialDrhopeData: Omit<DrhopeData, 'themes'> & { themes: Theme[], activeThemeId: string } = {
-    videos: [{ id: 'vid1', title: 'فيديو تعريفي', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }],
-    photos: ['https://picsum.photos/400/400?random=1', 'https://picsum.photos/400/400?random=2'],
-    instagramLinks: [{ id: 'insta1', title: 'بث مباشر #1', url: 'https://instagram.com' }],
-    socialMediaLinks: { instagram: 'https://instagram.com', twitter: 'https://twitter.com', snapchat: 'https://snapchat.com', tiktok: 'https://tiktok.com', facebook: 'https://facebook.com' },
-    whatsappNumber: '+966501234567',
+    videos: [],
+    photos: [],
+    instagramLinks: [],
+    socialMediaLinks: { instagram: '', twitter: '', snapchat: '', tiktok: '', facebook: '' },
+    whatsappNumber: '',
     backgroundMusicUrl: '',
     backgroundMusicName: '',
-    introText: 'يُحِبُّهُمْ وَيُحِبُّهُونَهُۥٓ',
+    introText: '',
     logoUrl: '',
     cvUrl: '',
     headerLinks: { drhope: 'دكتور هوب', reviews: 'آراء المشتركات', profile: 'ملفي الشخصي' },
-    accountHolderName: 'مؤسسة نوايا للفعاليات',
-    bankName: 'بنك الراجحي',
-    ibanNumber: 'SA00 0000 0000 0000 0000 0000 0000',
-    accountNumber: '1234567890123',
+    accountHolderName: '',
+    bankName: '',
+    ibanNumber: '',
+    accountNumber: '',
     swiftCode: '',
-    companyAddress: 'ابوظبي - الامارات العربية المتحدة',
-    companyPhone: '+971 4 123 4567',
-    taxRegistrationNumber: '100000000000003',
-    liveWorkshopRefundPolicy: 'يحق للمشتركة الإنسحاب وإسترجاع المبلغ كامل قبل بدايه الورشة بأسبوع ( ٧ ايام )\nقبل بدء الورشة بسبعة ايام نعتذر لا يمكننا إسترجاع المبلغ\nيتم إسترجاع المبلغ في خلال سبعة ايام عمل',
-    recordedWorkshopTerms: 'يتم تفعيل الورشة بعد التحويل وارسال صورة من التحويل على الواتساب\nالدخول بحسابك المسجل على صفحة دوراتك بالموقع - بداخلها تجد الورشة',
+    companyAddress: '',
+    companyPhone: '',
+    taxRegistrationNumber: '',
+    liveWorkshopRefundPolicy: '',
+    recordedWorkshopTerms: '',
     paymentSettings: {
         cardPaymentsEnabled: true,
         bankTransfersEnabled: true,
@@ -191,20 +55,14 @@ const initialDrhopeData: Omit<DrhopeData, 'themes'> & { themes: Theme[], activeT
         consultationsEnabled: true,
     },
     payItForwardStats: {
-        totalFund: 7650,
-        beneficiariesCount: 18
+        totalFund: 0,
+        beneficiariesCount: 0
     }
 };
 
-const initialProducts: Product[] = [
-    { id: 101, name: 'دفتر يوميات نوايا', price: 75, imageUrl: 'https://picsum.photos/id/101/400/400' },
-    { id: 102, name: 'مخطط سنوي 2025', price: 120, imageUrl: 'https://picsum.photos/id/102/400/400' },
-    { id: 103, name: 'كتاب "تحدث بثقة"', price: 85, imageUrl: 'https://picsum.photos/id/103/400/400' },
-];
+const initialProducts: Product[] = [];
 
-const initialPartners: Partner[] = [
-    { id: 'partner1', name: 'شريك النجاح الأول', logo: 'https://picsum.photos/id/201/200/200', description: 'نبذة مفصلة عن شريك النجاح الأول وما يقدمه من خدمات مميزة.', websiteUrl: 'https://example.com', instagramUrl: 'https://instagram.com' },
-];
+const initialPartners: Partner[] = [];
 
 interface RegistrationAvailability {
     emailUser?: User;
@@ -215,6 +73,11 @@ interface UserContextType {
     currentUser: User | null;
     users: User[];
     workshops: Workshop[];
+    paginationMeta: PaginationMeta | null;
+    fetchWorkshops: (options?: { page?: number; type?: string; search?: string }) => Promise<void>;
+    fetchWorkshopDetails: (id: number) => Promise<Workshop | null>;
+    earliestWorkshop: EarliestWorkshopData | null;
+    fetchEarliestWorkshop: () => Promise<void>;
     products: Product[];
     partners: Partner[];
     countries: Country[];
@@ -318,6 +181,14 @@ interface UserContextType {
     removeFromCart: (cartItemId: number) => Promise<boolean>;
     fetchOrderSummary: () => Promise<OrderSummaryResponse | null>;
     createOrder: (paymentMethod: 'online' | 'bank_transfer') => Promise<CreateOrderResponse>;
+
+    // New Subscription Actions
+    createSubscription: (input: SubscriptionCreateInput) => Promise<SubscriptionCreateResponse | null>;
+    processSubscriptionPayment: (input: PaymentProcessInput) => Promise<PaymentProcessResponse | null>;
+
+    // Charity Actions
+    buyCharitySeats: (input: CharityCreateInput) => Promise<CharityCreateResponse | null>;
+    processCharityPayment: (input: CharityProcessInput) => Promise<PaymentProcessResponse | null>;
 }
 
 
@@ -331,6 +202,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     const [users, setUsers] = useState<User[]>(initialUsers);
     const [workshops, setWorkshops] = useState<Workshop[]>(initialWorkshops);
+    const [earliestWorkshop, setEarliestWorkshop] = useState<EarliestWorkshopData | null>(null);
+    const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
     const [products, setProducts] = useState<Product[]>(initialProducts);
     const [partners, setPartners] = useState<Partner[]>(initialPartners);
     const [pendingGifts, setPendingGifts] = useState<PendingGift[]>([]);
@@ -382,8 +255,160 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         fetchCountries();
         fetchSettings();
+        fetchWorkshops(); // Fetch workshops from API
         fetchDrHopeContent();
     }, []);
+
+    // Re-fetch earliest workshop when auth state might have changed
+    useEffect(() => {
+        fetchEarliestWorkshop();
+    }, [currentUser]);
+
+    const fetchWorkshops = async (options?: { page?: number; type?: string; search?: string }) => {
+        try {
+            const queryParams = new URLSearchParams();
+            if (options?.page) queryParams.append('page', options.page.toString());
+            if (options?.type) queryParams.append('type', options.type);
+            if (options?.search) queryParams.append('search', options.search);
+
+            const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.WORKSHOPS}?${queryParams.toString()}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+
+            const data = await response.json();
+            if (data.key === 'success' && data.data) {
+                const { live_workshops = [], recorded_workshops = [] } = data.data;
+
+                // Helper to map API workshop to our Workshop type
+                const mapWorkshop = (w: any, isRecorded: boolean): Workshop => ({
+                    id: w.id,
+                    title: w.title,
+                    instructor: w.teacher || '',
+                    teacher: w.teacher,
+                    startDate: '', // Handled by date_range or start_time if needed, but keeping original structure
+                    startTime: w.start_time || '',
+                    start_time: w.start_time,
+                    endTime: w.end_time || '',
+                    end_time: w.end_time,
+                    date_range: w.date_range,
+                    location: w.type_label === 'أونلاين و حضوري' ? 'أونلاين وحضوري' :
+                        (w.type_label === 'أونلاين' ? 'أونلاين' :
+                            (w.type_label === 'حضوري' ? 'حضوري' :
+                                (isRecorded ? 'مسجلة' : 'أونلاين'))),
+                    type_label: w.type_label,
+                    country: 'المملكة العربية السعودية', // Defaults as API only sends address for Riyadh/Saudi items currently
+                    city: w.address || '',
+                    address: w.address,
+                    isRecorded: isRecorded,
+                    zoomLink: '',
+                    isVisible: true,
+                    has_multiple_packages: w.has_multiple_packages,
+                    price: 0, // Price is usually in packages
+                    packages: [], // Packages would be fetched separately in details if not here
+                    reviews: [],
+                    certificatesIssued: true,
+                });
+
+                const mappedLive = live_workshops.map((w: any) => mapWorkshop(w, false));
+                const mappedRecorded = recorded_workshops.map((w: any) => mapWorkshop(w, true));
+
+                setWorkshops([...mappedLive, ...mappedRecorded]);
+                if (data.data.pagination) {
+                    setPaginationMeta(data.data.pagination);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch workshops:', error);
+        }
+    };
+
+    const fetchWorkshopDetails = async (id: number): Promise<Workshop | null> => {
+        try {
+            const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.WORKSHOPS}/${id}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+
+            const data = await response.json();
+            if (data.key === 'success' && data.data) {
+                const w = data.data;
+                const existing = workshops.find(wk => wk.id === id);
+
+                // Map packages from details
+                const packages: Package[] = w.packages?.map((p: any) => ({
+                    id: p.id,
+                    name: p.title,
+                    price: p.price,
+                    discountPrice: p.is_offer ? p.offer_price : undefined,
+                    features: p.features, // Can be string (HTML) or array
+                    attendanceType: existing?.location === 'حضوري' ? 'حضوري' : 'أونلاين', // Infer or default
+                    availability: p.offer_expiry_date ? { endDate: p.offer_expiry_date } : undefined
+                })) || existing?.packages || [];
+
+                const details: Workshop = {
+                    ...(existing || {}), // Start with existing data if available
+                    id: w.id, // Ensure ID matches
+                    title: w.title || existing?.title || '',
+                    description: w.description,
+                    subject_of_discussion: w.subject_of_discussion,
+                    workshop_returning_policy: w.workshop_returning_policy,
+                    date_range: w.date_range,
+                    packages: packages,
+                    // Ensure required fields are present if 'existing' was null
+                    instructor: existing?.instructor || w.teacher || '',
+                    startDate: existing?.startDate || '',
+                    startTime: existing?.startTime || '',
+                    location: existing?.location || 'أونلاين',
+                    country: existing?.country || '',
+                    isRecorded: existing?.isRecorded || false,
+                    zoomLink: existing?.zoomLink || '',
+                    isVisible: true,
+                } as Workshop;
+
+                return details;
+            }
+            return null;
+        } catch (error) {
+            console.error('Failed to fetch workshop details:', error);
+            return null;
+        }
+    };
+
+    const fetchEarliestWorkshop = async () => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const headers: HeadersInit = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.GENERAL.EARLIEST_WORKSHOP}`, { headers });
+            if (!response.ok) {
+                console.warn(`Earliest Workshop HTTP Error ${response.status}`);
+                return;
+            }
+
+            const data: EarliestWorkshopResponse = await response.json();
+            if (data.key === 'success' && data.data) {
+                const w = data.data as any;
+                // Normalize data to avoid static fallbacks in UI
+                const normalized: EarliestWorkshopData = {
+                    id: w.id,
+                    title: w.title,
+                    type: w.type || 'online',
+                    online_link: w.online_link || w.zoomLink || null,
+                    start_date: w.start_date || w.startDate || w.date || "",
+                    start_time: w.start_time || w.startTime || w.time || "00:00",
+                    is_subscribed: w.is_subscribed ?? w.isSubscribed ?? false,
+                    requires_authentication: w.requires_authentication ?? w.requiresAuthentication ?? false,
+                    instructor: w.instructor || w.teacher || w.teacher_name || "",
+                };
+                setEarliestWorkshop(normalized);
+            }
+        } catch (error) {
+            console.error('Failed to fetch earliest workshop:', error);
+        }
+    };
 
     const fetchDrHopeContent = async () => {
         try {
@@ -731,12 +756,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             const data = await response.json();
-            
+
             if (data.key === 'success') {
                 // Refresh cart state to ensure it's empty
                 await fetchCart();
             }
-            
+
             return data;
         } catch (error) {
             console.error('Create order failed', error);
@@ -1478,6 +1503,120 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const createSubscription = async (input: SubscriptionCreateInput): Promise<SubscriptionCreateResponse | null> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return null;
+
+            const formData = new FormData();
+            formData.append('package_id', input.package_id.toString());
+            formData.append('subscription_type', input.subscription_type);
+
+            if (input.recipient_name) {
+                input.recipient_name.forEach((name, i) => formData.append(`recipient_name[${i}]`, name));
+            }
+            if (input.recipient_phone) {
+                input.recipient_phone.forEach((phone, i) => formData.append(`recipient_phone[${i}]`, phone));
+            }
+            if (input.country_id) {
+                input.country_id.forEach((id, i) => formData.append(`country_id[${i}]`, id.toString()));
+            }
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.SUBSCRIPTIONS.CREATE}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok && data.key === 'success') {
+                return data.data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Create subscription failed:', error);
+            return null;
+        }
+    };
+
+    const processSubscriptionPayment = async (input: PaymentProcessInput): Promise<PaymentProcessResponse | null> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return null;
+
+            const formData = new FormData();
+            formData.append('subscription_id', input.subscription_id.toString());
+            formData.append('payment_type', input.payment_type);
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.SUBSCRIPTIONS.PROCESS}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok && data.key === 'success') {
+                return data;
+            }
+            return data;
+        } catch (error) {
+            console.error('Process payment failed:', error);
+            return null;
+        }
+    };
+
+    const buyCharitySeats = async (input: CharityCreateInput): Promise<CharityCreateResponse | null> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return null;
+
+            const formData = new FormData();
+            formData.append('package_id', input.package_id.toString());
+            formData.append('number_of_seats', input.number_of_seats.toString());
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.SUBSCRIPTIONS.BUY_CHARITY}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok && data.key === 'success') {
+                return data.data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Buy charity seats failed:', error);
+            return null;
+        }
+    };
+
+    const processCharityPayment = async (input: CharityProcessInput): Promise<PaymentProcessResponse | null> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return null;
+
+            const formData = new FormData();
+            formData.append('charity_id', input.charity_id.toString());
+            formData.append('payment_type', input.payment_type);
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.SUBSCRIPTIONS.PROCESS_CHARITY}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok && data.key === 'success') {
+                return data;
+            }
+            return data;
+        } catch (error) {
+            console.error('Process charity payment failed:', error);
+            return null;
+        }
+    };
+
     const value: UserContextType = useMemo(() => ({
         currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, globalCertificateTemplate: null, pendingGifts, expenses,
         broadcastHistory,
@@ -1485,11 +1624,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         countriesDebugInfo,
 
         // Auth & User Actions
-        login, out: logout, register,
+        login, logout, register,
         addUser, updateUser, deleteUser, restoreUser, permanentlyDeleteUser, convertToInternalCredit,
         findUserByCredential, checkRegistrationAvailability,
 
-        addWorkshop, updateWorkshop, deleteWorkshop, restoreWorkshop, permanentlyDeleteWorkshop,
+        addWorkshop, updateWorkshop, deleteWorkshop, restoreWorkshop, permanentlyDeleteWorkshop, fetchWorkshops, fetchWorkshopDetails, earliestWorkshop, fetchEarliestWorkshop, paginationMeta,
 
         addSubscription, updateSubscription, deleteSubscription, restoreSubscription, permanentlyDeleteSubscription, transferSubscription, reactivateSubscription,
 
@@ -1514,8 +1653,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateCartItem,
         removeFromCart,
         fetchOrderSummary,
-        createOrder
-    }), [currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, pendingGifts, expenses, broadcastHistory, cart]);
+        createOrder,
+
+        // New Subscription Actions
+        createSubscription,
+        processSubscriptionPayment,
+
+        // Charity Actions
+        buyCharitySeats,
+        processCharityPayment
+    }), [currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, pendingGifts, expenses, broadcastHistory, cart, paginationMeta, countries, countriesDebugInfo, createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop, fetchEarliestWorkshop]);
 
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

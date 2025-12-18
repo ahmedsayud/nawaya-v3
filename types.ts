@@ -91,7 +91,7 @@ export interface Package {
     name: string;
     price: number;
     discountPrice?: number;
-    features: string[];
+    features: string[] | string;
     paymentLink?: string;
     availability?: {
         endDate?: string;
@@ -150,23 +150,32 @@ export interface Workshop {
     isNew?: boolean;
     title: string;
     instructor: string;
+    teacher?: string; // API field
     startDate: string;
     endDate?: string;
+    date_range?: string; // API field
     startTime: string;
+    start_time?: string; // API field
     endTime?: string;
+    end_time?: string; // API field
     location: 'أونلاين' | 'حضوري' | 'مسجلة' | 'أونلاين وحضوري';
+    type_label?: string; // API field
     country: string;
     city?: string;
+    address?: string; // API field
     hotelName?: string;
     hallName?: string;
     application?: string;
     isRecorded: boolean;
     zoomLink: string;
+    subject_of_discussion?: string;
+    workshop_returning_policy?: string;
     description?: string;
     topics?: string[];
     isVisible: boolean;
     isDeleted?: boolean;
     packages?: Package[];
+    has_multiple_packages?: boolean; // API field
     price?: number;
     paymentLink?: string;
     recordings?: Recording[];
@@ -178,6 +187,8 @@ export interface Workshop {
     trainerPayments?: Payment[];
     payItForwardBalance?: number; // Balance specific to this workshop
 }
+
+
 
 export interface Subscription {
     id: string;
@@ -442,3 +453,120 @@ export interface CreateOrderResponse {
         message?: string;
     } | any[];
 }
+
+export interface PaginationMeta {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
+export interface PaginatedWorkshopsResponse {
+    key: string;
+    msg: string;
+    data: {
+        live_workshops: any[];
+        recorded_workshops: any[];
+        pagination?: PaginationMeta;
+    };
+}
+
+export interface SubscriptionCreateResponse {
+    payment_options: {
+        online_payment: boolean;
+        bank_transfer: boolean;
+    };
+    subscriptions: {
+        subscription_id: number;
+        subscription_details: {
+            workshop_id: number;
+            workshop_title: string;
+            package_id: string | number;
+            package_title: string;
+            price: number;
+        };
+    }[];
+    bank_account?: {
+        account_name: string;
+        bank_name: string;
+        IBAN_number: string;
+        account_number: string;
+        swift: string;
+    };
+}
+
+export interface SubscriptionCreateInput {
+    package_id: number;
+    subscription_type: 'myself' | 'gift';
+    recipient_name?: string[];
+    recipient_phone?: string[];
+    country_id?: number[];
+}
+
+export interface PaymentProcessResponse {
+    key: string;
+    msg: string;
+    data: {
+        invoice_url?: string;
+        invoice_id?: string;
+        subscription_id: number;
+        message?: string;
+    };
+}
+
+export interface PaymentProcessInput {
+    subscription_id: number;
+    payment_type: 'online' | 'bank_transfer';
+}
+
+export interface CharityCreateResponse {
+    payment_options: {
+        online_payment: boolean;
+        bank_transfer: boolean;
+    };
+    charity_id: number;
+    charity_details: {
+        workshop_id: number;
+        workshop_title: string;
+        package_id: string | number;
+        package_title: string;
+        number_of_seats: number;
+        price: number;
+    };
+    bank_account?: {
+        account_name: string;
+        bank_name: string;
+        IBAN_number: string;
+        account_number: string;
+        swift: string;
+    };
+}
+
+export interface CharityCreateInput {
+    package_id: number;
+    number_of_seats: number;
+}
+
+export interface CharityProcessInput {
+    charity_id: number;
+    payment_type: 'online' | 'bank_transfer';
+}
+
+export interface EarliestWorkshopData {
+    id: number;
+    title: string;
+    type: string;
+    online_link: string | null;
+    start_date: string;
+    start_time: string;
+    is_subscribed: boolean;
+    requires_authentication: boolean;
+    instructor?: string;
+}
+
+export interface EarliestWorkshopResponse {
+    key: string;
+    msg: string;
+    data: EarliestWorkshopData | null;
+}
+
