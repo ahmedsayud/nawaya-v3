@@ -1373,7 +1373,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             console.log('[fetchProfile] Calling API...');
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.GENERAL.PROFILE}`, {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.DETAILS}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,

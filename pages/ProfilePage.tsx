@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Workshop, Subscription, User, NoteResource, Recording, ConsultationRequest, SubscriptionStatus } from '../types';
 import { CloseIcon, VideoIcon, CalendarIcon, ChevronDownIcon, EyeIcon, AcademicCapIcon, UserCircleIcon, LightBulbIcon, DocumentTextIcon, StarIcon, ChatBubbleLeftRightIcon, CreditCardIcon, ShieldCheckIcon, TrashIcon, PencilIcon, GlobeAltIcon, ReceiptTaxIcon, CheckCircleIcon, InformationCircleIcon, EnvelopeIcon, PhoneIcon, MusicalNoteIcon, ClockIcon } from '../components/icons';
 import { useUser } from '../context/UserContext';
+import { API_BASE_URL, API_ENDPOINTS } from '../constants';
 import { formatArabicDate, formatArabicTime, isWorkshopExpired } from '../utils';
 import { CertificateModal } from '../components/CertificateModal';
 import { GoogleGenAI, Type } from '@google/genai';
@@ -107,7 +108,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
 
             console.log('[AddReviewForm] Submitting review:', { subscriptionId: rawSubId, workshopId, rating, review: comment });
 
-            const response = await fetch('/api/profile/review', {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.ADD_REVIEW}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -222,7 +223,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
 
             setIsLoadingProfile(true);
             try {
-                const response = await fetch(`/api/profile/details`, {
+                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.DETAILS}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -239,7 +240,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                 }
 
                 // Fetch suggested workshops
-                const suggestedResponse = await fetch(`/api/profile/suggest-workshops`, {
+                const suggestedResponse = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.SUGGEST_WORKSHOPS}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,

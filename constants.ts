@@ -6,9 +6,13 @@ export const API_ENDPOINTS = {
         LOGOUT: '/api/logout',
         REGISTER: '/api/register',
     },
+    PROFILE: {
+        DETAILS: '/api/profile/details',
+        SUGGEST_WORKSHOPS: '/api/profile/suggest-workshops',
+        ADD_REVIEW: '/api/profile/review',
+    },
     GENERAL: {
         COUNTRIES: '/api/countries',
-        PROFILE: '/api/profile/details',
         SETTINGS: '/api/home/settings',
         WORKSHOPS: '/api/workshops',
         EARLIEST_WORKSHOP: '/api/home/earliest-workshop',
