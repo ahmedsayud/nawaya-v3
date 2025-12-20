@@ -84,8 +84,8 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
 
       if (response.key === 'success') {
         // Success
-        if (paymentMethod === 'online' && response.data.invoice_url) {
-          window.open(response.data.invoice_url, '_blank', 'noopener,noreferrer');
+        if (paymentMethod === 'online' && (response.data as any).invoice_url) {
+          window.open((response.data as any).invoice_url, '_blank', 'noopener,noreferrer');
         }
         onConfirm();
       } else {
@@ -104,7 +104,7 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
     }`;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[70] p-4 backdrop-blur-sm">
       <div className="bg-gradient-to-br from-[#2e0235] via-[#3b0764] to-[#4c1d95] text-slate-200 rounded-2xl shadow-2xl w-full max-w-lg border border-fuchsia-500/30 flex flex-col max-h-[90vh] animate-fade-in-up">
         <header className="p-5 flex justify-between items-center border-b border-fuchsia-500/20 flex-shrink-0 bg-black/20">
           <h2 className="text-xl font-bold text-white">تأكيد الطلب والدفع</h2>

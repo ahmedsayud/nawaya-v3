@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Subscription, Workshop } from '../types';
 import { CloseIcon, PrintIcon, DownloadIcon } from './icons';
+import { API_BASE_URL, API_ENDPOINTS } from '../constants';
 
 interface CertificateModalProps {
     isOpen: boolean;
@@ -24,7 +25,7 @@ const sanitizeHtml = (html: string): string => {
 };
 
 export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onClose, user, subscription, workshop }) => {
-    const [certificateHtml, setCertificateHtml] = useState<string>('');
+    const [certificateUrl, setCertificateUrl] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string>('');
 
@@ -34,6 +35,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
 
             setIsLoading(true);
             setError('');
+            setCertificateUrl('');
 
             try {
                 const token = localStorage.getItem('auth_token');
@@ -46,28 +48,29 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
                 // Handle both "sub-123" format and raw numeric ID
                 const rawId = String(subscription.id);
                 const subscriptionId = rawId.startsWith('sub-') ? rawId.replace('sub-', '') : rawId;
-                console.log('[CertificateModal] Fetching certificate for subscription:', subscriptionId);
 
-                const response = await fetch(`/api/profile/subscription/${subscriptionId}/certificate`, {
+                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.CERTIFICATE(subscriptionId)}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Accept': 'text/html'
+                        'Accept': 'application/pdf, text/html'
                     }
                 });
 
-                console.log('[CertificateModal] Response status:', response.status);
-
                 if (response.ok) {
-                    const html = await response.text();
-                    console.log('[CertificateModal] HTML length:', html.length);
-                    console.log('[CertificateModal] HTML preview:', html.substring(0, 500));
-                    // Sanitize the HTML to remove scripts and dangerous elements
-                    const sanitizedHtml = sanitizeHtml(html);
-                    setCertificateHtml(sanitizedHtml);
+                    const contentType = response.headers.get('content-type');
+
+                    if (contentType?.includes('application/pdf')) {
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        setCertificateUrl(url);
+                    } else {
+                        // Fallback for text/html or generic binary
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                        setCertificateUrl(url);
+                    }
                 } else {
-                    const errorText = await response.text();
-                    console.error('[CertificateModal] Error response:', errorText);
                     setError(`فشل تحميل الشهادة (${response.status})`);
                 }
             } catch (err) {
@@ -79,91 +82,41 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
         };
 
         fetchCertificate();
+
+        return () => {
+            if (certificateUrl) {
+                URL.revokeObjectURL(certificateUrl);
+            }
+        };
     }, [isOpen, subscription.id]);
 
     if (!isOpen) return null;
 
     const handlePrint = () => {
-        const printContents = document.getElementById('printable-certificate')?.innerHTML;
-        if (printContents) {
-            const printWindow = window.open('', '_blank');
+        if (certificateUrl) {
+            const printWindow = window.open(certificateUrl);
             if (printWindow) {
-                printWindow.document.write(`
-                    <html>
-                    <head>
-                        <title>شهادة - ${user.fullName}</title>
-                        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap" rel="stylesheet">
-                        <style>
-                            body { 
-                                font-family: 'Noto Sans Arabic', sans-serif;
-                                direction: rtl;
-                                -webkit-print-color-adjust: exact !important;
-                                print-color-adjust: exact !important;
-                                margin: 0;
-                                padding: 0;
-                            }
-                            @page {
-                                size: landscape;
-                                margin: 0;
-                            }
-                        </style>
-                    </head>
-                    <body>${printContents}</body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.onload = () => {
-                    printWindow.print();
-                };
+                printWindow.print();
             }
-        }
-    };
-
-    const handleDownload = async () => {
-        const certificateElement = document.getElementById('printable-certificate');
-        if (!certificateElement) return;
-
-        // Check if html2canvas is available
-        if (typeof (window as any).html2canvas === 'undefined') {
-            // Fallback to print
-            handlePrint();
-            return;
-        }
-
-        try {
-            const canvas = await (window as any).html2canvas(certificateElement, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: null,
-            });
-
-            // Create download link
-            const link = document.createElement('a');
-            link.download = `Certificate-${user.fullName.replace(/\s/g, '_')}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        } catch (err) {
-            console.error('Error downloading certificate:', err);
-            // Fallback to print
-            handlePrint();
         }
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[100] p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-5xl border border-yellow-500/50 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-5xl border border-yellow-500/50 h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <header className="p-3 bg-slate-800 flex justify-between items-center flex-shrink-0 rounded-t-lg">
                     <h2 className="text-lg font-bold text-white">شهادة إتمام الورشة</h2>
                     <div className="flex items-center gap-x-3">
-                        {certificateHtml && (
+                        {certificateUrl && (
                             <>
-                                <button
-                                    onClick={handleDownload}
+                                <a
+                                    href={certificateUrl}
+                                    download={`Certificate-${user.fullName.replace(/\s/g, '_')}.pdf`}
                                     className="flex items-center gap-x-2 py-2 px-3 rounded-md bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-white font-bold text-sm shadow-lg shadow-yellow-500/30 transition-all transform hover:scale-105 border border-yellow-500/20"
                                 >
                                     <DownloadIcon className="w-5 h-5" />
                                     <span>تحميل</span>
-                                </button>
+                                </a>
                                 <button
                                     onClick={handlePrint}
                                     className="flex items-center gap-x-2 py-2 px-3 rounded-md bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold text-sm shadow-lg shadow-purple-500/30 transition-all transform hover:scale-105 border border-fuchsia-500/20"
@@ -179,32 +132,28 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
                     </div>
                 </header>
 
-                <div className="flex-grow p-4 overflow-y-auto bg-slate-700">
+                <div className="flex-grow bg-slate-700 relative h-full">
                     {isLoading ? (
-                        <div className="flex items-center justify-center h-full min-h-[400px]">
+                        <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
                                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
                                 <p className="mt-4 text-slate-300">جاري تحميل الشهادة...</p>
                             </div>
                         </div>
                     ) : error ? (
-                        <div className="flex items-center justify-center h-full min-h-[400px]">
+                        <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center text-red-400">
                                 <p className="text-xl mb-2">⚠️</p>
                                 <p>{error}</p>
                             </div>
                         </div>
-                    ) : certificateHtml ? (
-                        <div
-                            id="printable-certificate"
-                            className="bg-white mx-auto shadow-2xl rounded-lg overflow-hidden"
-                            style={{
-                                direction: 'rtl',
-                                maxWidth: '100%',
-                            }}
-                            dangerouslySetInnerHTML={{ __html: certificateHtml }}
+                    ) : (
+                        <iframe
+                            src={certificateUrl}
+                            className="w-full h-full rounded-b-lg border-0 bg-white"
+                            title="Certificate Preview"
                         />
-                    ) : null}
+                    )}
                 </div>
             </div>
         </div>

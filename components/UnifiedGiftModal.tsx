@@ -97,11 +97,11 @@ const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedP
     const labelClass = "block text-xs font-bold text-fuchsia-300 mb-1.5 text-right";
 
     return (
-        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
-            <div className="bg-theme-gradient w-full max-w-2xl rounded-2xl shadow-2xl border border-fuchsia-500/30 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-[#2e0235] via-[#3b0764] to-[#4c1d95] w-full max-w-2xl rounded-2xl shadow-2xl border border-fuchsia-500/30 flex flex-col max-h-[90vh] animate-fade-in-up">
 
                 {/* Header */}
-                <header className="p-4 flex justify-between items-center border-b border-fuchsia-500/20 bg-fuchsia-900/20 rounded-t-2xl">
+                <header className="p-5 flex justify-between items-center border-b border-fuchsia-500/20 flex-shrink-0 bg-black/20">
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                         <GiftIcon className="w-6 h-6 text-fuchsia-400" />
                         <span>إهداء مقعد</span>

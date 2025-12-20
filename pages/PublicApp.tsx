@@ -36,7 +36,7 @@ import { isWorkshopExpired } from '../utils';
 const PublicApp: React.FC = () => {
     const {
         currentUser, workshops, products, placeOrder, addSubscription, addPendingGift, donateToPayItForward, cart,
-        createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment
+        createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop
     } = useUser();
 
     // Navigation State
@@ -148,17 +148,25 @@ const PublicApp: React.FC = () => {
             return;
         }
 
-        const isSubscribed = user.subscriptions.some(
-            sub => sub.workshopId === nextLiveWorkshop.id &&
+        const isSubscribed = (user.subscriptions || []).some(
+            sub => Number(sub.workshopId) === Number(nextLiveWorkshop.id) &&
                 sub.status !== 'REFUNDED' &&
                 !sub.isPayItForwardDonation
         );
 
         if (isSubscribed) {
-            if (nextLiveWorkshop.zoomLink) {
-                setZoomRedirectLink(nextLiveWorkshop.zoomLink);
+            // Prioritize link from earliestWorkshop if IDs match
+            const bestLink = (earliestWorkshop && earliestWorkshop.id === nextLiveWorkshop.id)
+                ? earliestWorkshop.online_link
+                : nextLiveWorkshop.zoomLink;
+
+            if (bestLink) {
+                setZoomRedirectLink(bestLink);
             } else {
-                showToast('رابط البث غير متوفر حالياً، يرجى الانتظار', 'warning');
+                const sessionInfo = nextLiveWorkshop.startDate && nextLiveWorkshop.startTime
+                    ? `ميعاد الجلسة القادمة في ${nextLiveWorkshop.startDate} الساعة ${nextLiveWorkshop.startTime}`
+                    : '';
+                showToast(`رابط البث غير متوفر حالياً. ${sessionInfo}`, 'warning');
             }
         } else {
             showToast('يجب الاشتراك في الورشة للوصول إلى البث المباشر', 'warning');
@@ -258,11 +266,23 @@ const PublicApp: React.FC = () => {
 
         if (result) {
             setSubscriptionApiResponse(result);
+            const apiPrice = result.subscriptions[0]?.subscription_details.price;
+
+            // Prioritize package price (especially if discounted)
+            const packagePrice = selectedPackage.discountPrice ?? selectedPackage.price;
+
+            // Fix: handle 0 case strictly. If API says 0 OR package says 0 (free), use 0.
+            // Also handle potential string '0' response
+            const isApiFree = apiPrice === 0 || apiPrice === '0';
+            const isPackageFree = packagePrice === 0;
+
+            const finalPrice = (isApiFree || isPackageFree) ? 0 : packagePrice;
+
             const intent: PaymentIntent = {
                 type: 'workshop',
                 item: workshop,
                 pkg: selectedPackage,
-                amount: result.subscriptions[0]?.subscription_details.price || selectedPackage.price
+                amount: finalPrice
             };
             setPaymentModalIntent(intent);
             setIsPaymentModalOpen(true);
@@ -464,6 +484,12 @@ const PublicApp: React.FC = () => {
                     paymentType={paymentModalIntent.type}
                     paymentOptions={paymentModalIntent.type === 'payItForward' ? charityApiResponse?.payment_options : subscriptionApiResponse?.payment_options}
                     bankAccount={paymentModalIntent.type === 'payItForward' ? charityApiResponse?.bank_account : subscriptionApiResponse?.bank_account}
+                    onBack={paymentModalIntent.type === 'workshop' ? () => {
+                        // Close payment modal
+                        setIsPaymentModalOpen(false);
+                        // Re-open workshop details
+                        setOpenedWorkshopId(paymentModalIntent.item.id);
+                    } : undefined}
                 />
             )}
             {isGiftModalOpen && giftModalIntent && <UnifiedGiftModal workshop={giftModalIntent.workshop} selectedPackage={giftModalIntent.pkg} onClose={() => setIsGiftModalOpen(false)} onProceed={handleGiftProceed} />}
@@ -479,7 +505,7 @@ const PublicApp: React.FC = () => {
             {isPartnersModalOpen && <PartnersModal isOpen={isPartnersModalOpen} onClose={() => setIsPartnersModalOpen(false)} />}
             {attachmentToView && <AttachmentViewerModal note={attachmentToView} onClose={() => setAttachmentToView(null)} />}
             {zoomRedirectLink && <ZoomRedirectModal isOpen={!!zoomRedirectLink} zoomLink={zoomRedirectLink} onClose={() => setZoomRedirectLink(null)} />}
-            {invoiceToView && <InvoiceModal isOpen={!!invoiceToView} onClose={() => setInvoiceToView(null)} user={invoiceToView.user} subscription={invoiceToView.subscription} workshop={workshops.find(w => w.id === invoiceToView.subscription.workshopId)!} />}
+            {invoiceToView && <InvoiceModal isOpen={!!invoiceToView} onClose={() => setInvoiceToView(null)} user={invoiceToView.user} subscription={invoiceToView.subscription} workshop={workshops.find(w => Number(w.id) === Number(invoiceToView.subscription.workshopId))!} />}
             {isCvModalOpen && <CvModal isOpen={isCvModalOpen} onClose={() => setIsCvModalOpen(false)} />}
             {isNavigationHubOpen && <NavigationHubModal
                 isOpen={isNavigationHubOpen}

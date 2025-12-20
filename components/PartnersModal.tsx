@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
 import { Partner } from '../types';
 import { CloseIcon, ArrowLeftIcon, GlobeAltIcon, InstagramIcon, TwitterIcon } from './icons';
+import { API_BASE_URL, API_ENDPOINTS } from '../constants';
 
 interface PartnersModalProps {
   isOpen: boolean;
@@ -26,7 +27,7 @@ const PartnersModal: React.FC<PartnersModalProps> = ({ isOpen, onClose }) => {
           const headers: HeadersInit = { 'Content-Type': 'application/json' };
           if (token) headers['Authorization'] = `Bearer ${token}`;
 
-          const res = await fetch(`https://tan-bison-374038.hostingersite.com/api/drhope/partners/${selectedPartner.id}`, { headers });
+          const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.DRHOPE.PARTNERS}/${selectedPartner.id}`, { headers });
           const data = await res.json();
 
           if (data.key === 'success' && data.data) {

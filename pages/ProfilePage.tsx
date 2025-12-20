@@ -4,7 +4,7 @@ import { Workshop, Subscription, User, NoteResource, Recording, ConsultationRequ
 import { CloseIcon, VideoIcon, CalendarIcon, ChevronDownIcon, EyeIcon, AcademicCapIcon, UserCircleIcon, LightBulbIcon, DocumentTextIcon, StarIcon, ChatBubbleLeftRightIcon, CreditCardIcon, ShieldCheckIcon, TrashIcon, PencilIcon, GlobeAltIcon, ReceiptTaxIcon, CheckCircleIcon, InformationCircleIcon, EnvelopeIcon, PhoneIcon, MusicalNoteIcon, ClockIcon } from '../components/icons';
 import { useUser } from '../context/UserContext';
 import { API_BASE_URL, API_ENDPOINTS } from '../constants';
-import { formatArabicDate, formatArabicTime, isWorkshopExpired } from '../utils';
+import { formatArabicDate, formatArabicTime, isWorkshopExpired, toEnglishDigits, parseArabicDateRange } from '../utils';
 import { CertificateModal } from '../components/CertificateModal';
 import { GoogleGenAI, Type } from '@google/genai';
 import { ConfirmationModal } from '../components/ConfirmationModal';
@@ -290,58 +290,71 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
     }, [isOpen, user]);
 
     const subscriptions = useMemo(() => {
-        if (!profileData?.active_subscriptions) return [];
+        if (!profileData?.active_subscriptions || !Array.isArray(profileData.active_subscriptions)) return [];
 
         // Map API subscriptions to our format
-        return profileData.active_subscriptions.map((sub: any) => ({
-            id: `sub-${sub.id}`,
-            workshopId: sub.workshop.id,
-            activationDate: new Date().toISOString(),
-            expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            status: SubscriptionStatus.ACTIVE,
-            isApproved: true,
-            paymentMethod: 'LINK' as const,
-            // Store API data for later use
-            apiData: sub
-        }));
+        return profileData.active_subscriptions
+            .map((sub: any) => {
+                if (!sub) return null;
+                return {
+                    id: `sub-${sub.id}`,
+                    workshopId: Number(sub.workshop?.id || sub.workshop_id),
+                    activationDate: new Date().toISOString(),
+                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                    status: SubscriptionStatus.ACTIVE,
+                    isApproved: true,
+                    paymentMethod: 'LINK' as const,
+                    // Store API data for later use
+                    apiData: sub
+                };
+            })
+            .filter(Boolean) as Subscription[];
     }, [profileData]);
 
     // Create workshops from API data
     const apiWorkshops = useMemo(() => {
-        if (!profileData?.active_subscriptions) return [];
+        if (!profileData?.active_subscriptions || !Array.isArray(profileData.active_subscriptions)) return [];
 
-        return profileData.active_subscriptions.map((sub: any) => ({
-            id: sub.workshop.id,
-            title: sub.workshop.title,
-            instructor: sub.workshop.teacher || 'غير محدد',
-            startDate: new Date().toISOString(),
-            endDate: undefined,
-            startTime: sub.workshop.start_time || '09:00',
-            endTime: sub.workshop.end_time || '17:00',
-            location: sub.workshop.type_label === 'أونلاين' ? 'أونلاين' :
-                sub.workshop.type_label === 'حضوري' ? 'حضوري' :
-                    sub.workshop.type_label === 'مسجلة' ? 'مسجلة' : 'أونلاين وحضوري',
-            isRecorded: sub.workshop.type_label === 'مسجلة',
-            zoomLink: sub.online_link || undefined,
-            city: sub.workshop.address || undefined,
-            notes: sub.files?.map((f: any) => ({ type: 'file' as const, name: f.title, value: f.file })) || [],
-            recordings: sub.recordings?.filter((r: any) => r.is_available).map((r: any) => ({
-                name: r.title,
-                url: r.link,
-                accessStartDate: undefined,
-                accessEndDate: undefined
-            })) || [],
-            mediaFiles: sub.attachments?.map((a: any) => ({
-                type: a.type as 'audio' | 'video',
-                name: a.title,
-                value: a.file
-            })) || [],
-            certificatesIssued: sub.can_install_certificate || false,
-            isVisible: true,
-            isDeleted: false,
-            topics: [],
-            reviews: []
-        }));
+        return profileData.active_subscriptions
+            .map((sub: any) => {
+                if (!sub || !sub.workshop) return null;
+
+                const { startDate, endDate } = parseArabicDateRange(sub.workshop.date_range);
+
+                return {
+                    id: Number(sub.workshop.id),
+                    title: sub.workshop.title,
+                    instructor: sub.workshop.teacher || 'غير محدد',
+                    startDate: startDate,
+                    endDate: endDate,
+                    startTime: sub.workshop.start_time || '09:00',
+                    endTime: sub.workshop.end_time || '17:00',
+                    location: sub.workshop.type_label === 'أونلاين' ? 'أونلاين' :
+                        sub.workshop.type_label === 'حضوري' ? 'حضوري' :
+                            sub.workshop.type_label === 'مسجلة' ? 'مسجلة' : 'أونلاين وحضوري',
+                    isRecorded: sub.workshop.type_label === 'مسجلة',
+                    zoomLink: sub.online_link || undefined,
+                    city: sub.workshop.address || undefined,
+                    notes: sub.files?.map((f: any) => ({ type: 'file' as const, name: f.title, value: f.file })) || [],
+                    recordings: sub.recordings?.filter((r: any) => r.is_available).map((r: any) => ({
+                        name: r.title,
+                        url: r.link,
+                        accessStartDate: undefined,
+                        accessEndDate: undefined
+                    })) || [],
+                    mediaFiles: sub.attachments?.map((a: any) => ({
+                        type: a.type as 'audio' | 'video',
+                        name: a.title,
+                        value: a.file
+                    })) || [],
+                    certificatesIssued: sub.can_install_certificate || false,
+                    isVisible: true,
+                    isDeleted: false,
+                    topics: [],
+                    reviews: []
+                };
+            })
+            .filter(Boolean) as Workshop[];
     }, [profileData]);
 
     const userConsultations = useMemo(() => {
@@ -500,17 +513,30 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                             <h3 className="text-2xl font-black text-white mb-2">{nextLiveWorkshop.title}</h3>
                                             <p className="text-fuchsia-200 text-sm mb-4 flex items-center justify-center md:justify-start gap-2">
                                                 <CalendarIcon className="w-4 h-4" />
-                                                {formatArabicDate(nextLiveWorkshop.startDate)} - {formatArabicTime(nextLiveWorkshop.startTime)}
+                                                <span>
+                                                    من: {formatArabicDate(nextLiveWorkshop.startDate)}
+                                                    {nextLiveWorkshop.endDate && ` - إلى: ${formatArabicDate(nextLiveWorkshop.endDate)}`}
+                                                </span>
                                             </p>
                                         </div>
 
-                                        <button
-                                            onClick={(e) => handleLiveStreamClick(nextLiveWorkshop, e)}
-                                            className="w-full md:w-auto bg-white text-fuchsia-800 font-black py-3 px-8 rounded-xl hover:bg-fuchsia-50 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center gap-2"
-                                        >
-                                            <VideoIcon className="w-6 h-6" />
-                                            دخول البث الآن
-                                        </button>
+                                        {nextLiveWorkshop.zoomLink ? (
+                                            <button
+                                                onClick={(e) => handleLiveStreamClick(nextLiveWorkshop, e)}
+                                                className="w-full md:w-auto bg-white text-fuchsia-800 font-black py-3 px-8 rounded-xl hover:bg-fuchsia-50 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center gap-2"
+                                            >
+                                                <VideoIcon className="w-6 h-6" />
+                                                دخول البث الآن
+                                            </button>
+                                        ) : (
+                                            <div className="w-full md:w-auto bg-white/10 text-white px-6 py-3 rounded-xl border border-white/20 text-center backdrop-blur-sm">
+                                                <p className="text-xs text-fuchsia-200 mb-1 font-bold">رابط البث سيتاح قريباً</p>
+                                                <div className="flex items-center justify-center gap-2 text-sm font-bold dir-rtl">
+                                                    <ClockIcon className="w-4 h-4" />
+                                                    <span>{formatArabicDate(nextLiveWorkshop.startDate)} - {formatArabicTime(nextLiveWorkshop.startTime)}</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -556,11 +582,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                 <div key={sub.id} className={`bg-black/20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${isExpanded ? 'border-fuchsia-500/50 shadow-lg shadow-fuchsia-500/10' : 'border-slate-700/50 hover:border-fuchsia-500/30'}`}>
                                                     {/* Header Row */}
                                                     <div className="w-full p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:bg-fuchsia-500/10 transition-colors cursor-pointer" onClick={() => setExpandedWorkshopId(isExpanded ? null : workshop.id)}>
-                                                        <div className="flex-grow">
-                                                            <span className="font-bold text-white text-lg">{workshop.title}</span>
-                                                            {showLiveStreamButton && (
-                                                                <span className="mr-2 inline-flex items-center gap-1 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">LIVE</span>
-                                                            )}
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-bold text-white text-lg">{workshop.title}</span>
+                                                                {showLiveStreamButton && (
+                                                                    <span className="inline-flex items-center gap-1 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">LIVE</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                                                                <CalendarIcon className="w-3 h-3" />
+                                                                <span>
+                                                                    {workshop.isRecorded ? 'ورشة مسجلة' : (
+                                                                        <>
+                                                                            من: {formatArabicDate(workshop.startDate)}
+                                                                            {workshop.endDate && ` - إلى: ${formatArabicDate(workshop.endDate)}`}
+                                                                        </>
+                                                                    )}
+                                                                </span>
+                                                            </div>
                                                         </div>
 
                                                         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">

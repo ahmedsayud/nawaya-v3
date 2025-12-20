@@ -37,7 +37,7 @@ export const formatArabicTime = (timeString: string | undefined): string => {
   const [hours, minutes] = timeString.split(':');
   // Create a dummy date assuming the input time is UTC, to convert to UAE time.
   const date = new Date(Date.UTC(2000, 0, 1, parseInt(hours, 10), parseInt(minutes, 10)));
-  
+
   // Check for validity
   if (isNaN(date.getTime())) {
     console.warn(`Invalid time string passed to formatArabicTime: "${timeString}"`);
@@ -53,7 +53,7 @@ export const formatArabicTime = (timeString: string | undefined): string => {
   const parts = timeFormatterAr.formatToParts(date);
   const hour = parts.find(p => p.type === 'hour')?.value;
   const minute = parts.find(p => p.type === 'minute')?.value;
-  
+
   const timeFormatterEn = new Intl.DateTimeFormat('en-US', {
     hour12: true,
     hour: 'numeric', // We only need the period
@@ -63,7 +63,7 @@ export const formatArabicTime = (timeString: string | undefined): string => {
   const dayPeriod = enParts.find(p => p.type === 'dayPeriod')?.value; // "AM" or "PM"
 
   const timePart = `${hour}:${minute}`;
-  
+
   return `${timePart} ${dayPeriod}`;
 };
 
@@ -79,13 +79,13 @@ export const isWorkshopExpired = (workshop: Workshop): boolean => {
   if (!expiryDateString) {
     return false; // If there's no date, it cannot be expired.
   }
-  
+
   // Create a date object for the end of the expiry day in UTC to avoid timezone issues.
   const expiryDate = new Date(`${expiryDateString}T23:59:59.999Z`);
   if (isNaN(expiryDate.getTime())) {
-      return false; // Invalid date string, assume not expired.
+    return false; // Invalid date string, assume not expired.
   }
-  
+
   const now = new Date(); // This is mocked to UTC
 
   return expiryDate < now;
@@ -109,7 +109,7 @@ export const normalizePhoneNumber = (phone: string): string => {
   if (!phone) return '';
   // Remove spaces, dashes, parentheses to get a clean string of digits and maybe a leading +
   let normalized = phone.replace(/[\s-()]/g, '');
-  
+
   // Remove leading '00' or '+' to get just the digits
   if (normalized.startsWith('+')) {
     normalized = normalized.substring(1);
@@ -120,7 +120,7 @@ export const normalizePhoneNumber = (phone: string): string => {
   // Now `normalized` is a string of digits, e.g., '9710501234567' or '971501234567'
 
   // Heuristic for Gulf countries: if number starts with country code + 0, remove the 0.
-  const prefixes = ['971', '966', '974', '965', '973', '968']; 
+  const prefixes = ['971', '966', '974', '965', '973', '968'];
   for (const prefix of prefixes) {
     if (normalized.startsWith(prefix + '0')) {
       return prefix + normalized.substring(prefix.length + 1);
@@ -146,19 +146,19 @@ export const fileToDataUrl = (file: File): Promise<string> => {
  * Calculates a human-readable "time since" string.
  */
 export const timeSince = (dateString: string): string => {
-    const date = new Date(dateString);
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    let interval = seconds / 31536000;
-    if (interval > 1) return `قبل ${Math.floor(interval)} سنة`;
-    interval = seconds / 2592000;
-    if (interval > 1) return `قبل ${Math.floor(interval)} شهر`;
-    interval = seconds / 86400;
-    if (interval > 1) return `قبل ${Math.floor(interval)} يوم`;
-    interval = seconds / 3600;
-    if (interval > 1) return `قبل ${Math.floor(interval)} ساعة`;
-    interval = seconds / 60;
-    if (interval > 1) return `قبل ${Math.floor(interval)} دقيقة`;
-    return 'الآن';
+  const date = new Date(dateString);
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  let interval = seconds / 31536000;
+  if (interval > 1) return `قبل ${Math.floor(interval)} سنة`;
+  interval = seconds / 2592000;
+  if (interval > 1) return `قبل ${Math.floor(interval)} شهر`;
+  interval = seconds / 86400;
+  if (interval > 1) return `قبل ${Math.floor(interval)} يوم`;
+  interval = seconds / 3600;
+  if (interval > 1) return `قبل ${Math.floor(interval)} ساعة`;
+  interval = seconds / 60;
+  if (interval > 1) return `قبل ${Math.floor(interval)} دقيقة`;
+  return 'الآن';
 };
 
 /**
@@ -197,7 +197,7 @@ export const downloadHtmlAsPdf = async (htmlContent: string, filename: string = 
     const images = Array.from(contentElement.getElementsByTagName('img'));
     const imageLoadPromises = images.map(img => {
       if (img.complete && img.decode) {
-        return img.decode().catch(() => {}); // Already loaded, just decode. Catch errors.
+        return img.decode().catch(() => { }); // Already loaded, just decode. Catch errors.
       }
       return new Promise<void>((resolve) => {
         img.onload = () => {
@@ -210,7 +210,7 @@ export const downloadHtmlAsPdf = async (htmlContent: string, filename: string = 
         img.onerror = () => resolve(); // Don't block on broken images
       });
     });
-    
+
     // Also wait for fonts to be ready
     const fontPromise = (document as any).fonts ? (document as any).fonts.ready : Promise.resolve();
 
@@ -263,4 +263,83 @@ export const downloadHtmlAsPdf = async (htmlContent: string, filename: string = 
   } finally {
     document.body.removeChild(tempContainer);
   }
+};
+
+/**
+ * Lexicon for Arabic months to their numeric representation (0-11 for Date constructor).
+ */
+const ARABIC_MONTHS: Record<string, number> = {
+  'يناير': 0, 'فبراير': 1, 'مارس': 2, 'أبريل': 3, 'مايو': 4, 'يونيو': 5,
+  'يوليو': 6, 'أغسطس': 7, 'سبتمبر': 8, 'أكتوبر': 9, 'نوفمبر': 10, 'ديسمبر': 11,
+  'جانفي': 0, 'فيفري': 1, 'مارس_': 2, 'أفريل': 3, 'ماي': 4, 'جوان': 5,
+  'جويلية': 6, 'أوت': 7, 'سبتمبر_': 8, 'أكتوبر_': 9, 'نوفمبر_': 10, 'ديسمبر_': 11
+};
+
+/**
+ * Parses an Arabic date string like "23 ديسمبر 2025" into a Date object.
+ */
+const parseSingleArabicDate = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+  const parts = dateStr.trim().split(/\s+/);
+  if (parts.length < 3) return null;
+
+  const day = parseInt(toEnglishDigits(parts[0]), 10);
+  const monthName = parts[1];
+  const year = parseInt(toEnglishDigits(parts[2]), 10);
+
+  const month = ARABIC_MONTHS[monthName];
+  if (month === undefined || isNaN(day) || isNaN(year)) return null;
+
+  return new Date(Date.UTC(year, month, day));
+};
+
+/**
+ * Parses an Arabic date range string like "23 ديسمبر 2025 الى 24 يناير 2026"
+ * into a pair of startDate and endDate.
+ */
+export const parseArabicDateRange = (range: string | undefined): { startDate: string; endDate?: string } => {
+  const now = new Date();
+  const fallbackDate = now.toISOString().split('T')[0];
+  const fallback = { startDate: fallbackDate };
+  if (!range) return fallback;
+
+  try {
+    const cleanedRange = range.replace(/ـ/g, '').replace(/[\u064B-\u065F]/g, ''); // Remove Tatweel and Harakat
+    const separators = [' الى ', ' إلى ', ' - ', ' – '];
+    let parts: string[] = [];
+
+    for (const sep of separators) {
+      if (cleanedRange.includes(sep)) {
+        parts = cleanedRange.split(sep);
+        break;
+      }
+    }
+
+    if (parts.length === 2) {
+      const startStr = parts[0].trim();
+      const endStr = parts[1].trim();
+
+      const startDate = parseSingleArabicDate(startStr);
+      const endDate = parseSingleArabicDate(endStr);
+
+      if (startDate && endDate) {
+        return {
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0]
+        };
+      } else if (startDate) {
+        return { startDate: startDate.toISOString().split('T')[0] };
+      }
+    } else {
+      // Might be a single date
+      const singleDate = parseSingleArabicDate(cleanedRange);
+      if (singleDate) {
+        return { startDate: singleDate.toISOString().split('T')[0] };
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing Arabic date range:', range, error);
+  }
+
+  return fallback;
 };

@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { User } from '../types';
-import { CloseIcon, CreditCardIcon, LockClosedIcon, BanknotesIcon, VisaIcon, MastercardIcon, GiftIcon, HeartIcon } from './icons';
+import { CloseIcon, CreditCardIcon, LockClosedIcon, BanknotesIcon, VisaIcon, MastercardIcon, GiftIcon, HeartIcon, ArrowRightIcon } from './icons';
 import { useUser } from '../context/UserContext';
 
 interface PaymentModalProps {
@@ -23,11 +23,12 @@ interface PaymentModalProps {
         account_number: string;
         swift: string;
     };
+    onBack?: () => void;
 }
 
 type PaymentMethod = 'CARD' | 'BANK_TRANSFER';
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaymentSubmit, onBankPaymentSubmit, itemTitle, itemPackageName, amount, currentUser, onRequestLogin, paymentType, paymentOptions, bankAccount }) => {
+const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaymentSubmit, onBankPaymentSubmit, itemTitle, itemPackageName, amount, currentUser, onRequestLogin, paymentType, paymentOptions, bankAccount, onBack }) => {
     const { drhopeData } = useUser();
 
     const paymentSettings = useMemo(() => ({
@@ -83,14 +84,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
     if (!isOpen) return null;
 
     const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let value = e.target.value.replace(/\D/g, '');
-        if (cardExpiry.length > value.length && cardExpiry.includes(' / ')) {
-            value = value.slice(0, 2);
+        const input = e.target.value;
+        // Strip all non-digits
+        let digits = input.replace(/\D/g, '');
+
+        // Limit to 4 digits (MMYY)
+        if (digits.length > 4) {
+            digits = digits.slice(0, 4);
         }
-        else if (value.length > 2) {
-            value = value.slice(0, 2) + ' / ' + value.slice(2, 4);
+
+        let formatted = digits;
+        if (digits.length > 2) {
+            formatted = digits.slice(0, 2) + ' / ' + digits.slice(2);
+        } else if (digits.length === 2 && (input.includes('/') || input.endsWith(' '))) {
+            // If user explicitly typed slash or space after 2 digits, add separator
+            formatted = digits + ' / ';
         }
-        setCardExpiry(value);
+
+        setCardExpiry(formatted);
     };
 
     const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,7 +160,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
                         {paymentType === 'payItForward' && <HeartIcon className="w-6 h-6 text-pink-500" />}
                         <span>{amount === 0 ? 'تأكيد التسجيل المجاني' : 'إتمام عملية الدفع'}</span>
                     </h2>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors"><CloseIcon className="w-6 h-6" /></button>
+                    {onBack ? (
+                        <button onClick={onBack} className="p-2 rounded-full hover:bg-white/10 transition-colors transform hover:-translate-x-1">
+                            <ArrowRightIcon className="w-6 h-6" />
+                        </button>
+                    ) : (
+                        <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                            <CloseIcon className="w-6 h-6" />
+                        </button>
+                    )}
                 </header>
 
                 <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto p-6 space-y-6 custom-scrollbar">
@@ -220,6 +239,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
                                     <div>
                                         <label className="text-xs font-bold text-slate-400 mb-1.5 block">تاريخ الانتهاء</label>
                                         <input type="text" value={cardExpiry} onChange={handleExpiryChange} placeholder="MM / YY" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg ltr-input focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" required />
+                                        <p className="text-[10px] text-slate-500 mt-1 text-left dir-ltr">Ex: 05 / 26</p>
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-slate-400 mb-1.5 block">CVV</label>

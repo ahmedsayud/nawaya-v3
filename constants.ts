@@ -10,6 +10,8 @@ export const API_ENDPOINTS = {
         DETAILS: '/api/profile/details',
         SUGGEST_WORKSHOPS: '/api/profile/suggest-workshops',
         ADD_REVIEW: '/api/profile/review',
+        CERTIFICATE: (id: string | number) => `/api/profile/subscription/${id}/certificate`,
+        INVOICE: (id: string | number) => `/api/profile/subscription/${id}/invoice`,
     },
     GENERAL: {
         COUNTRIES: '/api/countries',

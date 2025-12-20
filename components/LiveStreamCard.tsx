@@ -21,7 +21,7 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
 }) => {
 
     const isSubscribed = user?.subscriptions.some(
-        sub => sub.workshopId === workshopId &&
+        sub => Number(sub.workshopId) === Number(workshopId) &&
             sub.status !== SubscriptionStatus.REFUNDED &&
             !sub.isPayItForwardDonation
     );
@@ -139,13 +139,42 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                     {timeLeft ? "استعد لللقاء المباشر! تأكد من أنك في مكان هادئ ومستعد للإلهام." : "انضم الآن لتجربة تفاعلية مباشرة. البث بدأ بالفعل!"}
                 </p>
 
-                <button
-                    onClick={handleLinkClick}
-                    className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10"
-                >
-                    <LoginIcon className="w-5 h-5" />
-                    <span>{timeLeft ? "احجز مقعدك" : "الدخول إلى البث"}</span>
-                </button>
+                {timeLeft ? (
+                    isSubscribed ? (
+                        <div className="flex flex-col items-center gap-2 mt-4 bg-green-900/40 p-3 rounded-xl border border-green-500/30">
+                            <span className="text-green-300 font-bold text-sm sm:text-base">✅ أنت مشترك في هذه الورشة</span>
+                            <p className="text-slate-300 text-xs text-center">رابط البث سيظهر هنا تلقائياً عند بدء العد التنازلي</p>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleLinkClick}
+                            className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10"
+                        >
+                            <LoginIcon className="w-5 h-5" />
+                            <span>احجز مقعدك</span>
+                        </button>
+                    )
+                ) : (
+                    zoomLink ? (
+                        <button
+                            onClick={handleLinkClick}
+                            className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10"
+                        >
+                            <LoginIcon className="w-5 h-5" />
+                            <span>الدخول إلى البث</span>
+                        </button>
+                    ) : (
+                        <div className="flex flex-col items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/10 w-full">
+                            <div className="flex items-center gap-2 text-pink-200">
+                                <InformationCircleIcon className="w-5 h-5" />
+                                <span className="text-sm font-bold">رابط البث سيكون متاحاً قريباً</span>
+                            </div>
+                            <p className="text-[10px] sm:text-xs text-slate-300 font-medium leading-relaxed">
+                                {startDate && startTime ? `ترقبوا ميعاد الجلسة في ${startDate} الساعة ${startTime}` : "انتظرونا في ميعاد الجلسة القادمة."}
+                            </p>
+                        </div>
+                    )
+                )}
 
                 {!user && <p className="text-pink-200/60 text-center mt-4 text-[10px] sm:text-xs font-medium">يجب تسجيل الدخول أولاً للتحقق من اشتراكك.</p>}
                 {user && !isSubscribed && (

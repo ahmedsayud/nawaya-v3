@@ -23,7 +23,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
   onZoomRedirect,
   showToast
 }) => {
-  const { currentUser: user, workshops, fetchWorkshops, paginationMeta } = useUser();
+  const { currentUser: user, workshops, fetchWorkshops, paginationMeta, earliestWorkshop } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'أونلاين' | 'حضوري' | 'مسجلة'>('all');
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -74,8 +74,32 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
   const newWorkshops = visibleWorkshops.filter(w => !w.isRecorded && !isWorkshopExpired(w));
   const recordedWorkshops = visibleWorkshops.filter(w => w.isRecorded);
 
-  // Live stream card logic
-  const liveStreamWorkshop = visibleWorkshops.find(w => !w.isRecorded && !isWorkshopExpired(w)) || null;
+  // Live stream card logic - Prioritize earliestWorkshop if available for the link
+  const liveStreamWorkshop = useMemo(() => {
+    // 1. Try to find a workshop the user is subscribed to that is live and not expired
+    if (user) {
+      const myLiveWorkshops = user.subscriptions
+        .map(sub => workshops.find(w => Number(w.id) === Number(sub.workshopId)))
+        .filter((w): w is Workshop => !!w && !w.isRecorded && !isWorkshopExpired(w))
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+      if (myLiveWorkshops.length > 0) {
+        return myLiveWorkshops[0];
+      }
+    }
+
+    // 2. Fallback to public candidate
+    const candidate = visibleWorkshops.find(w => !w.isRecorded && !isWorkshopExpired(w)) || null;
+    if (candidate && earliestWorkshop && Number(earliestWorkshop.id) === Number(candidate.id)) {
+      return {
+        ...candidate,
+        zoomLink: earliestWorkshop.online_link || candidate.zoomLink,
+        startDate: earliestWorkshop.start_date || candidate.startDate,
+        startTime: earliestWorkshop.start_time || candidate.startTime
+      };
+    }
+    return candidate;
+  }, [visibleWorkshops, earliestWorkshop, user, workshops]);
 
   const filters: Array<'all' | 'أونلاين' | 'حضوري' | 'مسجلة'> = ['all', 'أونلاين', 'حضوري', 'مسجلة'];
   const filterLabels = {

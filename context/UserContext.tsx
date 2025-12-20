@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, createContext, useContext } from 'react';
 import { API_BASE_URL, API_ENDPOINTS } from '../constants';
 import { User, Workshop, DrhopeData, Notification, SubscriptionStatus, Subscription, Product, Order, OrderStatus, Partner, ConsultationRequest, Theme, ThemeColors, CreditTransaction, PendingGift, Expense, BroadcastCampaign, Review, Country, Cart, CartItem, OrderSummaryResponse, CreateOrderResponse, PaginationMeta, Package, SubscriptionCreateResponse, SubscriptionCreateInput, PaymentProcessResponse, PaymentProcessInput, CharityCreateResponse, CharityCreateInput, CharityProcessInput, EarliestWorkshopData, EarliestWorkshopResponse } from '../types';
-import { normalizePhoneNumber } from '../utils';
+import { normalizePhoneNumber, parseArabicDateRange } from '../utils';
 import { trackEvent } from '../analytics';
 
 // Initial Data (Simulated Database)
@@ -197,8 +197,14 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [currentUser, setCurrentUser] = useState<User | null>(() => {
-        const stored = localStorage.getItem('currentUser');
-        return stored ? JSON.parse(stored) : null;
+        try {
+            const stored = localStorage.getItem('currentUser');
+            return stored ? JSON.parse(stored) : null;
+        } catch (e) {
+            console.error('Failed to parse currentUser from localStorage', e);
+            localStorage.removeItem('currentUser'); // Clear corrupted data
+            return null;
+        }
     });
     const [users, setUsers] = useState<User[]>(initialUsers);
     const [workshops, setWorkshops] = useState<Workshop[]>(initialWorkshops);
@@ -221,48 +227,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [countries, setCountries] = useState<Country[]>([]);
     const [countriesDebugInfo, setCountriesDebugInfo] = useState<string>('');
 
-    useEffect(() => {
-        const fetchCountries = async () => {
-            try {
-                const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.COUNTRIES}`;
-                console.log('Fetching countries from:', url);
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP Error ${response.status}`);
-                }
-
-                // Clone response to check if it matches expected JSON
-                const text = await response.text();
-                try {
-                    const data = JSON.parse(text);
-                    console.log('Countries API response:', data);
-                    if (data.key === 'success' && Array.isArray(data.data)) {
-                        setCountries(data.data);
-                        setCountriesDebugInfo(`Success (${data.data.length})`);
-                        console.log('Countries set in state:', data.data.length);
-                    } else {
-                        setCountriesDebugInfo(`Invalid Data Key: ${data.key}`);
-                        console.error('Countries API returned unexpected format:', data);
-                    }
-                } catch (e) {
-                    setCountriesDebugInfo(`Parse Error: ${text.substring(0, 50)}...`);
-                    console.error('JSON Parse Error', e);
-                }
-            } catch (error: any) {
-                setCountriesDebugInfo(`Fetch Error: ${error.message}`);
-                console.error('Failed to fetch countries:', error);
-            }
-        };
-        fetchCountries();
-        fetchSettings();
-        fetchWorkshops(); // Fetch workshops from API
-        fetchDrHopeContent();
-    }, []);
-
-    // Re-fetch earliest workshop when auth state might have changed
-    useEffect(() => {
-        fetchEarliestWorkshop();
-    }, [currentUser]);
+    // Moved useEffects to bottom to fix hosting issues
 
     const fetchWorkshops = async (options?: { page?: number; type?: string; search?: string }) => {
         try {
@@ -280,34 +245,38 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const { live_workshops = [], recorded_workshops = [] } = data.data;
 
                 // Helper to map API workshop to our Workshop type
-                const mapWorkshop = (w: any, isRecorded: boolean): Workshop => ({
-                    id: w.id,
-                    title: w.title,
-                    instructor: w.teacher || '',
-                    teacher: w.teacher,
-                    startDate: '', // Handled by date_range or start_time if needed, but keeping original structure
-                    startTime: w.start_time || '',
-                    start_time: w.start_time,
-                    endTime: w.end_time || '',
-                    end_time: w.end_time,
-                    date_range: w.date_range,
-                    location: w.type_label === 'أونلاين و حضوري' ? 'أونلاين وحضوري' :
-                        (w.type_label === 'أونلاين' ? 'أونلاين' :
-                            (w.type_label === 'حضوري' ? 'حضوري' :
-                                (isRecorded ? 'مسجلة' : 'أونلاين'))),
-                    type_label: w.type_label,
-                    country: 'المملكة العربية السعودية', // Defaults as API only sends address for Riyadh/Saudi items currently
-                    city: w.address || '',
-                    address: w.address,
-                    isRecorded: isRecorded,
-                    zoomLink: '',
-                    isVisible: true,
-                    has_multiple_packages: w.has_multiple_packages,
-                    price: 0, // Price is usually in packages
-                    packages: [], // Packages would be fetched separately in details if not here
-                    reviews: [],
-                    certificatesIssued: true,
-                });
+                const mapWorkshop = (w: any, isRecorded: boolean): Workshop => {
+                    const { startDate, endDate } = parseArabicDateRange(w.date_range);
+                    return {
+                        id: w.id,
+                        title: w.title,
+                        instructor: w.teacher || '',
+                        teacher: w.teacher,
+                        startDate: startDate || w.start_time || '', // Use parsed date or fallback
+                        startTime: w.start_time || '',
+                        start_time: w.start_time,
+                        endTime: w.end_time || '',
+                        end_time: w.end_time,
+                        date_range: w.date_range,
+                        endDate: endDate,
+                        location: w.type_label === 'أونلاين و حضوري' ? 'أونلاين وحضوري' :
+                            (w.type_label === 'أونلاين' ? 'أونلاين' :
+                                (w.type_label === 'حضوري' ? 'حضوري' :
+                                    (isRecorded ? 'مسجلة' : 'أونلاين'))),
+                        type_label: w.type_label,
+                        country: 'المملكة العربية السعودية', // Defaults as API only sends address for Riyadh/Saudi items currently
+                        city: w.address || '',
+                        address: w.address,
+                        isRecorded: isRecorded,
+                        zoomLink: '',
+                        isVisible: true,
+                        has_multiple_packages: w.has_multiple_packages,
+                        price: 0, // Price is usually in packages
+                        packages: [], // Packages would be fetched separately in details if not here
+                        reviews: [],
+                        certificatesIssued: true,
+                    };
+                };
 
                 const mappedLive = live_workshops.map((w: any) => mapWorkshop(w, false));
                 const mappedRecorded = recorded_workshops.map((w: any) => mapWorkshop(w, true));
@@ -546,16 +515,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    useEffect(() => {
-        if (currentUser) {
-            const updatedCurrentUser = users.find(u => u.id === currentUser.id);
-            if (updatedCurrentUser && JSON.stringify(updatedCurrentUser) !== JSON.stringify(currentUser)) {
-                setCurrentUser(updatedCurrentUser);
-            } else if (!updatedCurrentUser) {
-                setCurrentUser(null);
-            }
-        }
-    }, [users, currentUser]);
+    // Removed synchronizing effect that cleared currentUser on refresh
 
     // Fetch profile data when user logs in
     useEffect(() => {
@@ -1389,50 +1349,55 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('[fetchProfile] Active subscriptions count:', profileData.active_subscriptions?.length);
 
                 // Extract workshops from API subscriptions and add to workshops state
-                const apiWorkshops: Workshop[] = profileData.active_subscriptions?.map((sub: any) => {
-                    // Parse date_range if available, otherwise use current date
-                    let startDate = new Date().toISOString();
-                    let endDate: string | undefined = undefined;
+                const apiWorkshops: Workshop[] = (profileData.active_subscriptions || [])
+                    .map((sub: any) => {
+                        if (!sub || !sub.workshop) {
+                            // If workshop object is missing, try to find it in existing workshops
+                            const workshopId = Number(sub?.workshop_id || sub?.workshop?.id);
+                            const existing = workshops.find(w => Number(w.id) === workshopId);
+                            if (existing) {
+                                return { ...existing, zoomLink: sub.online_link || existing.zoomLink };
+                            }
+                            return null;
+                        }
 
-                    if (sub.workshop.date_range) {
-                        // date_range format: "23 ديسمبر 2025 الى 24 يناير 2026"
-                        // We'll just use current date for now since it's in Arabic
-                        console.log('[fetchProfile] Date range (Arabic):', sub.workshop.date_range);
-                    }
+                        // Parse date_range if available
+                        const { startDate, endDate } = parseArabicDateRange(sub.workshop.date_range);
 
-                    return {
-                        id: sub.workshop.id,
-                        title: sub.workshop.title,
-                        instructor: sub.workshop.teacher || 'غير محدد',
-                        startDate: startDate,
-                        endDate: endDate,
-                        startTime: sub.workshop.start_time || '09:00',
-                        endTime: sub.workshop.end_time || '17:00',
-                        location: sub.workshop.type_label === 'أونلاين' ? 'أونلاين' :
-                            sub.workshop.type_label === 'حضوري' ? 'حضوري' :
-                                sub.workshop.type_label === 'مسجلة' ? 'مسجلة' : 'أونلاين وحضوري',
-                        isRecorded: sub.workshop.type_label === 'مسجلة',
-                        zoomLink: sub.online_link || undefined,
-                        city: sub.workshop.address || undefined,
-                        notes: sub.files?.map((f: any) => ({ type: 'file' as const, name: f.title, value: f.file })) || [],
-                        recordings: sub.recordings?.filter((r: any) => r.is_available).map((r: any) => ({
-                            name: r.title,
-                            url: r.link,
-                            accessStartDate: undefined, // Will parse availability later if needed
-                            accessEndDate: undefined
-                        })) || [],
-                        mediaFiles: sub.attachments?.map((a: any) => ({
-                            type: a.type as 'audio' | 'video',
-                            name: a.title,
-                            value: a.file
-                        })) || [],
-                        certificatesIssued: sub.can_install_certificate || false,
-                        isVisible: true,
-                        isDeleted: false,
-                        topics: [],
-                        reviews: []
-                    };
-                }) || [];
+                        return {
+                            id: Number(sub.workshop.id),
+                            title: sub.workshop.title,
+                            instructor: sub.workshop.teacher || 'غير محدد',
+                            startDate: startDate,
+                            endDate: endDate,
+                            startTime: sub.workshop.start_time || '09:00',
+                            endTime: sub.workshop.end_time || '17:00',
+                            location: sub.workshop.type_label === 'أونلاين' ? 'أونلاين' :
+                                sub.workshop.type_label === 'حضوري' ? 'حضوري' :
+                                    sub.workshop.type_label === 'مسجلة' ? 'مسجلة' : 'أونلاين وحضوري',
+                            isRecorded: sub.workshop.type_label === 'مسجلة',
+                            zoomLink: sub.online_link || undefined,
+                            city: sub.workshop.address || undefined,
+                            notes: sub.files?.map((f: any) => ({ type: 'file' as const, name: f.title, value: f.file })) || [],
+                            recordings: sub.recordings?.filter((r: any) => r.is_available).map((r: any) => ({
+                                name: r.title,
+                                url: r.link,
+                                accessStartDate: undefined,
+                                accessEndDate: undefined
+                            })) || [],
+                            mediaFiles: sub.attachments?.map((a: any) => ({
+                                type: a.type as 'audio' | 'video',
+                                name: a.title,
+                                value: a.file
+                            })) || [],
+                            certificatesIssued: sub.can_install_certificate || false,
+                            isVisible: true,
+                            isDeleted: false,
+                            topics: [],
+                            reviews: []
+                        };
+                    })
+                    .filter(Boolean) as Workshop[];
 
                 console.log('[fetchProfile] Extracted workshops:', apiWorkshops.length);
 
@@ -1448,15 +1413,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
 
                 // Map API subscriptions to our Subscription type
-                const subscriptions: Subscription[] = profileData.active_subscriptions?.map((sub: any) => ({
-                    id: `sub-${sub.id}`,
-                    workshopId: sub.workshop.id,
-                    activationDate: new Date().toISOString(),
-                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-                    status: SubscriptionStatus.ACTIVE,
-                    isApproved: true,
-                    paymentMethod: 'LINK' as const,
-                })) || [];
+                const subscriptions: Subscription[] = (profileData.active_subscriptions || [])
+                    .filter((sub: any) => sub && sub.workshop) // Filter out incomplete subscriptions
+                    .map((sub: any) => ({
+                        id: `sub-${sub.id}`,
+                        workshopId: sub.workshop.id,
+                        activationDate: new Date().toISOString(),
+                        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                        status: SubscriptionStatus.ACTIVE,
+                        isApproved: true,
+                        paymentMethod: 'LINK' as const,
+                    }));
 
                 console.log('[fetchProfile] Mapped subscriptions:', subscriptions);
 
@@ -1616,6 +1583,86 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return null;
         }
     };
+
+    // Initial Data Fetching
+    useEffect(() => {
+        const fetchCountries = async () => {
+            try {
+                const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.COUNTRIES}`;
+                console.log('Fetching countries from:', url);
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP Error ${response.status}`);
+                }
+
+                // Clone response to check if it matches expected JSON
+                const text = await response.text();
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Countries API response:', data);
+                    if (data.key === 'success' && Array.isArray(data.data)) {
+                        setCountries(data.data);
+                        setCountriesDebugInfo(`Success (${data.data.length})`);
+                        console.log('Countries set in state:', data.data.length);
+                    } else {
+                        setCountriesDebugInfo(`Invalid Data Key: ${data.key}`);
+                        console.error('Countries API returned unexpected format:', data);
+                    }
+                } catch (e) {
+                    setCountriesDebugInfo(`Parse Error: ${text.substring(0, 50)}...`);
+                    console.error('JSON Parse Error', e);
+                }
+            } catch (error: any) {
+                setCountriesDebugInfo(`Fetch Error: ${error.message}`);
+                console.error('Failed to fetch countries:', error);
+            }
+        };
+        fetchCountries();
+        fetchSettings();
+        fetchWorkshops(); // Fetch workshops from API
+        fetchDrHopeContent();
+    }, []);
+
+    // Re-fetch earliest workshop when auth state might have changed
+    useEffect(() => {
+        fetchEarliestWorkshop();
+    }, [currentUser]);
+
+    // Session Security: Monitor active session
+    useEffect(() => {
+        const checkSession = async () => {
+            const token = localStorage.getItem('auth_token');
+            if (!token || !currentUser) return;
+
+            try {
+                // Verify token validity by calling a lightweight protected endpoint (e.g., profile or notifications)
+                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.DETAILS}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                });
+
+                if (response.status === 401) {
+                    console.warn('Session expired orinvalidated (possibly logged in from another device). Logging out.');
+                    logout();
+                    // Optionally force reload to clear all states cleanly
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('Session check failed:', error);
+            }
+        };
+
+        // Check on mount, then every 60 seconds, and on window focus
+        checkSession();
+        const interval = setInterval(checkSession, 60000);
+
+        const handleFocus = () => checkSession();
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [currentUser, logout]); // Dependencies ensure it runs when user logs in
 
     const value: UserContextType = useMemo(() => ({
         currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, globalCertificateTemplate: null, pendingGifts, expenses,
