@@ -530,7 +530,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                             </button>
                                         ) : (
                                             <div className="w-full md:w-auto bg-white/10 text-white px-6 py-3 rounded-xl border border-white/20 text-center backdrop-blur-sm">
-                                                <p className="text-xs text-fuchsia-200 mb-1 font-bold">رابط البث سيتاح قريباً</p>
+                                                <p className="text-xs text-fuchsia-200 mb-1 font-bold">رابط البث المباشر سيظهر هنا قريباً</p>
                                                 <div className="flex items-center justify-center gap-2 text-sm font-bold dir-rtl">
                                                     <ClockIcon className="w-4 h-4" />
                                                     <span>{formatArabicDate(nextLiveWorkshop.startDate)} - {formatArabicTime(nextLiveWorkshop.startTime)}</span>
