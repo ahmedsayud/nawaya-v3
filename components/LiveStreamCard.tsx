@@ -143,7 +143,7 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                     isSubscribed ? (
                         <div className="flex flex-col items-center gap-2 mt-4 bg-green-900/40 p-3 rounded-xl border border-green-500/30">
                             <span className="text-green-300 font-bold text-sm sm:text-base">✅ أنت مشترك في هذه الورشة</span>
-                            <p className="text-slate-300 text-xs text-center">رابط البث سيظهر هنا تلقائياً عند بدء العد التنازلي</p>
+                            <p className="text-slate-300 text-xs text-center">رابط البث المباشر سيظهر هنا قريباً</p>
                         </div>
                     ) : (
                         <button

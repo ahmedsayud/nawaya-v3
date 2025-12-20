@@ -358,8 +358,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             const data: EarliestWorkshopResponse = await response.json();
+            console.log('🔍 RAW Earliest Workshop API Response:', data);
+
             if (data.key === 'success' && data.data) {
                 const w = data.data as any;
+                console.log('🔍 Raw workshop object before normalization:', w);
+
                 // Normalize data to avoid static fallbacks in UI
                 const normalized: EarliestWorkshopData = {
                     id: w.id,
@@ -372,6 +376,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     requires_authentication: w.requires_authentication ?? w.requiresAuthentication ?? false,
                     instructor: w.instructor || w.teacher || w.teacher_name || "",
                 };
+
+                console.log('🔍 Normalized earliest workshop:', normalized);
                 setEarliestWorkshop(normalized);
             }
         } catch (error) {

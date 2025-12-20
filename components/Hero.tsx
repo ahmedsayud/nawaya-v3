@@ -65,6 +65,45 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     };
 
+    // Parse Arabic time format like "مساءً 11:40" or "صباحاً 9:30"
+    const parseArabicTime = (timeStr: string): string => {
+        if (!timeStr) return "00:00";
+
+        // If already in HH:MM format, return as is
+        if (/^\d{1,2}:\d{2}$/.test(timeStr.trim())) {
+            return timeStr.trim();
+        }
+
+        // Handle Arabic format: "مساءً 11:40" or "صباحاً 9:30"
+        const isPM = timeStr.includes('مساءً');
+        const isAM = timeStr.includes('صباحاً');
+
+        // Extract time part (remove Arabic text)
+        const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
+        if (!timeMatch) return "00:00";
+
+        let hours = parseInt(timeMatch[1]);
+        const minutes = timeMatch[2];
+
+        console.log(`⏰ Parsing: "${timeStr}" | isPM: ${isPM} | isAM: ${isAM} | hours: ${hours}`);
+
+        // Convert to 24-hour format
+        if (isPM && hours !== 12) {
+            hours += 12;
+            console.log(`⏰ PM conversion: ${hours - 12} + 12 = ${hours}`);
+        } else if (isAM && hours === 12) {
+            hours = 0;
+            console.log(`⏰ AM midnight conversion: 12 -> 0`);
+        } else if (!isPM && !isAM && hours >= 1 && hours <= 11) {
+            hours += 12;
+            console.log(`⏰ No AM/PM, assuming PM: ${hours - 12} + 12 = ${hours}`);
+        }
+
+        const result = `${hours.toString().padStart(2, '0')}:${minutes}`;
+        console.log(`⏰ Final result: "${result}"`);
+        return result;
+    };
+
     const calculateTimeLeft = () => {
         const datePart = displayWorkshop.start_date || (displayWorkshop as any).startDate || "";
         const timePart = displayWorkshop.start_time || (displayWorkshop as any).startTime || "";
@@ -72,9 +111,13 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
         if (!datePart || !timePart) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
         try {
+            // Parse Arabic time format first
+            const normalizedTime = parseArabicTime(timePart);
+            console.log(`Time parsing: "${timePart}" -> "${normalizedTime}"`);
+
             // 1. Get raw components
             const dParts = datePart.split(/[-/]/).map(p => parseInt(p));
-            const tParts = timePart.split(':').map(p => parseInt(p));
+            const tParts = normalizedTime.split(':').map(p => parseInt(p));
 
             if (dParts.some(isNaN) || tParts.some(isNaN)) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
@@ -84,21 +127,28 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
 
             // 2. Create target variable
             const target = new Date(year, month - 1, day, tParts[0], tParts[1], tParts[2] || 0);
+            console.log(`📅 Target date: ${target.toLocaleString('ar-EG')}`);
 
             // 3. Current time variable
             const now = new Date();
+            console.log(`📅 Current date: ${now.toLocaleString('ar-EG')}`);
 
             // 4. Difference in milliseconds -> seconds
             const diffMs = target.getTime() - now.getTime();
+            console.log(`📅 Difference: ${diffMs}ms = ${Math.floor(diffMs / 1000)}s = ${Math.floor(diffMs / 60000)}min`);
 
             if (diffMs > 0) {
                 // Convert to total duration components
-                return {
+                const result = {
                     days: Math.floor(diffMs / (1000 * 60 * 60 * 24)),
                     hours: Math.floor((diffMs / (1000 * 60 * 60)) % 24),
                     minutes: Math.floor((diffMs / (1000 * 60)) % 60),
                     seconds: Math.floor((diffMs / 1000) % 60)
                 };
+                console.log(`📅 Countdown result:`, result);
+                return result;
+            } else {
+                console.warn(`⚠️ Workshop time has passed! Difference: ${diffMs}ms (${Math.floor(diffMs / 60000)} minutes ago)`);
             }
             return { days: 0, hours: 0, minutes: 0, seconds: 0 };
         } catch (e) {
@@ -106,16 +156,21 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
         }
     };
 
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+    const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft());
 
     useEffect(() => {
-        // Explicitly update every 1000ms (1 second)
+        // Calculate initial value
+        const initial = calculateTimeLeft();
+        setTimeLeft(initial);
+
+        // Update every second to show real-time countdown
         const timer = setInterval(() => {
             const nextTime = calculateTimeLeft();
             setTimeLeft(nextTime);
         }, 1000);
+
         return () => clearInterval(timer);
-    }, [displayWorkshop]);
+    }, [displayWorkshop.start_date, displayWorkshop.start_time, (displayWorkshop as any).startDate, (displayWorkshop as any).startTime]);
 
     const handleAction = () => {
         if (displayWorkshop.is_subscribed && (displayWorkshop as any).online_link) {
