@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Workshop, User, SubscriptionStatus } from '../types';
 import { formatArabicDate, formatArabicTime } from '../utils';
 import { CalendarIcon, GlobeAltIcon, TagIcon, AcademicCapIcon, CheckCircleIcon, VideoIcon, ClockIcon } from './icons';
-import { useUser } from '../context/UserContext';
 
 interface WorkshopCardProps {
   workshop: Workshop;
@@ -13,21 +12,6 @@ interface WorkshopCardProps {
 }
 
 const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, onOpenDetails }) => {
-  const { fetchWorkshopDetails } = useUser();
-  const [actualPrice, setActualPrice] = useState<number | null>(null);
-
-  // Fetch workshop details to get actual price if has_multiple_packages is false
-  useEffect(() => {
-    if (!workshop.has_multiple_packages && !workshop.packages?.[0]?.price && workshop.price === 0) {
-      fetchWorkshopDetails(workshop.id).then((details) => {
-        if (details?.packages?.[0]?.price !== undefined) {
-          setActualPrice(details.packages[0].price);
-        }
-      }).catch(err => {
-        console.error('Failed to fetch workshop price:', err);
-      });
-    }
-  }, [workshop.id, workshop.has_multiple_packages, workshop.price, fetchWorkshopDetails]);
 
   const handleOpenDetails = () => {
     onOpenDetails(workshop.id);
@@ -62,17 +46,7 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
     'أونلاين وحضوري': 'bg-purple-50 text-purple-700 border-purple-200',
   };
 
-  const priceToDisplay = workshop.has_multiple_packages
-    ? null
-    : (actualPrice ?? workshop.packages?.[0]?.price ?? workshop.price);
-
-  console.log(`Workshop: ${workshop.title}`, {
-    has_multiple_packages: workshop.has_multiple_packages,
-    workshop_price: workshop.price,
-    package_price: workshop.packages?.[0]?.price,
-    actualPrice,
-    priceToDisplay
-  });
+  const priceToDisplay = workshop.price ?? (workshop.packages?.[0]?.price);
 
   // Common Icon Color - Pink-600 matches the site's accent #db2777
   const iconColorClass = "text-pink-600";
@@ -148,9 +122,9 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
           </div>
         ) : (
           <div className="flex justify-between items-center">
-            {workshop.has_multiple_packages ? (
+            {workshop.has_multiple_packages || workshop.location === 'حضوري' || workshop.location === 'أونلاين وحضوري' ? (
               <div className="text-xs sm:text-sm text-pink-800 font-bold bg-pink-50 px-3 py-1.5 rounded-lg border border-pink-200">باقات متعددة</div>
-            ) : priceToDisplay !== undefined && priceToDisplay !== null ? (
+            ) : priceToDisplay !== undefined ? (
               <div className="flex items-center gap-x-1">
                 <TagIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0`} />
                 <span className="text-xl sm:text-2xl font-black text-slate-800">{priceToDisplay}</span>
