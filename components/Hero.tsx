@@ -10,11 +10,11 @@ interface HeroProps {
 }
 
 const CountdownUnit: React.FC<{ value: number; label: string }> = ({ value, label }) => (
-    <div className="flex flex-col items-center">
-        <span className="text-3xl sm:text-4xl font-black text-slate-900 leading-none tracking-tighter">
+    <div className="flex flex-col items-center transition-all hover:scale-110 group px-2">
+        <span className="text-2xl sm:text-4xl font-black bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent leading-none tracking-tighter">
             {value.toString().padStart(2, '0')}
         </span>
-        <span className="text-[10px] sm:text-[11px] text-slate-500 font-bold mt-2 uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] sm:text-[11px] text-fuchsia-600 font-extrabold mt-2 uppercase tracking-widest group-hover:text-pink-500 transition-colors">{label}</span>
     </div>
 );
 
@@ -22,31 +22,38 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
     const { workshops, earliestWorkshop } = useUser();
 
     const displayWorkshop = useMemo(() => {
-        // High priority: Normalized earliest workshop from API
-        if (earliestWorkshop) {
-            return earliestWorkshop;
-        }
-
-        // Fallback: First upcoming workshop from general list (already mapped in fetchWorkshops)
-        const upcoming = workshops
+        // High priority: The exact same logic used in WorkshopsPage for LiveStreamCard
+        const candidate = workshops
             .filter(w => w.isVisible && !w.isRecorded && !isWorkshopExpired(w))
-            .sort((a, b) => new Date(`${a.startDate}T${a.startTime}:00Z`).getTime() - new Date(`${b.startDate}T${b.startTime}:00Z`).getTime())[0];
+            .sort((a, b) => new Date(`${a.startDate}T${a.startTime}:00Z`).getTime() - new Date(`${b.startDate}T${b.startTime}:00Z`).getTime())[0] || null;
 
-        if (upcoming) {
+        if (candidate && earliestWorkshop && Number(earliestWorkshop.id) === Number(candidate.id)) {
             return {
-                ...upcoming,
-                start_date: upcoming.startDate,
-                start_time: upcoming.startTime,
+                ...candidate,
+                zoomLink: earliestWorkshop.online_link || candidate.zoomLink,
+                startDate: earliestWorkshop.start_date || candidate.startDate,
+                startTime: earliestWorkshop.start_time || candidate.startTime,
+                is_subscribed: earliestWorkshop.is_subscribed,
+                requires_authentication: earliestWorkshop.requires_authentication,
+                instructor: earliestWorkshop.instructor || candidate.instructor
             };
         }
 
-        // Ultimate fallback: Placeholder (Only if API fails completely)
+        if (candidate) {
+            return {
+                ...candidate,
+                start_date: candidate.startDate,
+                start_time: candidate.startTime,
+            };
+        }
+
+        // Ultimate fallback: Placeholder
         return {
             id: 0,
-            title: "رحلة اكتشاف الذات: بوصلة الحياة",
+            title: "نوايا .. حيث يبدء الاثر",
             instructor: "د. هوب",
-            start_date: "2025-12-25",
-            start_time: "20:00",
+            start_date: "",
+            start_time: "",
             is_subscribed: false,
             requires_authentication: false
         };
@@ -213,13 +220,22 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
                                         </p>
                                     )}
 
-                                    <div className="flex justify-center items-center gap-6 sm:gap-10 mb-10" dir="ltr">
+                                    <div className="flex justify-center items-center gap-3 sm:gap-6 mb-10" dir="ltr">
                                         <CountdownUnit value={timeLeft.days || 0} label="أيام" />
-                                        <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                        <div className="flex flex-col gap-2 mt-[-20px] opacity-20">
+                                            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+                                            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+                                        </div>
                                         <CountdownUnit value={timeLeft.hours || 0} label="ساعات" />
-                                        <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                        <div className="flex flex-col gap-2 mt-[-20px] opacity-20">
+                                            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+                                            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+                                        </div>
                                         <CountdownUnit value={timeLeft.minutes || 0} label="دقائق" />
-                                        <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                        <div className="flex flex-col gap-2 mt-[-20px] opacity-20">
+                                            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+                                            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+                                        </div>
                                         <CountdownUnit value={timeLeft.seconds || 0} label="ثواني" />
                                     </div>
 

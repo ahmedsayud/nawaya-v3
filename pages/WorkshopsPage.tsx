@@ -166,22 +166,6 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
           </div>
         ) : (
           <>
-            {newWorkshops.length > 0 && (
-              <section id="live_events" className="mb-12 sm:mb-16 text-right">
-                <div className="relative mb-8">
-                  <h2 className="text-xl font-bold text-slate-900 pb-2 tracking-wider inline-flex items-center gap-2">
-                    <span className="w-1.5 h-8 bg-fuchsia-600 rounded-full"></span>
-                    الورش المباشرة
-                  </h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                  {newWorkshops.map(workshop => (
-                    <WorkshopCard key={workshop.id} workshop={workshop} user={user} onEnroll={() => { }} onOpenDetails={onOpenWorkshopDetails} />
-                  ))}
-                </div>
-              </section>
-            )}
-
             {recordedWorkshops.length > 0 && (
               <section id="record_events" className="text-right">
                 <div className="relative mb-8">
