@@ -71,13 +71,22 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
   const visibleWorkshops = workshops.filter(w => w.isVisible);
 
   // Still separate into sections manually from the current page's results
-  const newWorkshops = visibleWorkshops.filter(w => !w.isRecorded && !isWorkshopExpired(w));
+  // Sort by date to ensure chronological order for the countdown candidate
+  const newWorkshops = visibleWorkshops
+    .filter(w => !w.isRecorded && !isWorkshopExpired(w))
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   const recordedWorkshops = visibleWorkshops.filter(w => w.isRecorded);
 
   // Live stream card logic - Use the public upcoming workshop for everyone
   const liveStreamWorkshop = useMemo(() => {
-    // Fallback to public candidate (The upcoming live workshop)
-    const candidate = visibleWorkshops.find(w => !w.isRecorded && !isWorkshopExpired(w)) || null;
+    const now = new Date();
+    // Use the first workshop from the sorted newWorkshops list that hasn't started yet or is very recent
+    const candidate = newWorkshops.find(w => {
+      const [hours, minutes] = (w.startTime || '00:00').split(':').map(p => parseInt(p) || 0);
+      const target = new Date(`${w.startDate}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00+04:00`);
+      // Keep it as a candidate if it's in the future OR started less than 4 hours ago (still live)
+      return target.getTime() + (4 * 60 * 60 * 1000) > now.getTime();
+    }) || null;
 
     if (candidate && earliestWorkshop && Number(earliestWorkshop.id) === Number(candidate.id)) {
       return {
@@ -88,7 +97,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
       };
     }
     return candidate;
-  }, [visibleWorkshops, earliestWorkshop, workshops]);
+  }, [newWorkshops, earliestWorkshop]);
 
   const filters: Array<'all' | 'أونلاين' | 'حضوري' | 'مسجلة'> = ['all', 'أونلاين', 'حضوري', 'مسجلة'];
   const filterLabels = {
@@ -105,6 +114,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
         onExploreClick={() => onScrollToSection('workshops_section')}
         onOpenWorkshopDetails={onOpenWorkshopDetails}
         onLoginRequest={onLiveStreamLoginRequest}
+        workshop={liveStreamWorkshop}
       />
 
       <div className="container mx-auto px-4 py-8">
@@ -117,6 +127,8 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
               zoomLink={liveStreamWorkshop.zoomLink}
               startDate={liveStreamWorkshop.startDate}
               startTime={liveStreamWorkshop.startTime}
+              location={liveStreamWorkshop.location}
+              address={liveStreamWorkshop.address || liveStreamWorkshop.city}
               user={user}
               onLoginRequest={onLiveStreamLoginRequest}
               onZoomRedirect={onZoomRedirect}
@@ -166,6 +178,22 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
           </div>
         ) : (
           <>
+            {newWorkshops.length > 0 && (
+              <section id="live_events" className="text-right mb-12">
+                <div className="relative mb-8">
+                  <h2 className="text-xl font-bold text-slate-900 pb-2 tracking-wider inline-flex items-center gap-2">
+                    <span className="w-1.5 h-8 bg-pink-600 rounded-full"></span>
+                    الورش المباشرة
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                  {newWorkshops.map(workshop => (
+                    <WorkshopCard key={workshop.id} workshop={workshop} user={user} onEnroll={() => { }} onOpenDetails={onOpenWorkshopDetails} />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {recordedWorkshops.length > 0 && (
               <section id="record_events" className="text-right">
                 <div className="relative mb-8">

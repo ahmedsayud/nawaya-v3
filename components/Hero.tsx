@@ -7,6 +7,7 @@ interface HeroProps {
     onExploreClick: () => void;
     onOpenWorkshopDetails: (workshopId: number) => void;
     onLoginRequest: () => void;
+    workshop?: any;
 }
 
 const CountdownUnit: React.FC<{ value: number; label: string }> = ({ value, label }) => (
@@ -18,14 +19,44 @@ const CountdownUnit: React.FC<{ value: number; label: string }> = ({ value, labe
     </div>
 );
 
-const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLoginRequest }) => {
+const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLoginRequest, workshop: passedWorkshop }) => {
     const { workshops, earliestWorkshop } = useUser();
 
     const displayWorkshop = useMemo(() => {
-        // High priority: The exact same logic used in WorkshopsPage for LiveStreamCard
-        const candidate = workshops
-            .filter(w => w.isVisible && !w.isRecorded && !isWorkshopExpired(w))
-            .sort((a, b) => new Date(`${a.startDate}T${a.startTime}:00Z`).getTime() - new Date(`${b.startDate}T${b.startTime}:00Z`).getTime())[0] || null;
+        // Higher priority: Use the workshop passed from parent (synced with LiveStreamCard)
+        if (passedWorkshop) {
+            return {
+                ...passedWorkshop,
+                // Ensure internal date/time keys match what the countdown expects
+                start_date: passedWorkshop.startDate || passedWorkshop.start_date,
+                start_time: passedWorkshop.startTime || passedWorkshop.start_time
+            };
+        }
+
+        const getWorkshopDate = (w: any) => {
+            const dateStr = w.startDate || w.start_date;
+            const timeStr = w.startTime || w.start_time;
+            if (!dateStr) return new Date(8640000000000000); // Far future
+
+            try {
+                const normTime = parseArabicTime(timeStr);
+                const [h, m] = normTime.split(':').map(p => parseInt(p));
+                const dParts = dateStr.split(/[-/]/).map(p => parseInt(p));
+                let y, mo, d;
+                if (dParts[0] > 1000) [y, mo, d] = dParts;
+                else[d, mo, y] = dParts;
+                return new Date(y, mo - 1, d, h, m, 0);
+            } catch (e) { return new Date(8640000000000000); }
+        };
+
+        const now = new Date();
+        const upcoming = workshops
+            .filter(w => w.isVisible && !w.isRecorded)
+            .map(w => ({ ...w, targetDate: getWorkshopDate(w) }))
+            .filter(w => w.targetDate.getTime() + (4 * 60 * 60 * 1000) > now.getTime()) // Still live if started < 4h ago
+            .sort((a, b) => a.targetDate.getTime() - b.targetDate.getTime());
+
+        const candidate = upcoming[0] || null;
 
         if (candidate && earliestWorkshop && Number(earliestWorkshop.id) === Number(candidate.id)) {
             return {
@@ -39,25 +70,10 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
             };
         }
 
-        if (candidate) {
-            return {
-                ...candidate,
-                start_date: candidate.startDate,
-                start_time: candidate.startTime,
-            };
-        }
+        if (candidate) return candidate;
 
-        // Ultimate fallback: Placeholder
-        return {
-            id: 0,
-            title: "نوايا .. حيث يبدء الاثر",
-            instructor: "د. هوب",
-            start_date: "",
-            start_time: "",
-            is_subscribed: false,
-            requires_authentication: false
-        };
-    }, [workshops, earliestWorkshop]);
+        return null;
+    }, [workshops, earliestWorkshop, passedWorkshop]);
 
     const calculateDiff = (targetDate: Date) => {
         const difference = +targetDate - +new Date();
@@ -72,57 +88,46 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     };
 
-    // Parse Arabic time format like "مساءً 11:40" or "صباحاً 9:30"
+    // Parse time format like "مساءً 11:40", "صباحاً 9:30", "am 9:00", "5:00 PM"
     const parseArabicTime = (timeStr: string): string => {
         if (!timeStr) return "00:00";
 
+        const cleanTime = timeStr.toLowerCase().trim();
         // If already in HH:MM format, return as is
-        if (/^\d{1,2}:\d{2}$/.test(timeStr.trim())) {
-            return timeStr.trim();
+        if (/^\d{1,2}:\d{2}$/.test(cleanTime)) {
+            return cleanTime;
         }
 
-        // Handle Arabic format: "مساءً 11:40" or "صباحاً 9:30"
-        const isPM = timeStr.includes('مساءً');
-        const isAM = timeStr.includes('صباحاً');
+        const isPM = cleanTime.includes('مساءً') || cleanTime.includes('pm');
+        const isAM = cleanTime.includes('صباحاً') || cleanTime.includes('am');
 
-        // Extract time part (remove Arabic text)
-        const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
+        const timeMatch = cleanTime.match(/(\d{1,2}):(\d{2})/);
         if (!timeMatch) return "00:00";
 
         let hours = parseInt(timeMatch[1]);
         const minutes = timeMatch[2];
 
-        console.log(`⏰ Parsing: "${timeStr}" | isPM: ${isPM} | isAM: ${isAM} | hours: ${hours}`);
-
-        // Convert to 24-hour format
         if (isPM && hours !== 12) {
             hours += 12;
-            console.log(`⏰ PM conversion: ${hours - 12} + 12 = ${hours}`);
         } else if (isAM && hours === 12) {
             hours = 0;
-            console.log(`⏰ AM midnight conversion: 12 -> 0`);
         } else if (!isPM && !isAM && hours >= 1 && hours <= 11) {
+            // Default heuristic: if 1-11 and no indicator, assume PM for workshops
             hours += 12;
-            console.log(`⏰ No AM/PM, assuming PM: ${hours - 12} + 12 = ${hours}`);
         }
 
-        const result = `${hours.toString().padStart(2, '0')}:${minutes}`;
-        console.log(`⏰ Final result: "${result}"`);
-        return result;
+        return `${hours.toString().padStart(2, '0')}:${minutes}`;
     };
 
     const calculateTimeLeft = () => {
+        if (!displayWorkshop) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
         const datePart = displayWorkshop.start_date || (displayWorkshop as any).startDate || "";
         const timePart = displayWorkshop.start_time || (displayWorkshop as any).startTime || "";
 
         if (!datePart || !timePart) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
         try {
-            // Parse Arabic time format first
             const normalizedTime = parseArabicTime(timePart);
-            console.log(`Time parsing: "${timePart}" -> "${normalizedTime}"`);
-
-            // 1. Get raw components
             const dParts = datePart.split(/[-/]/).map(p => parseInt(p));
             const tParts = normalizedTime.split(':').map(p => parseInt(p));
 
@@ -132,30 +137,17 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
             if (dParts[0] > 1000) { [year, month, day] = dParts; }
             else { [day, month, year] = dParts; }
 
-            // 2. Create target variable
             const target = new Date(year, month - 1, day, tParts[0], tParts[1], tParts[2] || 0);
-            console.log(`📅 Target date: ${target.toLocaleString('ar-EG')}`);
-
-            // 3. Current time variable
             const now = new Date();
-            console.log(`📅 Current date: ${now.toLocaleString('ar-EG')}`);
-
-            // 4. Difference in milliseconds -> seconds
             const diffMs = target.getTime() - now.getTime();
-            console.log(`📅 Difference: ${diffMs}ms = ${Math.floor(diffMs / 1000)}s = ${Math.floor(diffMs / 60000)}min`);
 
             if (diffMs > 0) {
-                // Convert to total duration components
-                const result = {
+                return {
                     days: Math.floor(diffMs / (1000 * 60 * 60 * 24)),
                     hours: Math.floor((diffMs / (1000 * 60 * 60)) % 24),
                     minutes: Math.floor((diffMs / (1000 * 60)) % 60),
                     seconds: Math.floor((diffMs / 1000) % 60)
                 };
-                console.log(`📅 Countdown result:`, result);
-                return result;
-            } else {
-                console.warn(`⚠️ Workshop time has passed! Difference: ${diffMs}ms (${Math.floor(diffMs / 60000)} minutes ago)`);
             }
             return { days: 0, hours: 0, minutes: 0, seconds: 0 };
         } catch (e) {
@@ -166,18 +158,10 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
     const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft());
 
     useEffect(() => {
-        // Calculate initial value
-        const initial = calculateTimeLeft();
-        setTimeLeft(initial);
-
-        // Update every second to show real-time countdown
-        const timer = setInterval(() => {
-            const nextTime = calculateTimeLeft();
-            setTimeLeft(nextTime);
-        }, 1000);
-
+        setTimeLeft(calculateTimeLeft());
+        const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 1000);
         return () => clearInterval(timer);
-    }, [displayWorkshop.start_date, displayWorkshop.start_time, (displayWorkshop as any).startDate, (displayWorkshop as any).startTime]);
+    }, [displayWorkshop]);
 
     const handleAction = () => {
         if (displayWorkshop.is_subscribed && (displayWorkshop as any).online_link) {
@@ -193,15 +177,13 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
 
     const btnClasses = "bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-2.5 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg text-xs sm:text-sm flex items-center justify-center gap-2 group mx-auto font-bold";
 
-    const isFinished = timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0;
-
     return (
         <section className="hero-section relative text-center pt-24 pb-8 overflow-hidden flex flex-col justify-center min-h-[45vh]">
             <div className="container mx-auto px-4 relative z-10">
                 <div className="animate-fade-in-up max-w-xl mx-auto px-4">
                     <div className="bg-white rounded-2xl p-8 sm:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] relative overflow-hidden text-slate-900 border border-slate-100">
                         <div className="relative z-10">
-                            {!isFinished ? (
+                            {displayWorkshop && (
                                 <>
                                     <div className="inline-block mb-4">
                                         <span className="bg-fuchsia-100/50 text-fuchsia-600 text-[10px] font-extrabold px-3 py-1 rounded-full border border-fuchsia-100 uppercase tracking-widest flex items-center gap-1.5">
@@ -255,7 +237,8 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
                                         )}
                                     </button>
                                 </>
-                            ) : (
+                            )}
+                            {!displayWorkshop && (
                                 <>
                                     <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 leading-tight tracking-tight">
                                         نوايا .. حيث يبدء الاثر
