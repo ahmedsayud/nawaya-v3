@@ -24,6 +24,7 @@ import WorkshopsPage from '../pages/WorkshopsPage';
 import ProfilePage from '../pages/ProfilePage';
 import WatchPage from '../pages/WatchPage';
 import { InvoiceModal } from '../components/InvoiceModal';
+import { CertificateModal } from '../components/CertificateModal';
 import ConsultationRequestModal from '../components/ConsultationRequestModal';
 import ReviewsModal from '../components/ReviewsModal';
 import PartnersModal from '../components/PartnersModal';
@@ -74,6 +75,7 @@ const PublicApp: React.FC = () => {
     const [zoomRedirectLink, setZoomRedirectLink] = useState<string | null>(null);
     const [attachmentToView, setAttachmentToView] = useState<NoteResource | null>(null);
     const [invoiceToView, setInvoiceToView] = useState<{ user: User; subscription: Subscription } | null>(null);
+    const [certificateToView, setCertificateToView] = useState<{ subscription: Subscription; workshop: Workshop } | null>(null);
 
     const [watchData, setWatchData] = useState<{ workshop: Workshop, recording: Recording } | null>(null);
     const [paymentModalIntent, setPaymentModalIntent] = useState<PaymentIntent | null>(null);
@@ -273,7 +275,7 @@ const PublicApp: React.FC = () => {
 
             // Fix: handle 0 case strictly. If API says 0 OR package says 0 (free), use 0.
             // Also handle potential string '0' response
-            const isApiFree = apiPrice === 0 || apiPrice === '0';
+            const isApiFree = String(apiPrice) === '0';
             const isPackageFree = packagePrice === 0;
 
             const finalPrice = (isApiFree || isPackageFree) ? 0 : packagePrice;
@@ -495,7 +497,7 @@ const PublicApp: React.FC = () => {
             {isGiftModalOpen && giftModalIntent && <UnifiedGiftModal workshop={giftModalIntent.workshop} selectedPackage={giftModalIntent.pkg} onClose={() => setIsGiftModalOpen(false)} onProceed={handleGiftProceed} />}
             {isBoutiqueModalOpen && <BoutiqueModal isOpen={isBoutiqueModalOpen} onClose={() => setIsBoutiqueModalOpen(false)} onCheckout={handleCheckout} onRequestLogin={() => handleLoginClick(false)} initialView={boutiqueInitialView} />}
             {isProductCheckoutOpen && <ProductCheckoutModal isOpen={isProductCheckoutOpen} onClose={() => setIsProductCheckoutOpen(false)} onConfirm={() => handleProductOrderConfirm(false)} onCardPaymentConfirm={() => handleProductOrderConfirm(true)} onRequestLogin={() => { setIsProductCheckoutOpen(false); handleLoginClick(false); }} currentUser={currentUser} />}
-            {isProfileOpen && <ProfilePage isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={currentUser} onZoomRedirect={(link) => setZoomRedirectLink(link)} onPlayRecording={(w, r) => setWatchData({ workshop: w, recording: r })} onViewAttachment={(note) => setAttachmentToView(note)} onViewRecommendedWorkshop={(id) => { setIsProfileOpen(false); setOpenedWorkshopId(id); }} showToast={showToast} onPayForConsultation={() => { }} onViewInvoice={(details) => setInvoiceToView(details)} />}
+            {isProfileOpen && <ProfilePage isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={currentUser} onZoomRedirect={(link) => setZoomRedirectLink(link)} onPlayRecording={(w, r) => setWatchData({ workshop: w, recording: r })} onViewAttachment={(note) => setAttachmentToView(note)} onViewRecommendedWorkshop={(id) => { setIsProfileOpen(false); setOpenedWorkshopId(id); }} showToast={showToast} onPayForConsultation={() => { }} onViewInvoice={(details) => setInvoiceToView(details)} onViewCertificate={(details) => setCertificateToView(details)} />}
 
             {isVideoModalOpen && <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} />}
             {isPhotoAlbumModalOpen && <PhotoAlbumModal isOpen={isPhotoAlbumModalOpen} onClose={() => setIsPhotoAlbumModalOpen(false)} />}
@@ -506,6 +508,7 @@ const PublicApp: React.FC = () => {
             {attachmentToView && <AttachmentViewerModal note={attachmentToView} onClose={() => setAttachmentToView(null)} />}
             {zoomRedirectLink && <ZoomRedirectModal isOpen={!!zoomRedirectLink} zoomLink={zoomRedirectLink} onClose={() => setZoomRedirectLink(null)} />}
             {invoiceToView && <InvoiceModal isOpen={!!invoiceToView} onClose={() => setInvoiceToView(null)} user={invoiceToView.user} subscription={invoiceToView.subscription} workshop={workshops.find(w => Number(w.id) === Number(invoiceToView.subscription.workshopId))!} />}
+            {certificateToView && currentUser && <CertificateModal isOpen={!!certificateToView} onClose={() => setCertificateToView(null)} user={currentUser} subscription={certificateToView.subscription} workshop={certificateToView.workshop} />}
             {isCvModalOpen && <CvModal isOpen={isCvModalOpen} onClose={() => setIsCvModalOpen(false)} />}
             {isNavigationHubOpen && <NavigationHubModal
                 isOpen={isNavigationHubOpen}

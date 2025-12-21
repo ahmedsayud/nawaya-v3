@@ -8,6 +8,7 @@ import { formatArabicDate, formatArabicTime, isWorkshopExpired, toEnglishDigits,
 import { CertificateModal } from '../components/CertificateModal';
 import { GoogleGenAI, Type } from '@google/genai';
 import { ConfirmationModal } from '../components/ConfirmationModal';
+import { PledgeModal } from '../components/PledgeModal';
 import { trackEvent } from '../analytics';
 import RecordingStatsModal from '../components/RecordingStatsModal';
 
@@ -23,6 +24,7 @@ interface ProfilePageProps {
     showToast: (message: string, type?: 'success' | 'warning' | 'error') => void;
     onPayForConsultation: (consultation: ConsultationRequest) => void;
     onViewInvoice: (details: { user: User; subscription: Subscription }) => void;
+    onViewCertificate: (details: { subscription: Subscription; workshop: Workshop }) => void;
 }
 
 type RecordingStatus = 'AVAILABLE' | 'NOT_YET_AVAILABLE' | 'EXPIRED';
@@ -197,17 +199,17 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
 };
 
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoomRedirect, onPlayRecording, onViewAttachment, onViewRecommendedWorkshop, showToast, onPayForConsultation, onViewInvoice }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoomRedirect, onPlayRecording, onViewAttachment, onViewRecommendedWorkshop, showToast, onPayForConsultation, onViewInvoice, onViewCertificate }) => {
     // REMOVED updateSubscription from destructuring as it's no longer available in UserContextType
     const { workshops, currentUser: loggedInUser, addReview, consultationRequests, globalCertificateTemplate } = useUser();
 
     const [activeView, setActiveView] = useState<ProfileView>('my_workshops');
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [isLoadingRecs, setIsLoadingRecs] = useState(false);
-    const [expandedWorkshopId, setExpandedWorkshopId] = useState<number | null>(null);
+    const [expandedId, setExpandedId] = useState<string | number | null>(null);
     const [isCreditHistoryVisible, setIsCreditHistoryVisible] = useState(false);
     const [comingSoonModalWorkshop, setComingSoonModalWorkshop] = useState<Workshop | null>(null);
-    const [certificateToView, setCertificateToView] = useState<{ subscription: Subscription; workshop: Workshop } | null>(null);
+    const [pendingRecording, setPendingRecording] = useState<{ workshop: Workshop; recording: Recording; index: number } | null>(null);
 
     // Profile API state
     const [profileData, setProfileData] = useState<any>(null);
@@ -363,20 +365,23 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
             .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
     }, [consultationRequests, user]);
 
-    const nextLiveWorkshop = useMemo(() => {
-        const liveSub = subscriptions.find(sub => {
+    const nextLiveSub = useMemo(() => {
+        return subscriptions.find(sub => {
             const w = apiWorkshops.find(wk => wk.id === sub.workshopId);
             return w && !w.isRecorded && !isWorkshopExpired(w);
         });
-        return liveSub ? apiWorkshops.find(w => w.id === liveSub.workshopId) : null;
     }, [subscriptions, apiWorkshops]);
+
+    const nextLiveWorkshop = useMemo(() => {
+        return nextLiveSub ? apiWorkshops.find(w => w.id === nextLiveSub.workshopId) : null;
+    }, [nextLiveSub, apiWorkshops]);
 
     // Auto-expand the first upcoming live workshop
     useEffect(() => {
-        if (isOpen && nextLiveWorkshop) {
-            setExpandedWorkshopId(nextLiveWorkshop.id);
+        if (isOpen && nextLiveSub) {
+            setExpandedId(nextLiveSub.id);
         }
-    }, [isOpen, nextLiveWorkshop]);
+    }, [isOpen, nextLiveSub]);
 
     useEffect(() => {
         // Reset view when modal is opened for a new user
@@ -446,7 +451,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
     };
 
     const handleDownloadCertificate = (workshop: Workshop, sub: Subscription) => {
-        setCertificateToView({ subscription: sub, workshop });
+        onViewCertificate({ subscription: sub, workshop });
     };
 
     const handleLiveStreamClick = (workshop: Workshop, e?: React.MouseEvent) => {
@@ -570,7 +575,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                             const hasReview = workshop.reviews?.some(r => r.fullName === user.fullName);
                                             // Allow review if user hasn't reviewed yet, regardless of expiry for now
                                             const canAddReview = !hasReview;
-                                            const isExpanded = expandedWorkshopId === workshop.id;
+                                            const isExpanded = expandedId === sub.id;
 
                                             let dateValue;
                                             if (workshop.isRecorded) {
@@ -598,7 +603,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                             return (
                                                 <div key={sub.id} className={`bg-black/20 rounded-xl overflow-hidden border-2 transition-all duration-300 ${isExpanded ? 'border-fuchsia-500/50 shadow-lg shadow-fuchsia-500/10' : 'border-slate-700/50 hover:border-fuchsia-500/30'}`}>
                                                     {/* Header Row */}
-                                                    <div className="w-full p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:bg-fuchsia-500/10 transition-colors cursor-pointer" onClick={() => setExpandedWorkshopId(isExpanded ? null : workshop.id)}>
+                                                    <div className="w-full p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:bg-fuchsia-500/10 transition-colors cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : sub.id)}>
                                                         <div className="flex flex-col gap-1">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-white text-lg">{workshop.title}</span>
@@ -700,7 +705,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
 
                                                                         return (
                                                                             <div key={index} className="space-y-2">
-                                                                                <button onClick={() => onPlayRecording(workshop, rec, index)} disabled={disabled} className="w-full flex items-center gap-x-4 p-4 text-right rounded-lg bg-slate-800/70 hover:bg-slate-800 border border-transparent hover:border-purple-500/50 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed group">
+                                                                                <button
+                                                                                    onClick={() => setPendingRecording({ workshop, recording: rec, index })}
+                                                                                    disabled={disabled}
+                                                                                    className="w-full flex items-center gap-x-4 p-4 text-right rounded-lg bg-slate-800/70 hover:bg-slate-800 border border-transparent hover:border-purple-500/50 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed group"
+                                                                                >
                                                                                     <div className="w-12 h-12 flex items-center justify-center rounded-full bg-purple-500/10 text-purple-400 flex-shrink-0 group-hover:bg-purple-500/20 transition-colors"><VideoIcon className="w-6 h-6" /></div>
                                                                                     <div className="flex-grow"><span className="font-bold text-white text-base group-hover:text-purple-300 transition-colors">مشاهدة: {rec.name}</span></div>
                                                                                 </button>
@@ -856,15 +865,20 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                     </div>
                 </div>
             )}
-            {certificateToView && user && (
-                <CertificateModal
-                    isOpen={!!certificateToView}
-                    onClose={() => setCertificateToView(null)}
-                    user={user}
-                    subscription={certificateToView.subscription}
-                    workshop={certificateToView.workshop}
+
+            {pendingRecording && (
+                <PledgeModal
+                    isOpen={!!pendingRecording}
+                    onClose={() => setPendingRecording(null)}
+                    onAccept={() => {
+                        onPlayRecording(pendingRecording.workshop, pendingRecording.recording, pendingRecording.index);
+                        setPendingRecording(null);
+                        onClose(); // Close the profile page so the video player is visible
+                    }}
+                    workshopTitle={pendingRecording.workshop.title}
                 />
             )}
+
             <style>{`.z-70 { z-index: 70; }`}</style>
         </div>
     );

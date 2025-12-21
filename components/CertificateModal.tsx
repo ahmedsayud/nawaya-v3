@@ -103,7 +103,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[100] p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-5xl border border-yellow-500/50 h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-4xl border border-yellow-500/50 h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <header className="p-3 bg-slate-800 flex justify-between items-center flex-shrink-0 rounded-t-lg">
                     <h2 className="text-lg font-bold text-white">شهادة إتمام الورشة</h2>
                     <div className="flex items-center gap-x-3">
