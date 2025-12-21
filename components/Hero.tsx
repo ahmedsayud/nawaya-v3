@@ -186,62 +186,78 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
 
     const btnClasses = "bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-2.5 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg text-xs sm:text-sm flex items-center justify-center gap-2 group mx-auto font-bold";
 
+    const isFinished = timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0;
+
     return (
         <section className="hero-section relative text-center pt-24 pb-8 overflow-hidden flex flex-col justify-center min-h-[45vh]">
             <div className="container mx-auto px-4 relative z-10">
                 <div className="animate-fade-in-up max-w-xl mx-auto px-4">
                     <div className="bg-white rounded-2xl p-8 sm:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] relative overflow-hidden text-slate-900 border border-slate-100">
                         <div className="relative z-10">
-                            <div className="inline-block mb-4">
-                                <span className="bg-fuchsia-100/50 text-fuchsia-600 text-[10px] font-extrabold px-3 py-1 rounded-full border border-fuchsia-100 uppercase tracking-widest flex items-center gap-1.5">
-                                    ✨ الورشة القادمة
-                                </span>
-                            </div>
+                            {!isFinished ? (
+                                <>
+                                    <div className="inline-block mb-4">
+                                        <span className="bg-fuchsia-100/50 text-fuchsia-600 text-[10px] font-extrabold px-3 py-1 rounded-full border border-fuchsia-100 uppercase tracking-widest flex items-center gap-1.5">
+                                            ✨ الورشة القادمة
+                                        </span>
+                                    </div>
 
-                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 leading-tight tracking-tight">
-                                {displayWorkshop.title}
-                            </h1>
+                                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 leading-tight tracking-tight">
+                                        {displayWorkshop.title}
+                                    </h1>
 
-                            {displayWorkshop.instructor && (
-                                <p className="text-xs sm:text-sm text-slate-500 mb-10 font-bold">
-                                    <span className="text-fuchsia-600 ml-1">تقديم:</span>
-                                    {displayWorkshop.instructor}
-                                </p>
+                                    {displayWorkshop.instructor && (
+                                        <p className="text-xs sm:text-sm text-slate-500 mb-10 font-bold">
+                                            <span className="text-fuchsia-600 ml-1">تقديم:</span>
+                                            {displayWorkshop.instructor}
+                                        </p>
+                                    )}
+
+                                    <div className="flex justify-center items-center gap-6 sm:gap-10 mb-10" dir="ltr">
+                                        <CountdownUnit value={timeLeft.days || 0} label="أيام" />
+                                        <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                        <CountdownUnit value={timeLeft.hours || 0} label="ساعات" />
+                                        <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                        <CountdownUnit value={timeLeft.minutes || 0} label="دقائق" />
+                                        <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
+                                        <CountdownUnit value={timeLeft.seconds || 0} label="ثواني" />
+                                    </div>
+
+                                    <button
+                                        onClick={handleAction}
+                                        className={btnClasses}
+                                    >
+                                        <span>{displayWorkshop.is_subscribed ? 'انضم للورشة الآن' : 'احجز مقعدك الآن'}</span>
+                                        {displayWorkshop.is_subscribed ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 leading-tight tracking-tight">
+                                        نوايا .. حيث يبدء الاثر
+                                    </h1>
+                                    <p className="text-sm sm:text-base text-slate-600 mb-8 max-w-lg mx-auto leading-relaxed">
+                                        نحن هنا لنصنع الأثر الذي طالما حلمت به. انضم إلينا الآن في رحلة التطوير والاستكشاف عبر ورشنا التدريبية المميزة والملهمة.
+                                    </p>
+                                    <button
+                                        onClick={onExploreClick}
+                                        className={btnClasses}
+                                    >
+                                        <span>تصفح الآن</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </>
                             )}
-
-                            <div className="flex justify-center items-center gap-6 sm:gap-10 mb-10" dir="ltr">
-                                <CountdownUnit value={timeLeft.days || 0} label="أيام" />
-                                <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
-                                <CountdownUnit value={timeLeft.hours || 0} label="ساعات" />
-                                <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
-                                <CountdownUnit value={timeLeft.minutes || 0} label="دقائق" />
-                                <span className="text-2xl font-light text-slate-200 mt-[-20px]">:</span>
-                                <CountdownUnit value={timeLeft.seconds || 0} label="ثواني" />
-                            </div>
-
-                            <button
-                                onClick={handleAction}
-                                className={btnClasses}
-                            >
-                                <span>{displayWorkshop.is_subscribed ? 'انضم للورشة الآن' : 'احجز مقعدك الآن'}</span>
-                                {displayWorkshop.is_subscribed ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                                    </svg>
-                                ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                                    </svg>
-                                )}
-                            </button>
-
-                            {/* Commented out as per user's manual edit */}
-                            {/* <div className="mt-8">
-                                <button className="text-[10px] sm:text-xs text-slate-400 hover:text-fuchsia-600 transition-colors flex items-center justify-center gap-1.5 mx-auto font-bold group">
-                                    <span className="bg-slate-100 text-slate-500 w-5 h-5 rounded-full flex items-center justify-center text-[10px] group-hover:bg-fuchsia-100 group-hover:text-fuchsia-600 transition-colors">؟</span>
-                                    <span>كيف أدخل؟</span>
-                                </button>
-                            </div> */}
                         </div>
                     </div>
                 </div>

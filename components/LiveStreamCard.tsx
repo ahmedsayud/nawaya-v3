@@ -31,12 +31,36 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
     useEffect(() => {
         if (!startDate || !startTime) return;
 
+        const parseTime = (timeStr: string) => {
+            if (!timeStr) return [0, 0];
+            const cleanTime = timeStr.toLowerCase().trim();
+            const isPM = cleanTime.includes('pm') || cleanTime.includes('مساءً');
+            const isAM = cleanTime.includes('am') || cleanTime.includes('صباحاً');
+
+            const match = cleanTime.match(/(\d{1,2}):(\d{2})/);
+            if (!match) return [0, 0];
+
+            let hours = parseInt(match[1]);
+            const minutes = parseInt(match[2]);
+
+            if (isPM && hours !== 12) hours += 12;
+            else if (isAM && hours === 12) hours = 0;
+            else if (!isPM && !isAM && hours >= 1 && hours <= 11) {
+                // Heuristic: if no AM/PM, and hours 1-11, usually it's PM for events
+                // But let's be safe and only convert if it matches common patterns
+            }
+
+            return [hours, minutes];
+        };
+
         const calculate = () => {
             try {
-                const dParts = startDate.split(/[-/]/).map(p => parseInt(p));
-                const tParts = startTime.split(':').map(p => parseInt(p));
+                if (!startDate || !startTime) return;
 
-                if (dParts.some(isNaN) || tParts.some(isNaN)) {
+                const dParts = startDate.split(/[-/]/).map(p => parseInt(p));
+                const [hours, minutes] = parseTime(startTime);
+
+                if (dParts.some(isNaN)) {
                     setTimeLeft(null);
                     return;
                 }
@@ -51,8 +75,9 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                     return;
                 }
 
-                const target = new Date(year, month - 1, day, tParts[0], tParts[1], tParts[2] || 0);
-                const diff = +target - +new Date();
+                const target = new Date(year, month - 1, day, hours, minutes, 0);
+                const now = new Date();
+                const diff = target.getTime() - now.getTime();
 
                 if (diff > 0) {
                     setTimeLeft({
@@ -111,72 +136,56 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                     </div>
                 </div>
 
-                {timeLeft ? (
-                    <div className="flex items-center gap-2 mb-4 bg-white/5 px-4 py-2 rounded-xl border border-white/10 shadow-inner" dir="ltr">
-                        <div className="flex flex-col"><span className="text-xl font-black text-white leading-none">{timeLeft.days}</span><span className="text-[8px] text-pink-300 uppercase font-bold">Days</span></div>
-                        <span className="text-white opacity-30">:</span>
-                        <div className="flex flex-col"><span className="text-xl font-black text-white leading-none">{timeLeft.hours.toString().padStart(2, '0')}</span><span className="text-[8px] text-pink-300 uppercase font-bold">Hrs</span></div>
-                        <span className="text-white opacity-30">:</span>
-                        <div className="flex flex-col"><span className="text-xl font-black text-white leading-none">{timeLeft.mins.toString().padStart(2, '0')}</span><span className="text-[8px] text-pink-300 uppercase font-bold">Min</span></div>
-                        <span className="text-white opacity-30">:</span>
-                        <div className="flex flex-col"><span className="text-xl font-black text-white leading-none">{timeLeft.secs.toString().padStart(2, '0')}</span><span className="text-[8px] text-pink-300 uppercase font-bold">Sec</span></div>
-                    </div>
-                ) : (
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-3">
-                        <span className="text-sm sm:text-base font-bold text-pink-100 tracking-wide">البث المباشر عبر ZOOM</span>
-                        <span className="flex items-center gap-1.5 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-lg shadow-red-900/50 border border-red-400/50 tracking-wider">
-                            <span className="w-1 h-1 rounded-full bg-white"></span>
-                            LIVE
-                        </span>
-                    </div>
-                )}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-3">
+                    <span className="text-sm sm:text-base font-bold text-pink-100 tracking-wide">البث المباشر عبر ZOOM</span>
+                    <span className="flex items-center gap-1.5 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-lg shadow-red-900/50 border border-red-400/50 tracking-wider">
+                        <span className="w-1 h-1 rounded-full bg-white"></span>
+                        LIVE
+                    </span>
+                </div>
 
-                <h4 className="text-base sm:text-xl font-black text-white mb-2 leading-tight drop-shadow-lg">
+                <h4 className="text-xl sm:text-2xl font-black text-white mb-2 leading-tight drop-shadow-lg">
                     {workshopTitle}
                 </h4>
 
-                <p className="text-slate-300 mb-6 max-w-sm text-xs sm:text-sm font-medium leading-relaxed">
-                    {timeLeft ? "استعد لللقاء المباشر! تأكد من أنك في مكان هادئ ومستعد للإلهام." : "انضم الآن لتجربة تفاعلية مباشرة. البث بدأ بالفعل!"}
+                <p className="text-slate-200 mb-6 max-w-sm text-xs sm:text-sm font-bold leading-relaxed">
+                    انضم الآن لتجربة تفاعلية مباشرة. البث بدأ بالفعل!
                 </p>
 
-                {timeLeft ? (
-                    isSubscribed ? (
-                        <div className="flex flex-col items-center gap-2 mt-4 bg-green-900/40 p-3 rounded-xl border border-green-500/30">
-                            <span className="text-green-300 font-bold text-sm sm:text-base">✅ أنت مشترك في هذه الورشة</span>
-                            <p className="text-slate-300 text-xs text-center">رابط البث المباشر سيظهر هنا قريباً</p>
+                {(!timeLeft || !zoomLink) && (
+                    <div className="flex flex-col items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/10 w-full mb-6">
+                        <div className="flex items-center gap-2 text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
+                            <InformationCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                            <span className="text-base sm:text-lg font-black tracking-tight">رابط البث سيظهر قريباً</span>
                         </div>
-                    ) : (
-                        <button
-                            onClick={handleLinkClick}
-                            className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10"
-                        >
-                            <LoginIcon className="w-5 h-5" />
-                            <span>احجز مقعدك</span>
-                        </button>
-                    )
-                ) : (
-                    zoomLink ? (
-                        <button
-                            onClick={handleLinkClick}
-                            className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10"
-                        >
-                            <LoginIcon className="w-5 h-5" />
-                            <span>الدخول إلى البث</span>
-                        </button>
-                    ) : (
-                        <div className="flex flex-col items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/10 w-full">
-                            <div className="flex items-center gap-2 text-pink-200">
-                                <InformationCircleIcon className="w-5 h-5" />
-                                <span className="text-sm font-bold">رابط البث سيكون متاحاً قريباً</span>
-                            </div>
-                            <p className="text-[10px] sm:text-xs text-slate-300 font-medium leading-relaxed">
-                                {startDate && startTime ? `ترقبوا ميعاد الجلسة في ${startDate} الساعة ${startTime}` : "انتظرونا في ميعاد الجلسة القادمة."}
-                            </p>
+                        <p className="text-[12px] sm:text-sm text-slate-100 font-bold leading-relaxed mb-1">
+                            استعدوا لرحلة ملهمة
+                        </p>
+                        <div dir="ltr" className="text-[10px] sm:text-xs text-slate-400 font-medium leading-relaxed">
+                            {(() => {
+                                if (!startTime || !startDate) return "";
+                                const cleanTime = startTime.toLowerCase().trim();
+                                const timeMatch = cleanTime.match(/(\d{1,2}:\d{2})/);
+                                const amPmMatch = cleanTime.match(/(pm|am|مساءً|صباحاً)/);
+                                const time = timeMatch ? timeMatch[1] : cleanTime;
+                                const amPm = amPmMatch ? (amPmMatch[1] === 'مساءً' ? 'pm' : amPmMatch[1] === 'صباحاً' ? 'am' : amPmMatch[1]) : '';
+                                return `${amPm} ${time} | ${startDate}`;
+                            })()}
                         </div>
-                    )
+                    </div>
                 )}
 
-                {!user && <p className="text-pink-200/60 text-center mt-4 text-[10px] sm:text-xs font-medium">يجب تسجيل الدخول أولاً للتحقق من اشتراكك.</p>}
+                {!timeLeft && zoomLink && (
+                    <button
+                        onClick={handleLinkClick}
+                        className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10"
+                    >
+                        <LoginIcon className="w-5 h-5" />
+                        <span>الدخول إلى البث</span>
+                    </button>
+                )}
+
+                {!user && <p className="text-pink-200/60 text-center mt-4 text-[10px] sm:text-xs font-bold">يجب تسجيل الدخول أولاً للتحقق من اشتراكك.</p>}
                 {user && !isSubscribed && (
                     <div className="mt-4 flex items-center gap-2 text-amber-300 bg-amber-900/30 px-3 py-1.5 rounded-lg border border-amber-500/30">
                         <span className="text-base">⚠️</span>

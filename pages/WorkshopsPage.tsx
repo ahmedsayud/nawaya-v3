@@ -74,22 +74,11 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
   const newWorkshops = visibleWorkshops.filter(w => !w.isRecorded && !isWorkshopExpired(w));
   const recordedWorkshops = visibleWorkshops.filter(w => w.isRecorded);
 
-  // Live stream card logic - Prioritize earliestWorkshop if available for the link
+  // Live stream card logic - Use the public upcoming workshop for everyone
   const liveStreamWorkshop = useMemo(() => {
-    // 1. Try to find a workshop the user is subscribed to that is live and not expired
-    if (user) {
-      const myLiveWorkshops = user.subscriptions
-        .map(sub => workshops.find(w => Number(w.id) === Number(sub.workshopId)))
-        .filter((w): w is Workshop => !!w && !w.isRecorded && !isWorkshopExpired(w))
-        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-
-      if (myLiveWorkshops.length > 0) {
-        return myLiveWorkshops[0];
-      }
-    }
-
-    // 2. Fallback to public candidate
+    // Fallback to public candidate (The upcoming live workshop)
     const candidate = visibleWorkshops.find(w => !w.isRecorded && !isWorkshopExpired(w)) || null;
+
     if (candidate && earliestWorkshop && Number(earliestWorkshop.id) === Number(candidate.id)) {
       return {
         ...candidate,
@@ -99,7 +88,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
       };
     }
     return candidate;
-  }, [visibleWorkshops, earliestWorkshop, user, workshops]);
+  }, [visibleWorkshops, earliestWorkshop, workshops]);
 
   const filters: Array<'all' | 'أونلاين' | 'حضوري' | 'مسجلة'> = ['all', 'أونلاين', 'حضوري', 'مسجلة'];
   const filterLabels = {

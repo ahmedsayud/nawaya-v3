@@ -46,7 +46,9 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
     'أونلاين وحضوري': 'bg-purple-50 text-purple-700 border-purple-200',
   };
 
-  const priceToDisplay = workshop.price ?? (workshop.packages?.[0]?.price);
+  const priceToDisplay = workshop.has_multiple_packages
+    ? null
+    : (workshop.packages?.[0]?.price ?? workshop.price);
 
   // Common Icon Color - Pink-600 matches the site's accent #db2777
   const iconColorClass = "text-pink-600";
@@ -122,9 +124,9 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
           </div>
         ) : (
           <div className="flex justify-between items-center">
-            {workshop.has_multiple_packages || workshop.location === 'حضوري' || workshop.location === 'أونلاين وحضوري' ? (
+            {workshop.has_multiple_packages ? (
               <div className="text-xs sm:text-sm text-pink-800 font-bold bg-pink-50 px-3 py-1.5 rounded-lg border border-pink-200">باقات متعددة</div>
-            ) : priceToDisplay !== undefined ? (
+            ) : priceToDisplay !== undefined && priceToDisplay !== null ? (
               <div className="flex items-center gap-x-1">
                 <TagIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0`} />
                 <span className="text-xl sm:text-2xl font-black text-slate-800">{priceToDisplay}</span>
