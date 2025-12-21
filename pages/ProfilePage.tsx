@@ -520,7 +520,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                             </p>
                                         </div>
 
-                                        {nextLiveWorkshop.zoomLink ? (
+                                        {nextLiveWorkshop && (
                                             <button
                                                 onClick={(e) => handleLiveStreamClick(nextLiveWorkshop, e)}
                                                 className="w-full md:w-auto bg-white text-fuchsia-800 font-black py-3 px-8 rounded-xl hover:bg-fuchsia-50 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center gap-2"
@@ -528,15 +528,32 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                 <VideoIcon className="w-6 h-6" />
                                                 دخول البث الآن
                                             </button>
-                                        ) : (
-                                            <div className="w-full md:w-auto bg-white/10 text-white px-6 py-3 rounded-xl border border-white/20 text-center backdrop-blur-sm">
-                                                <p className="text-xs text-fuchsia-200 mb-1 font-bold">رابط البث المباشر سيظهر هنا قريباً</p>
-                                                <div className="flex items-center justify-center gap-2 text-sm font-bold dir-rtl">
-                                                    <ClockIcon className="w-4 h-4" />
-                                                    <span>{formatArabicDate(nextLiveWorkshop.startDate)} - {formatArabicTime(nextLiveWorkshop.startTime)}</span>
-                                                </div>
-                                            </div>
                                         )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Coming Soon Modal - Shared Alert */}
+                            {comingSoonModalWorkshop && (
+                                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-[100] p-4" onClick={() => setComingSoonModalWorkshop(null)}>
+                                    <div className="bg-gradient-to-br from-[#270e4f] to-[#5b21b6] border border-white/20 rounded-2xl w-full max-w-sm p-6 text-center shadow-2xl transform transition-all" onClick={e => e.stopPropagation()}>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <span className="text-white font-bold opacity-60">تنبيه</span>
+                                            <button onClick={() => setComingSoonModalWorkshop(null)} className="text-white/60 hover:text-white"><CloseIcon className="w-5 h-5" /></button>
+                                        </div>
+                                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+                                            <InformationCircleIcon className="w-10 h-10 text-white" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white mb-2">رابط البث المباشر سيظهر هنا قريباً</h3>
+                                        <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
+                                            سيتم تفعيل رابط البث قبل موعد الورشة المحدد في {formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}
+                                        </p>
+                                        <button
+                                            onClick={() => setComingSoonModalWorkshop(null)}
+                                            className="w-full bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 rounded-lg transition-colors"
+                                        >
+                                            حسناً
+                                        </button>
                                     </div>
                                 </div>
                             )}
