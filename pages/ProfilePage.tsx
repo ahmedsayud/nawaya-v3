@@ -551,8 +551,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                         </div>
                                         <h3 className="text-xl font-bold text-white mb-2">رابط البث المباشر سيظهر هنا قريباً</h3>
                                         <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
-                                            سيتم تفعيل رابط البث قبل موعد الورشة المحدد في {formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}
+                                            سيتم تفعيل رابط البث قبل موعد الورشة
                                         </p>
+                                        <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
+                                            {formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}
+                                        </p>
+
                                         <button
                                             onClick={() => setComingSoonModalWorkshop(null)}
                                             className="w-full bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 rounded-lg transition-colors"
@@ -855,8 +859,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                         <div className="p-8 space-y-4">
                             <InformationCircleIcon className="w-16 h-16 mx-auto text-theme-secondary-accent" />
                             <h3 className="text-xl font-bold text-white">رابط البث المباشر سيظهر هنا قريباً</h3>
-                            <p className="text-sm text-slate-300">
-                                سيتم تفعيل رابط البث قبل موعد الورشة المحدد في {formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}.
+                            <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
+                                سيتم تفعيل رابط البث قبل موعد الورشة
+                            </p>
+                            <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
+                                {formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}
                             </p>
                             <button onClick={() => setComingSoonModalWorkshop(null)} className="mt-4 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 px-6 rounded-lg text-sm">
                                 حسناً

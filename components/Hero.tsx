@@ -241,16 +241,16 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
                             {!displayWorkshop && (
                                 <>
                                     <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 leading-tight tracking-tight">
-                                        نوايا .. حيث يبدء الاثر
+                                        نلهمك لتكون أفضل نسخة من نفسك
                                     </h1>
                                     <p className="text-sm sm:text-base text-slate-600 mb-8 max-w-lg mx-auto leading-relaxed">
-                                        نحن هنا لنصنع الأثر الذي طالما حلمت به. انضم إلينا الآن في رحلة التطوير والاستكشاف عبر ورشنا التدريبية المميزة والملهمة.
+اكتشفي شغفك وطوري مهاراتك في بيئة تعليمية ملهمة وإيجابية.
                                     </p>
                                     <button
                                         onClick={onExploreClick}
                                         className={btnClasses}
                                     >
-                                        <span>تصفح الآن</span>
+                                        <span>استكشفي الورش الآن </span>
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
                                             <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
                                         </svg>
