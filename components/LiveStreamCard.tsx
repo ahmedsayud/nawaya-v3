@@ -172,9 +172,9 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                                 return (
                                     <div className="flex items-center gap-2 justify-center">
                                         <span className="text-slate-100 font-bold">{`${amPm} ${time} | ${startDate}`}</span>
-                                        <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded border border-white/20 shadow-inner">
-                                            <span className="text-[10px]" role="img" aria-label="UAE Flag">🇦🇪</span>
-                                            <span className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">UAE</span>
+                                        <div className="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-md border border-white/20 shadow-inner">
+                                            <span className="text-xs" role="img" aria-label="UAE Flag">🇦🇪</span>
+                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">UAE</span>
                                         </div>
                                     </div>
                                 );

@@ -555,9 +555,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                         </p>
                                         <div className="flex items-center justify-center gap-2 mt-4">
                                             <span className="text-white font-bold">{formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}</span>
-                                            <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
-                                                <span className="text-[10px]">🇦🇪</span>
-                                                <span className="text-[8px] font-black text-slate-300">UAE</span>
+                                            <div className="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-md border border-white/20">
+                                                <span className="text-xs">🇦🇪</span>
+                                                <span className="text-[10px] font-black text-slate-300">UAE</span>
                                             </div>
                                         </div>
 
@@ -804,9 +804,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                             <p className="font-bold">موعدك المحدد:</p>
                                                             <div className="flex items-center justify-start gap-2 text-slate-300">
                                                                 <span className="font-semibold">{formatArabicDate(req.consultationDate)} - الساعة {formatArabicTime(req.consultationTime)}</span>
-                                                                <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
-                                                                    <span className="text-[10px]">🇦🇪</span>
-                                                                    <span className="text-[8px] font-black text-slate-300">UAE</span>
+                                                                <div className="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-md border border-white/20">
+                                                                    <span className="text-xs">🇦🇪</span>
+                                                                    <span className="text-[10px] font-black text-slate-300">UAE</span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -875,9 +875,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                             <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
                                 <div className="flex items-center justify-center gap-2">
                                     <span>{formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}</span>
-                                    <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
-                                        <span className="text-[10px]">🇦🇪</span>
-                                        <span className="text-[8px] font-black text-slate-300">UAE</span>
+                                    <div className="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-md border border-white/20">
+                                        <span className="text-xs">🇦🇪</span>
+                                        <span className="text-[10px] font-black text-slate-300">UAE</span>
                                     </div>
                                 </div>
                             </p>
