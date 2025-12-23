@@ -166,7 +166,7 @@ const PublicApp: React.FC = () => {
                 setZoomRedirectLink(bestLink);
             } else {
                 const sessionInfo = nextLiveWorkshop.startDate && nextLiveWorkshop.startTime
-                    ? `ميعاد الجلسة القادمة في ${nextLiveWorkshop.startDate} الساعة ${nextLiveWorkshop.startTime}`
+                    ? `ميعاد الجلسة القادمة في ${nextLiveWorkshop.startDate} الساعة ${nextLiveWorkshop.startTime} (UAE)`
                     : '';
                 showToast(`رابط البث غير متوفر حالياً. ${sessionInfo}`, 'warning');
             }

@@ -553,9 +553,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                         <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
                                             سيتم تفعيل رابط البث قبل موعد الورشة
                                         </p>
-                                        <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
-                                            {formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}
-                                        </p>
+                                        <div className="flex items-center justify-center gap-2 mt-4">
+                                            <span className="text-white font-bold">{formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}</span>
+                                            <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
+                                                <span className="text-[10px]">🇦🇪</span>
+                                                <span className="text-[8px] font-black text-slate-300">UAE</span>
+                                            </div>
+                                        </div>
 
                                         <button
                                             onClick={() => setComingSoonModalWorkshop(null)}
@@ -798,7 +802,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                     {(req.status === 'APPROVED' || req.status === 'PAID') && req.consultationDate && req.consultationTime && (
                                                         <div className="mt-3 pt-3 border-t border-slate-700 text-sm">
                                                             <p className="font-bold">موعدك المحدد:</p>
-                                                            <p className="text-slate-300">{formatArabicDate(req.consultationDate)} - الساعة {formatArabicTime(req.consultationTime)}</p>
+                                                            <div className="flex items-center justify-start gap-2 text-slate-300">
+                                                                <span className="font-semibold">{formatArabicDate(req.consultationDate)} - الساعة {formatArabicTime(req.consultationTime)}</span>
+                                                                <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
+                                                                    <span className="text-[10px]">🇦🇪</span>
+                                                                    <span className="text-[8px] font-black text-slate-300">UAE</span>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     )}
                                                     {req.status === 'APPROVED' && (
@@ -863,7 +873,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                 سيتم تفعيل رابط البث قبل موعد الورشة
                             </p>
                             <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
-                                {formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}
+                                <div className="flex items-center justify-center gap-2">
+                                    <span>{formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}</span>
+                                    <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
+                                        <span className="text-[10px]">🇦🇪</span>
+                                        <span className="text-[8px] font-black text-slate-300">UAE</span>
+                                    </div>
+                                </div>
                             </p>
                             <button onClick={() => setComingSoonModalWorkshop(null)} className="mt-4 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 px-6 rounded-lg text-sm">
                                 حسناً

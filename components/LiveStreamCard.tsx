@@ -169,7 +169,15 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                                 const amPmMatch = cleanTime.match(/(pm|am|مساءً|صباحاً)/);
                                 const time = timeMatch ? timeMatch[1] : cleanTime;
                                 const amPm = amPmMatch ? (amPmMatch[1] === 'مساءً' ? 'pm' : amPmMatch[1] === 'صباحاً' ? 'am' : amPmMatch[1]) : '';
-                                return `${amPm} ${time} | ${startDate}`;
+                                return (
+                                    <div className="flex items-center gap-2 justify-center">
+                                        <span className="text-slate-100 font-bold">{`${amPm} ${time} | ${startDate}`}</span>
+                                        <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded border border-white/20 shadow-inner">
+                                            <span className="text-[10px]" role="img" aria-label="UAE Flag">🇦🇪</span>
+                                            <span className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">UAE</span>
+                                        </div>
+                                    </div>
+                                );
                             })()}
                         </div>
                     </div>

@@ -89,12 +89,20 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
               </div>
               <div className="flex items-start gap-x-3 text-slate-600">
                 <ClockIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0 mt-0.5`} />
-                <span className="font-medium leading-tight">
-                  {workshop.start_time ?
-                    `${workshop.start_time}${workshop.end_time ? ` - ${workshop.end_time}` : ''}` :
-                    `${formatArabicTime(workshop.startTime)}${workshop.endTime ? ` - ${formatArabicTime(workshop.endTime)}` : ''}`
-                  }
-                </span>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-x-1.5 min-w-0">
+                    <span className="font-medium leading-tight truncate">
+                      {workshop.start_time ?
+                        `${workshop.start_time}${workshop.end_time ? ` - ${workshop.end_time}` : ''}` :
+                        `${formatArabicTime(workshop.startTime)}${workshop.endTime ? ` - ${formatArabicTime(workshop.endTime)}` : ''}`
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 shadow-sm flex-shrink-0">
+                    <span className="text-[10px]" role="img" aria-label="UAE Flag">🇦🇪</span>
+                    <span className="text-[9px] font-black text-slate-500 tracking-tighter">UAE</span>
+                  </div>
+                </div>
               </div>
             </>
           )}
