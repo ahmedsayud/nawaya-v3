@@ -240,11 +240,11 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
                             )}
                             {!displayWorkshop && (
                                 <>
-                                    <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 leading-tight tracking-tight">
+                                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-4 leading-tight tracking-tight">
                                         نلهمك لتكون أفضل نسخة من نفسك
                                     </h1>
                                     <p className="text-sm sm:text-base text-slate-600 mb-8 max-w-lg mx-auto leading-relaxed">
-اكتشفي شغفك وطوري مهاراتك في بيئة تعليمية ملهمة وإيجابية.
+                                        اكتشفي شغفك وطوري مهاراتك في بيئة ملهمة وإيجابية.
                                     </p>
                                     <button
                                         onClick={onExploreClick}
