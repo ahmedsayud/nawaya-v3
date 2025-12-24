@@ -68,26 +68,28 @@ export const formatArabicTime = (timeString: string | undefined): string => {
 
 
 /**
- * Checks if a workshop's end date has passed.
+ * Checks if a workshop has started or ended (should be hidden from upcoming listings).
  */
 export const isWorkshopExpired = (workshop: Workshop): boolean => {
   if (workshop.isRecorded) {
     return false; // Recorded workshops don't expire from the main listing.
   }
-  const expiryDateString = workshop.endDate || workshop.startDate;
-  if (!expiryDateString) {
+
+  const startDateString = workshop.startDate;
+  if (!startDateString) {
     return false; // If there's no date, it cannot be expired.
   }
 
-  // Create a date object for the end of the expiry day in UTC to avoid timezone issues.
-  const expiryDate = new Date(`${expiryDateString}T23:59:59.999Z`);
-  if (isNaN(expiryDate.getTime())) {
+  // Parse the full start date and time to check if workshop has begun
+  const startDateTime = parseWorkshopDateTime(workshop.startDate, workshop.startTime);
+  if (isNaN(startDateTime.getTime())) {
     return false; // Invalid date string, assume not expired.
   }
 
-  const now = new Date(); // This is mocked to UTC
+  const now = new Date();
 
-  return expiryDate < now;
+  // Workshop is expired if it has already started
+  return startDateTime < now;
 };
 
 /**

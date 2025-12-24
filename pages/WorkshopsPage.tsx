@@ -74,15 +74,23 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
   // Sort by date to ensure chronological order for the countdown candidate
 
 
-  // Sort by ID Descending for Display (User Request: "Newest created first on main page")
+  // Sort by Date Ascending for Display (User Request: "Soonest workshop first")
   const upcomingSortedById = [...visibleWorkshops]
     .filter(w => !w.isRecorded && !isWorkshopExpired(w))
-    .sort((a, b) => b.id - a.id);
+    .sort((a, b) => {
+      const dateA = parseWorkshopDateTime(a.startDate, a.startTime).getTime();
+      const dateB = parseWorkshopDateTime(b.startDate, b.startTime).getTime();
+      return dateA - dateB; // Soonest first
+    });
 
-  // Sort by ID Descending for Display
+  // Sort by Date Ascending for Display
   const recordedWorkshops = visibleWorkshops
     .filter(w => w.isRecorded)
-    .sort((a, b) => b.id - a.id);
+    .sort((a, b) => {
+      const dateA = parseWorkshopDateTime(a.startDate, a.startTime).getTime();
+      const dateB = parseWorkshopDateTime(b.startDate, b.startTime).getTime();
+      return dateA - dateB; // Oldest first
+    });
 
   // Sort by Date Ascending for "Next Up" Logic
   const upcomingSortedByDate = [...visibleWorkshops]
