@@ -72,20 +72,32 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
 
   // Still separate into sections manually from the current page's results
   // Sort by date to ensure chronological order for the countdown candidate
-  const newWorkshops = visibleWorkshops
+
+
+  // Sort by ID Descending for Display (User Request: "Newest created first on main page")
+  const upcomingSortedById = [...visibleWorkshops]
+    .filter(w => !w.isRecorded && !isWorkshopExpired(w))
+    .sort((a, b) => b.id - a.id);
+
+  // Sort by ID Descending for Display
+  const recordedWorkshops = visibleWorkshops
+    .filter(w => w.isRecorded)
+    .sort((a, b) => b.id - a.id);
+
+  // Sort by Date Ascending for "Next Up" Logic
+  const upcomingSortedByDate = [...visibleWorkshops]
     .filter(w => !w.isRecorded && !isWorkshopExpired(w))
     .sort((a, b) => {
       const dateA = parseWorkshopDateTime(a.startDate, a.startTime).getTime();
       const dateB = parseWorkshopDateTime(b.startDate, b.startTime).getTime();
       return dateA - dateB;
     });
-  const recordedWorkshops = visibleWorkshops.filter(w => w.isRecorded);
 
   // Live stream card logic - Use the public upcoming workshop for everyone
   const liveStreamWorkshop = useMemo(() => {
     const now = new Date();
-    // Use the first workshop from the sorted newWorkshops list that hasn't started yet or is very recent
-    const candidate = newWorkshops.find(w => {
+    // Use the first workshop from the sorted DATE list to find the actual next event
+    const candidate = upcomingSortedByDate.find(w => {
       const target = parseWorkshopDateTime(w.startDate, w.startTime);
       const isFuture = target.getTime() > now.getTime();
       const isWithinLiveWindow = target.getTime() + (4 * 60 * 60 * 1000) > now.getTime();
@@ -108,7 +120,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
       };
     }
     return candidate;
-  }, [newWorkshops, earliestWorkshop]);
+  }, [upcomingSortedByDate, earliestWorkshop]);
 
   const filters: Array<'all' | 'أونلاين' | 'حضوري' | 'مسجلة'> = ['all', 'أونلاين', 'حضوري', 'مسجلة'];
   const filterLabels = {
@@ -189,7 +201,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
           </div>
         ) : (
           <>
-            {newWorkshops.length > 0 && (
+            {upcomingSortedById.length > 0 && (
               <section id="live_events" className="text-right mb-12">
                 <div className="relative mb-8">
                   <h2 className="text-xl font-bold text-slate-900 pb-2 tracking-wider inline-flex items-center gap-2">
@@ -198,7 +210,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
                   </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                  {newWorkshops.map(workshop => (
+                  {upcomingSortedById.map(workshop => (
                     <WorkshopCard key={workshop.id} workshop={workshop} user={user} onEnroll={() => { }} onOpenDetails={onOpenWorkshopDetails} />
                   ))}
                 </div>

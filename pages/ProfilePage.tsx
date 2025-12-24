@@ -414,8 +414,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
             const timeA = getSortTime(a);
             const timeB = getSortTime(b);
 
-            if (groupA === 1) return timeA - timeB; // Upcoming: Closest first
-            return timeB - timeA; // Other: Most recent first
+            // All groups: Soonest first (Next workshop -> Later workshops)
+            return timeA - timeB;
         });
     }, [subscriptions, apiWorkshops]);
 
