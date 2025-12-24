@@ -74,7 +74,11 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
   // Sort by date to ensure chronological order for the countdown candidate
   const newWorkshops = visibleWorkshops
     .filter(w => !w.isRecorded && !isWorkshopExpired(w))
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    .sort((a, b) => {
+      const dateA = parseWorkshopDateTime(a.startDate, a.startTime).getTime();
+      const dateB = parseWorkshopDateTime(b.startDate, b.startTime).getTime();
+      return dateA - dateB;
+    });
   const recordedWorkshops = visibleWorkshops.filter(w => w.isRecorded);
 
   // Live stream card logic - Use the public upcoming workshop for everyone
@@ -83,8 +87,16 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
     // Use the first workshop from the sorted newWorkshops list that hasn't started yet or is very recent
     const candidate = newWorkshops.find(w => {
       const target = parseWorkshopDateTime(w.startDate, w.startTime);
-      // Keep it as a candidate if it's in the future OR started less than 4 hours ago (still live)
-      return target.getTime() + (4 * 60 * 60 * 1000) > now.getTime();
+      const isFuture = target.getTime() > now.getTime();
+      const isWithinLiveWindow = target.getTime() + (4 * 60 * 60 * 1000) > now.getTime();
+
+      // If future, always a candidate.
+      if (isFuture) return true;
+
+      // If started (live), ONLY show if link exists.
+      // If link is removed, we skip it (returning false), causing the find() to pick the NEXT workshop.
+      const hasLink = !!w.zoomLink || !!w.online_link;
+      return isWithinLiveWindow && hasLink;
     }) || null;
 
     if (candidate && earliestWorkshop && Number(earliestWorkshop.id) === Number(candidate.id)) {

@@ -159,7 +159,7 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                         className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10 mb-6"
                     >
                         <LoginIcon className="w-5 h-5" />
-                        <span>الدخول إلى البث</span>
+                        <span>ادخل الان</span>
                     </button>
                 ) : (
                     <div className="flex flex-col items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/10 w-full mb-6">

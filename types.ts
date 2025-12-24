@@ -168,6 +168,7 @@ export interface Workshop {
     application?: string;
     isRecorded: boolean;
     zoomLink: string;
+    online_link?: string;
     subject_of_discussion?: string;
     workshop_returning_policy?: string;
     description?: string;
