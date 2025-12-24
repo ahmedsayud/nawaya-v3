@@ -67,12 +67,7 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
       return;
     }
 
-    if (selectedMethod === 'CARD') {
-      if (!cardName.trim() || cardNumber.replace(/\s/g, '').length !== 16 || cardExpiry.length !== 7 || cardCvv.length < 3) {
-        setCardError('يرجى ملء جميع بيانات البطاقة بشكل صحيح.');
-        return;
-      }
-    }
+    // No local validation needed for CARD because it redirects to external gateway
 
     setIsProcessing(true);
 
@@ -82,12 +77,16 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
 
       setIsProcessing(false);
 
-      if (response.key === 'success') {
+      const data = response.data as any;
+      if (response.key === 'success' || (response as any).status === 'success') {
         // Success
-        if (paymentMethod === 'online' && (response.data as any).invoice_url) {
-          window.open((response.data as any).invoice_url, '_blank', 'noopener,noreferrer');
+        if (paymentMethod === 'online' && data?.invoice_url) {
+          // Redirect to payment gateway instead of opening in a new tab
+          window.location.href = data.invoice_url;
+        } else {
+          // For bank transfer or if no URL, just confirm
+          onConfirm();
         }
-        onConfirm();
       } else {
         setCardError(response.msg || 'حدث خطأ أثناء إنشاء الطلب');
       }
@@ -144,32 +143,19 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
           <div>
             {selectedMethod === 'CARD' ? (
               <div className="bg-black/20 p-5 rounded-2xl border border-fuchsia-500/20 space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-2">
-                  <h3 className="font-bold text-white text-sm">بيانات البطاقة</h3>
-                  <div className="flex items-center gap-x-2 opacity-80"><VisaIcon className="w-8" /><MastercardIcon className="w-8" /></div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-400 mb-1.5 block">رقم البطاقة</label>
-                  <div className="relative">
-                    <input type="tel" value={cardNumber} onChange={handleCardNumberChange} placeholder="0000 0000 0000 0000" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg ltr-input focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" maxLength={19} required={selectedMethod === 'CARD'} />
-                    <LockClosedIcon className="w-4 h-4 text-slate-500 absolute right-3 top-3.5" />
+                <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
+                  <div className="w-16 h-16 bg-fuchsia-500/20 rounded-full flex items-center justify-center">
+                    <CreditCardIcon className="w-8 h-8 text-fuchsia-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-white text-lg">الدفع الإلكتروني الآمن</h3>
+                    <p className="text-sm text-slate-400 max-w-[250px]">سيتم توجيهك إلى بوابة الدفع الآمنة لإتمام عملية الشراء باستخدام بطاقتك.</p>
+                  </div>
+                  <div className="flex items-center gap-x-3 pt-2">
+                    <VisaIcon className="w-12" />
+                    <MastercardIcon className="w-12" />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-400 mb-1.5 block">الاسم على البطاقة</label>
-                  <input type="text" value={cardName} onChange={e => setCardName(e.target.value)} placeholder="Full Name" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" required={selectedMethod === 'CARD'} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 mb-1.5 block">تاريخ الانتهاء</label>
-                    <input type="text" value={cardExpiry} onChange={handleExpiryChange} placeholder="MM / YY" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg ltr-input focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" required={selectedMethod === 'CARD'} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 mb-1.5 block">CVV</label>
-                    <input type="tel" value={cardCvv} onChange={e => setCardCvv(e.target.value.replace(/\D/g, ''))} placeholder="123" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg ltr-input focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" maxLength={4} required={selectedMethod === 'CARD'} />
-                  </div>
-                </div>
-                {cardError && <p className="text-sm text-red-400 text-center bg-red-900/20 p-2 rounded border border-red-500/20">{cardError}</p>}
               </div>
             ) : (
               <div className="space-y-4 text-center">

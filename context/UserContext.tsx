@@ -144,9 +144,13 @@ interface UserContextType {
     restorePendingGift: (id: string) => void;
     permanentlyDeletePendingGift: (id: string) => void;
     adminManualClaimGift: (id: string, recipientData: { name: string, email: string, phone: string }) => { success: boolean; message: string };
+    fetchProfile: () => Promise<any | null>;
+    payForConsultation: (consultationId: number) => Promise<{ success: boolean; invoiceUrl?: string; message?: string }>;
 
     // General & Content
     markNotificationsAsRead: () => void;
+    markNotificationAsRead: (notificationId: string | number) => Promise<boolean>;
+    deleteNotification: (notificationId: string | number) => Promise<boolean>;
     addNotificationForMultipleUsers: (userIds: number[], message: string) => void;
     updateDrhopeData: (data: Partial<DrhopeData>) => void;
     addPartner: (partner: Omit<Partner, 'id'>) => void;
@@ -709,21 +713,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const token = localStorage.getItem('auth_token');
             if (!token) throw new Error('No auth token');
 
-            const body = new URLSearchParams();
-            body.append('payment_type', paymentMethod);
+            const formData = new FormData();
+            formData.append('payment_type', paymentMethod);
 
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.ORDERS.CREATE}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
                     'Authorization': `Bearer ${token}`
                 },
-                body: body.toString()
+                body: formData
             });
 
             const data = await response.json();
 
-            if (data.key === 'success') {
+            if (data.key === 'success' || data.status === 'success') {
                 // Refresh cart state to ensure it's empty
                 await fetchCart();
             }
@@ -1433,6 +1436,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 console.log('[fetchProfile] Mapped subscriptions:', subscriptions);
 
+                // Extract and map consultations from support_messages
+                const consultations: ConsultationRequest[] = (profileData.support_messages || []).map((msg: any) => ({
+                    id: msg.id,
+                    userId: currentUser.id, // Ensure userId is set for filtering in ProfilePage
+                    message: msg.message,
+                    status: msg.status,
+                    price: msg.price,
+                    date: msg.date,
+                    time: msg.time,
+                    duration_minutes: msg.duration_minutes,
+                    created_at: msg.created_at,
+                    // Map to legacy fields for backward compatibility
+                    subject: msg.message,
+                    requestedAt: msg.created_at,
+                    consultationDate: msg.date !== 'غير محدد' ? msg.date : undefined,
+                    consultationTime: msg.time !== 'غير محدد' ? msg.time : undefined,
+                    durationMinutes: typeof msg.duration_minutes === 'number' ? msg.duration_minutes : undefined,
+                    fee: typeof msg.price === 'number' ? msg.price : undefined,
+                }));
+
+                console.log('[fetchProfile] Mapped consultations:', consultations.length);
+
+                // Update consultation requests state
+                setConsultationRequests(consultations);
+
                 // Update current user with fetched subscriptions
                 setCurrentUser(prev => {
                     console.log('[fetchProfile] Updating user, prev:', prev?.id);
@@ -1443,15 +1471,194 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
 
                 console.log('[fetchProfile] ✅ Profile fetched successfully');
+
+                // Fetch notifications after profile is loaded
+                fetchNotifications();
+
+                return profileData;
             } else {
                 console.error('[fetchProfile] ❌ Failed:', data);
+                return null;
             }
         } catch (error) {
             console.error('[fetchProfile] ❌ Error:', error);
+            return null;
+        }
+    };
+
+    const fetchNotifications = async () => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token || !currentUser) return;
+
+            const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.error('[fetchNotifications] ❌ Failed:', response.status);
+                return;
+            }
+
+            const result = await response.json();
+
+            if (result.key === 'success' && result.data && Array.isArray(result.data) && result.data[0]) {
+                const apiNotifications = result.data[0];
+
+                // Map API notifications to our Notification type
+                const mappedNotifications: Notification[] = apiNotifications.map((notif: any) => ({
+                    id: notif.id,
+                    title: notif.title,
+                    body: notif.body,
+                    message: notif.title || notif.body || '', // Fallback for display
+                    timestamp: new Date().toISOString(), // API doesn't provide timestamp
+                    read: false
+                }));
+
+                // Update current user's notifications
+                setCurrentUser(prev => {
+                    if (!prev) return null;
+                    return {
+                        ...prev,
+                        notifications: mappedNotifications
+                    };
+                });
+            }
+        } catch (error) {
+            console.error('[fetchNotifications] ❌ Error:', error);
         }
     };
 
     const markNotificationsAsRead = () => { if (currentUser) setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, notifications: u.notifications.map(n => ({ ...n, read: true })) } : u)); };
+
+    const markNotificationAsRead = async (notificationId: string | number): Promise<boolean> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token || !currentUser) return false;
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.MARK_AS_READ(notificationId)}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.error('[markNotificationAsRead] ❌ Failed:', response.status);
+                return false;
+            }
+
+            const result = await response.json();
+
+            if (result.key === 'success') {
+                // Update local state to mark notification as read
+                setCurrentUser(prev => {
+                    if (!prev) return null;
+                    return {
+                        ...prev,
+                        notifications: prev.notifications?.map(n =>
+                            String(n.id) === String(notificationId) ? { ...n, read: true } : n
+                        ) || []
+                    };
+                });
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('[markNotificationAsRead] ❌ Error:', error);
+            return false;
+        }
+    };
+
+    const deleteNotification = async (notificationId: string | number): Promise<boolean> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token || !currentUser) return false;
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.DELETE(notificationId)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.error('[deleteNotification] ❌ Failed:', response.status);
+                return false;
+            }
+
+            const result = await response.json();
+
+            if (result.key === 'success') {
+                // Remove notification from local state
+                setCurrentUser(prev => {
+                    if (!prev) return null;
+                    return {
+                        ...prev,
+                        notifications: prev.notifications?.filter(n =>
+                            String(n.id) !== String(notificationId)
+                        ) || []
+                    };
+                });
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('[deleteNotification] ❌ Error:', error);
+            return false;
+        }
+    };
+
+    const payForConsultation = async (consultationId: number): Promise<{ success: boolean; invoiceUrl?: string; message?: string }> => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return { success: false, message: 'يرجى تسجيل الدخول أولاً' };
+
+            console.log(`[payForConsultation] 🔄 Initiating payment for ID: ${consultationId}`);
+
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.PAY_CONSULTATION(consultationId)}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+            console.log('[payForConsultation] 📥 API Response:', data);
+
+            if (response.ok && data.key === 'success' && data.data?.invoice_url) {
+                return {
+                    success: true,
+                    invoiceUrl: data.data.invoice_url
+                };
+            }
+
+            // Handle session expiration or throttle explicitly if possible
+            if (response.status === 401) {
+                return { success: false, message: 'انتهت الجلسة، يرجى إعادة تسجيل الدخول' };
+            }
+
+            return {
+                success: false,
+                message: data.msg || 'حدث خطأ أثناء معالجة الدفع'
+            };
+        } catch (error) {
+            console.error('[payForConsultation] ❌ Error:', error);
+            return {
+                success: false,
+                message: 'حدث خطأ في الاتصال بالخادم'
+            };
+        }
+    };
 
     const logout = async () => {
         try {
@@ -1677,7 +1884,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         countriesDebugInfo,
 
         // Auth & User Actions
-        login, logout, register,
+        login, logout, register, fetchProfile, payForConsultation,
         addUser, updateUser, deleteUser, restoreUser, permanentlyDeleteUser, convertToInternalCredit,
         findUserByCredential, checkRegistrationAvailability,
 
@@ -1691,7 +1898,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         addPendingGift, checkAndClaimPendingGifts, donateToPayItForward, grantPayItForwardSeat, updatePendingGift, deletePendingGift, restorePendingGift, permanentlyDeletePendingGift, adminManualClaimGift,
 
-        markNotificationsAsRead, addNotificationForMultipleUsers, updateDrhopeData, addPartner, updatePartner, deletePartner, addBroadcastToHistory,
+        markNotificationsAsRead, markNotificationAsRead, deleteNotification, addNotificationForMultipleUsers, updateDrhopeData, addPartner, updatePartner, deletePartner, addBroadcastToHistory,
 
         addExpense, updateExpense, deleteExpense, restoreExpense, permanentlyDeleteExpense,
 

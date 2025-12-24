@@ -56,6 +56,8 @@ export interface Order {
 export interface Notification {
     id: string;
     message: string;
+    title?: string; // API field
+    body?: string;  // API field
     timestamp: string;
     read: boolean;
     workshopId?: number;
@@ -266,11 +268,18 @@ export interface Theme {
 }
 
 export interface ConsultationRequest {
-    id: string;
-    userId: number;
-    subject: string;
-    status: 'NEW' | 'APPROVED' | 'PENDING_PAYMENT' | 'PAID' | 'COMPLETED';
-    requestedAt: string;
+    id: number; // Changed from string to number to match API
+    userId?: number;
+    message: string; // The consultation subject/message
+    status: string; // Arabic status from API: "جديد", "بإنتظار الدفع", etc.
+    price: number | string; // Can be number or "غير محدد"
+    date: string; // Date in format "2025-12-26" or "غير محدد"
+    time: string; // Time in format "04:56:00" or "غير محدد"
+    duration_minutes: number | string; // Can be number or "غير محدد"
+    created_at: string; // Timestamp when consultation was created
+    // Legacy fields for backward compatibility
+    subject?: string;
+    requestedAt?: string;
     consultationDate?: string;
     consultationTime?: string;
     durationMinutes?: number;

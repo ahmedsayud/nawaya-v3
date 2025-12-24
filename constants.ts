@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
         ADD_REVIEW: '/api/profile/review',
         CERTIFICATE: (id: string | number) => `/api/profile/subscription/${id}/certificate`,
         INVOICE: (id: string | number) => `/api/profile/subscription/${id}/invoice`,
+        PAY_CONSULTATION: (id: string | number) => `/api/profile/support-message/${id}/pay`,
     },
     GENERAL: {
         COUNTRIES: '/api/countries',
@@ -43,6 +44,11 @@ export const API_ENDPOINTS = {
         PROCESS: '/api/subscriptions/process-payment',
         BUY_CHARITY: '/api/subscriptions/buy-charity',
         PROCESS_CHARITY: '/api/subscriptions/process-charity-payment',
+    },
+    NOTIFICATIONS: {
+        GET_ALL: '/api/notifications',
+        MARK_AS_READ: (id: string | number) => `/api/notifications/${id}/mark-as-read`,
+        DELETE: (id: string | number) => `/api/notifications/${id}`,
     }
 };
 

@@ -201,7 +201,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoomRedirect, onPlayRecording, onViewAttachment, onViewRecommendedWorkshop, showToast, onPayForConsultation, onViewInvoice, onViewCertificate }) => {
     // REMOVED updateSubscription from destructuring as it's no longer available in UserContextType
-    const { workshops, currentUser: loggedInUser, addReview, consultationRequests, globalCertificateTemplate } = useUser();
+    const { workshops, currentUser: loggedInUser, addReview, consultationRequests, globalCertificateTemplate, fetchProfile, payForConsultation } = useUser();
 
     const [activeView, setActiveView] = useState<ProfileView>('my_workshops');
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -214,34 +214,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
     // Profile API state
     const [profileData, setProfileData] = useState<any>(null);
     const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+    const [isPaying, setIsPaying] = useState<number | null>(null);
 
     // Fetch profile data from API
     useEffect(() => {
         const fetchProfileData = async () => {
-            if (!isOpen || !user) return;
+            if (!isOpen) return;
 
             const token = localStorage.getItem('auth_token');
             if (!token) return;
 
             setIsLoadingProfile(true);
             try {
-                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.DETAILS}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-                if (response.ok && data.key === 'success' && data.data) {
-                    setProfileData(data.data);
-                    console.log('[ProfilePage] Profile data loaded:', data.data);
-                } else {
-                    console.error('[ProfilePage] Failed to load profile:', data);
-                }
-
-                // Fetch suggested workshops
+                // 1. Fetch suggested workshops (this is specific to this view)
                 const suggestedResponse = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.SUGGEST_WORKSHOPS}`, {
                     method: 'GET',
                     headers: {
@@ -250,37 +235,46 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                     }
                 });
 
-                const suggestedData = await suggestedResponse.json();
-                if (suggestedResponse.ok && suggestedData.key === 'success' && suggestedData.data) {
-                    // Map suggested workshops to recommendations format
-                    const suggestedWorkshops = suggestedData.data.map((ws: any) => ({
-                        workshop: {
-                            id: ws.id,
-                            title: ws.title,
-                            instructor: ws.teacher,
-                            startDate: new Date().toISOString(),
-                            endDate: undefined,
-                            startTime: ws.start_time || '09:00',
-                            endTime: ws.end_time || '17:00',
-                            location: ws.type_label === 'أونلاين' ? 'أونلاين' :
-                                ws.type_label === 'حضوري' ? 'حضوري' :
-                                    ws.type_label === 'مسجلة' ? 'مسجلة' : 'أونلاين وحضوري',
-                            isRecorded: ws.type_label === 'مسجلة',
-                            city: ws.address || undefined,
-                            isVisible: true,
-                            isDeleted: false,
-                            topics: [],
-                            reviews: [],
-                            notes: [],
-                            recordings: [],
-                            mediaFiles: [],
-                            certificatesIssued: false
-                        },
-                        reason: 'ورشة مقترحة بناءً على اهتماماتك'
-                    }));
-                    setRecommendations(suggestedWorkshops);
-                    console.log('[ProfilePage] Suggested workshops loaded:', suggestedWorkshops.length);
+                if (suggestedResponse.ok) {
+                    const suggestedData = await suggestedResponse.json();
+                    if (suggestedData.key === 'success' && suggestedData.data) {
+                        const suggestedWorkshops = suggestedData.data.map((ws: any) => ({
+                            workshop: {
+                                id: ws.id,
+                                title: ws.title,
+                                instructor: ws.teacher,
+                                startDate: new Date().toISOString(),
+                                endDate: undefined,
+                                startTime: ws.start_time || '09:00',
+                                endTime: ws.end_time || '17:00',
+                                location: ws.type_label === 'أونلاين' ? 'أونلاين' :
+                                    ws.type_label === 'حضوري' ? 'حضوري' :
+                                        ws.type_label === 'مسجلة' ? 'مسجلة' : 'أونلاين وحضوري',
+                                isRecorded: ws.type_label === 'مسجلة',
+                                city: ws.address || undefined,
+                                isVisible: true,
+                                isDeleted: false,
+                                topics: [],
+                                reviews: [],
+                                notes: [],
+                                recordings: [],
+                                mediaFiles: [],
+                                certificatesIssued: false
+                            },
+                            reason: 'ورشة مقترحة بناءً على اهتماماتك'
+                        }));
+                        setRecommendations(suggestedWorkshops);
+                    }
                 }
+
+                // 2. Fetch the full profile details via the global context method
+                // This updates the global currentUser state which includes active_subscriptions and support_messages.
+                const updatedProfile = await fetchProfile();
+                if (updatedProfile) {
+                    setProfileData(updatedProfile);
+                    console.log('[ProfilePage] Syncing internal profileData from context fetch');
+                }
+
             } catch (error) {
                 console.error('[ProfilePage] Error fetching profile:', error);
             } finally {
@@ -289,7 +283,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
         };
 
         fetchProfileData();
-    }, [isOpen, user]);
+    }, [isOpen]); // Depend ONLY on isOpen to avoid the infinite loop
 
     const subscriptions = useMemo(() => {
         if (!profileData?.active_subscriptions || !Array.isArray(profileData.active_subscriptions)) return [];
@@ -503,6 +497,25 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
             onZoomRedirect(workshop.zoomLink, workshop.id);
         } else {
             setComingSoonModalWorkshop(workshop);
+        }
+    };
+
+    const handleConsultationPayment = async (consultation: ConsultationRequest) => {
+        setIsPaying(consultation.id);
+        try {
+            const result = await payForConsultation(consultation.id);
+            if (result.success && result.invoiceUrl) {
+                showToast('جاري توجيهك إلى بوابة الدفع...', 'success');
+                // Redirect to payment gateway
+                window.location.href = result.invoiceUrl;
+            } else {
+                showToast(result.message || 'حدث خطأ أثناء معالجة الدفع', 'error');
+            }
+        } catch (error) {
+            console.error('[ProfilePage] Payment error:', error);
+            showToast('حدث خطأ غير متوقع', 'error');
+        } finally {
+            setIsPaying(null);
         }
     };
 
@@ -830,40 +843,72 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                     <h3 className="text-base font-bold text-fuchsia-300 mb-4">طلبات الاستشارة ({userConsultations.length})</h3>
                                     <div className="space-y-3">
                                         {userConsultations.map(req => {
-                                            const statusClasses: Record<ConsultationRequest['status'], string> = {
-                                                NEW: 'bg-yellow-500/20 text-yellow-300', APPROVED: 'bg-sky-500/20 text-sky-300', PENDING_PAYMENT: 'bg-amber-500/20 text-amber-300', PAID: 'bg-teal-500/20 text-teal-300', COMPLETED: 'bg-green-500/20 text-green-300',
+                                            const statusClasses: Record<string, string> = {
+                                                'جديد': 'bg-yellow-500/20 text-yellow-300',
+                                                'بانتظار الدفع': 'bg-sky-500/20 text-sky-300',
+                                                'بإنتظار الدفع': 'bg-sky-500/20 text-sky-300',
+                                                'بانتظار التأكيد': 'bg-amber-500/20 text-amber-300',
+                                                'بإنتظار التأكيد': 'bg-amber-500/20 text-amber-300',
+                                                'مدفوع': 'bg-teal-500/20 text-teal-300',
+                                                'مكتمل': 'bg-green-500/20 text-green-300',
+                                                // Legacy mapping
+                                                'NEW': 'bg-yellow-500/20 text-yellow-300',
+                                                'APPROVED': 'bg-sky-500/20 text-sky-300',
+                                                'PENDING_PAYMENT': 'bg-amber-500/20 text-amber-300',
+                                                'PAID': 'bg-teal-500/20 text-teal-300',
+                                                'COMPLETED': 'bg-green-500/20 text-green-300',
                                             };
-                                            const statusNames: Record<ConsultationRequest['status'], string> = {
-                                                NEW: 'جديد', APPROVED: 'بانتظار الدفع', PENDING_PAYMENT: 'بانتظار التأكيد', PAID: 'مدفوع', COMPLETED: 'مكتمل',
+                                            const statusNames: Record<string, string> = {
+                                                'جديد': 'جديد',
+                                                'بانتظار الدفع': 'بانتظار الدفع',
+                                                'بإنتظار الدفع': 'بانتظار الدفع',
+                                                'بانتظار التأكيد': 'بانتظار التأكيد',
+                                                'بإنتظار التأكيد': 'بانتظار التأكيد',
+                                                'مدفوع': 'مدفوع',
+                                                'مكتمل': 'مكتمل',
+                                                // Legacy mapping
+                                                'NEW': 'جديد',
+                                                'APPROVED': 'بانتظار الدفع',
+                                                'PENDING_PAYMENT': 'بانتظار التأكيد',
+                                                'PAID': 'مدفوع',
+                                                'COMPLETED': 'مكتمل',
                                             };
                                             return (
                                                 <div key={req.id} className="bg-black/20 p-4 rounded-lg border border-slate-700/50">
                                                     <div className="flex justify-between items-start">
                                                         <div>
-                                                            <p className="font-bold text-white truncate max-w-sm">موضوع: {req.subject}</p>
+                                                            <p className="font-bold text-white truncate max-w-sm">موضوع: {req.message || req.subject}</p>
                                                             <p className="text-xs text-slate-400">تاريخ الطلب: {formatArabicDate(req.requestedAt)}</p>
                                                         </div>
-                                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${statusClasses[req.status]}`}>{statusNames[req.status]}</span>
+                                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${statusClasses[req.status] || 'bg-slate-500/20 text-slate-300'}`}>{statusNames[req.status] || req.status}</span>
                                                     </div>
-                                                    {(req.status === 'APPROVED' || req.status === 'PAID') && req.consultationDate && req.consultationTime && (
-                                                        <div className="mt-3 pt-3 border-t border-slate-700 text-sm">
-                                                            <p className="font-bold">موعدك المحدد:</p>
-                                                            <div className="flex items-center justify-start gap-2 text-slate-300">
-                                                                <span className="font-semibold">{formatArabicDate(req.consultationDate)} - الساعة {formatArabicTime(req.consultationTime)}</span>
-                                                                <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/20">
-                                                                    <span className="text-sm">🇦🇪</span>
-                                                                    <span className="text-xs font-black text-slate-300">UAE</span>
+                                                    {
+                                                        (req.status === 'APPROVED' || req.status === 'PAID' || req.status === 'بانتظار الدفع' || req.status === 'بإنتظار الدفع' || req.status === 'مدفوع') && req.consultationDate && req.consultationTime && (
+                                                            <div className="mt-3 pt-3 border-t border-slate-700 text-sm">
+                                                                <p className="font-bold">موعدك المحدد:</p>
+                                                                <div className="flex items-center justify-start gap-2 text-slate-300">
+                                                                    <span className="font-semibold">{formatArabicDate(req.consultationDate)} - الساعة {formatArabicTime(req.consultationTime)}</span>
+                                                                    <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/20">
+                                                                        <span className="text-sm">🇦🇪</span>
+                                                                        <span className="text-xs font-black text-slate-300">UAE</span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                    {req.status === 'APPROVED' && (
-                                                        <div className="mt-4 text-center">
-                                                            <button onClick={() => onPayForConsultation(req)} className="bg-theme-gradient-btn text-white font-bold py-2 px-6 rounded-lg text-sm">
-                                                                إتمام الدفع (رسوم {req.fee} درهم)
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                                        )
+                                                    }
+                                                    {
+                                                        (req.status === 'APPROVED' || req.status === 'بانتظار الدفع' || req.status === 'بإنتظار الدفع') && (
+                                                            <div className="mt-4 text-center">
+                                                                <button
+                                                                    onClick={() => handleConsultationPayment(req)}
+                                                                    disabled={isPaying === req.id}
+                                                                    className="bg-theme-gradient-btn text-white font-bold py-2 px-6 rounded-lg text-sm disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
+                                                                >
+                                                                    {isPaying === req.id ? 'جاري التحويل...' : `إتمام الدفع (رسوم ${req.fee} درهم)`}
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    }
                                                 </div>
                                             );
                                         })}
@@ -902,54 +947,58 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                 </div>
             </div>
 
-            {comingSoonModalWorkshop && (
-                <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-[70] p-4" onClick={() => setComingSoonModalWorkshop(null)}>
-                    <div
-                        className="bg-theme-gradient text-slate-200 rounded-lg shadow-2xl w-full max-w-md border border-sky-500/50 relative flex flex-col text-center animate-chatbot-in"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <header className="p-4 flex justify-between items-center border-b border-sky-500/30">
-                            <h2 className="text-lg font-bold text-sky-300">تنبيه</h2>
-                            <button onClick={() => setComingSoonModalWorkshop(null)} className="p-2 rounded-full hover:bg-white/10"><CloseIcon className="w-6 h-6" /></button>
-                        </header>
-                        <div className="p-8 space-y-4">
-                            <InformationCircleIcon className="w-16 h-16 mx-auto text-theme-secondary-accent" />
-                            <h3 className="text-xl font-bold text-white">رابط البث المباشر سيظهر هنا قريباً</h3>
-                            <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
-                                سيتم تفعيل رابط البث قبل موعد الورشة
-                            </p>
-                            <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
-                                <div className="flex items-center justify-center gap-2">
-                                    <span>{formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}</span>
-                                    <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/20">
-                                        <span className="text-sm">🇦🇪</span>
-                                        <span className="text-xs font-black text-slate-300">UAE</span>
+            {
+                comingSoonModalWorkshop && (
+                    <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-[70] p-4" onClick={() => setComingSoonModalWorkshop(null)}>
+                        <div
+                            className="bg-theme-gradient text-slate-200 rounded-lg shadow-2xl w-full max-w-md border border-sky-500/50 relative flex flex-col text-center animate-chatbot-in"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <header className="p-4 flex justify-between items-center border-b border-sky-500/30">
+                                <h2 className="text-lg font-bold text-sky-300">تنبيه</h2>
+                                <button onClick={() => setComingSoonModalWorkshop(null)} className="p-2 rounded-full hover:bg-white/10"><CloseIcon className="w-6 h-6" /></button>
+                            </header>
+                            <div className="p-8 space-y-4">
+                                <InformationCircleIcon className="w-16 h-16 mx-auto text-theme-secondary-accent" />
+                                <h3 className="text-xl font-bold text-white">رابط البث المباشر سيظهر هنا قريباً</h3>
+                                <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
+                                    سيتم تفعيل رابط البث قبل موعد الورشة
+                                </p>
+                                <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <span>{formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}</span>
+                                        <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/20">
+                                            <span className="text-sm">🇦🇪</span>
+                                            <span className="text-xs font-black text-slate-300">UAE</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </p>
-                            <button onClick={() => setComingSoonModalWorkshop(null)} className="mt-4 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 px-6 rounded-lg text-sm">
-                                حسناً
-                            </button>
+                                </p>
+                                <button onClick={() => setComingSoonModalWorkshop(null)} className="mt-4 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 px-6 rounded-lg text-sm">
+                                    حسناً
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {pendingRecording && (
-                <PledgeModal
-                    isOpen={!!pendingRecording}
-                    onClose={() => setPendingRecording(null)}
-                    onAccept={() => {
-                        onPlayRecording(pendingRecording.workshop, pendingRecording.recording, pendingRecording.index);
-                        setPendingRecording(null);
-                        onClose(); // Close the profile page so the video player is visible
-                    }}
-                    workshopTitle={pendingRecording.workshop.title}
-                />
-            )}
+            {
+                pendingRecording && (
+                    <PledgeModal
+                        isOpen={!!pendingRecording}
+                        onClose={() => setPendingRecording(null)}
+                        onAccept={() => {
+                            onPlayRecording(pendingRecording.workshop, pendingRecording.recording, pendingRecording.index);
+                            setPendingRecording(null);
+                            onClose(); // Close the profile page so the video player is visible
+                        }}
+                        workshopTitle={pendingRecording.workshop.title}
+                    />
+                )
+            }
 
             <style>{`.z-70 { z-index: 70; }`}</style>
-        </div>
+        </div >
     );
 };
 
