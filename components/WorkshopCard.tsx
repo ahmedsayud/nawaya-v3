@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Workshop, User, SubscriptionStatus } from '../types';
 import { formatArabicDate, formatArabicTime } from '../utils';
@@ -18,16 +17,16 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
   }
 
   const dateDisplay = workshop.endDate
-    ? `من ${formatArabicDate(workshop.startDate)} إلى ${formatArabicDate(workshop.endDate)}`
+    ? `من ${formatArabicDate(workshop.startDate)} إلى ${formatArabicDate(workshop.endDate)} `
     : formatArabicDate(workshop.startDate);
 
   let locationDisplay;
   if (workshop.location === 'حضوري' || workshop.location === 'أونلاين وحضوري') {
     locationDisplay = [workshop.hotelName, workshop.city, workshop.country].filter(Boolean).join(', ');
   } else if (workshop.location === 'أونلاين') {
-    locationDisplay = workshop.application ? `أونلاين عبر ${workshop.application}` : 'أونلاين';
+    locationDisplay = workshop.application ? `أونلاين عبر ${workshop.application} ` : 'أونلاين';
   } else { // مسجلة
-    locationDisplay = `${workshop.location}, ${workshop.country}`;
+    locationDisplay = `${workshop.location}, ${workshop.country} `;
   }
 
   const isSubscribed = user?.subscriptions.some(sub =>
@@ -60,7 +59,7 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
       {/* Card Header - Light Background */}
       <div className="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white">
         <div className="flex justify-start mb-2">
-          <span className={`px-3 py-1 text-[10px] sm:text-xs font-bold rounded-full border ${locationTypeClasses[workshop.location]}`}>
+          <span className={`px-3 py-1 text-[10px] sm:text-xs font-bold rounded-full border ${locationTypeClasses[workshop.location]} `}>
             {workshop.location}
           </span>
         </div>
@@ -68,7 +67,7 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
           {/* Title Text: Dark Slate for readability on white */}
           <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug group-hover:text-pink-700 transition-colors">{workshop.title}</h3>
           <div className="flex items-center justify-center gap-x-2 text-slate-500 text-xs sm:text-sm mt-3 sm:mt-4 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-            <AcademicCapIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${iconColorClass}`} />
+            <AcademicCapIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${iconColorClass} `} />
             <span className="font-semibold">{workshop.teacher || workshop.instructor}</span>
           </div>
         </div>
@@ -92,7 +91,7 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
                   <ClockIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0 mt-0.5`} />
                   <span className="font-medium leading-tight" dir="ltr">
                     {workshop.start_time ?
-                      `${workshop.start_time}${workshop.end_time ? ` - ${workshop.end_time}` : ''}` :
+                      `${formatArabicTime(workshop.start_time)}${workshop.end_time ? ` - ${formatArabicTime(workshop.end_time)}` : ''}` :
                       `${formatArabicTime(workshop.startTime)}${workshop.endTime ? ` - ${formatArabicTime(workshop.endTime)}` : ''}`
                     }
                   </span>

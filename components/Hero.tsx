@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useUser } from '../context/UserContext';
-import { isWorkshopExpired } from '../utils';
+import { isWorkshopExpired, parseWorkshopDateTime } from '../utils';
 
 interface HeroProps {
     onExploreClick: () => void;
@@ -37,16 +37,7 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
             const dateStr = w.startDate || w.start_date;
             const timeStr = w.startTime || w.start_time;
             if (!dateStr) return new Date(8640000000000000); // Far future
-
-            try {
-                const normTime = parseArabicTime(timeStr);
-                const [h, m] = normTime.split(':').map(p => parseInt(p));
-                const dParts = dateStr.split(/[-/]/).map(p => parseInt(p));
-                let y, mo, d;
-                if (dParts[0] > 1000) [y, mo, d] = dParts;
-                else[d, mo, y] = dParts;
-                return new Date(y, mo - 1, d, h, m, 0);
-            } catch (e) { return new Date(8640000000000000); }
+            return parseWorkshopDateTime(dateStr, timeStr);
         };
 
         const now = new Date();
@@ -88,56 +79,15 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     };
 
-    // Parse time format like "مساءً 11:40", "صباحاً 9:30", "am 9:00", "5:00 PM"
-    const parseArabicTime = (timeStr: string): string => {
-        if (!timeStr) return "00:00";
-
-        const cleanTime = timeStr.toLowerCase().trim();
-        // If already in HH:MM format, return as is
-        if (/^\d{1,2}:\d{2}$/.test(cleanTime)) {
-            return cleanTime;
-        }
-
-        const isPM = cleanTime.includes('مساءً') || cleanTime.includes('pm');
-        const isAM = cleanTime.includes('صباحاً') || cleanTime.includes('am');
-
-        const timeMatch = cleanTime.match(/(\d{1,2}):(\d{2})/);
-        if (!timeMatch) return "00:00";
-
-        let hours = parseInt(timeMatch[1]);
-        const minutes = timeMatch[2];
-
-        if (isPM && hours !== 12) {
-            hours += 12;
-        } else if (isAM && hours === 12) {
-            hours = 0;
-        } else if (!isPM && !isAM && hours >= 1 && hours <= 11) {
-            // Default heuristic: if 1-11 and no indicator, assume PM for workshops
-            hours += 12;
-        }
-
-        return `${hours.toString().padStart(2, '0')}:${minutes}`;
-    };
-
     const calculateTimeLeft = () => {
         if (!displayWorkshop) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
         const datePart = displayWorkshop.start_date || (displayWorkshop as any).startDate || "";
         const timePart = displayWorkshop.start_time || (displayWorkshop as any).startTime || "";
 
-        if (!datePart || !timePart) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+        if (!datePart) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
         try {
-            const normalizedTime = parseArabicTime(timePart);
-            const dParts = datePart.split(/[-/]/).map(p => parseInt(p));
-            const tParts = normalizedTime.split(':').map(p => parseInt(p));
-
-            if (dParts.some(isNaN) || tParts.some(isNaN)) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-
-            let year, month, day;
-            if (dParts[0] > 1000) { [year, month, day] = dParts; }
-            else { [day, month, year] = dParts; }
-
-            const target = new Date(year, month - 1, day, tParts[0], tParts[1], tParts[2] || 0);
+            const target = parseWorkshopDateTime(datePart, timePart);
             const now = new Date();
             const diffMs = target.getTime() - now.getTime();
 

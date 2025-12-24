@@ -36,37 +36,34 @@ export const formatArabicDate = (dateString: string | undefined): string => {
  */
 export const formatArabicTime = (timeString: string | undefined): string => {
   if (!timeString) return '';
-  const [hours, minutes] = timeString.split(':');
-  // Create a dummy date assuming the input time is UTC, to convert to UAE time.
-  const date = new Date(Date.UTC(2000, 0, 1, parseInt(hours, 10), parseInt(minutes, 10)));
 
-  // Check for validity
-  if (isNaN(date.getTime())) {
-    console.warn(`Invalid time string passed to formatArabicTime: "${timeString}"`);
-    return ''; // Return empty string for invalid times.
+  const cleanTime = timeString.toLowerCase().trim();
+  let isPM = cleanTime.includes('pm') || cleanTime.includes('مساءً');
+  let isAM = cleanTime.includes('am') || cleanTime.includes('صباحاً');
+
+  const match = cleanTime.match(/(\d{1,2}):(\d{2})/);
+  if (!match) return timeString;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2];
+
+  // If no AM/PM indicator, infer from hours (24h format input)
+  if (!isPM && !isAM) {
+    if (hours >= 12) {
+      isPM = true;
+      if (hours > 12) hours -= 12;
+    } else {
+      isAM = true;
+      if (hours === 0) hours = 12;
+    }
+  } else {
+    // Normalize hours to 12-hour format if needed
+    if (hours > 12) hours -= 12;
+    else if (hours === 0) hours = 12;
   }
 
-  const timeFormatterAr = new Intl.DateTimeFormat('ar-u-nu-latn', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-    timeZone: 'Asia/Dubai', // UAE timezone
-  });
-  const parts = timeFormatterAr.formatToParts(date);
-  const hour = parts.find(p => p.type === 'hour')?.value;
-  const minute = parts.find(p => p.type === 'minute')?.value;
-
-  const timeFormatterEn = new Intl.DateTimeFormat('en-US', {
-    hour12: true,
-    hour: 'numeric', // We only need the period
-    timeZone: 'Asia/Dubai',
-  });
-  const enParts = timeFormatterEn.formatToParts(date);
-  const dayPeriod = enParts.find(p => p.type === 'dayPeriod')?.value; // "AM" or "PM"
-
-  const timePart = `${hour}:${minute}`;
-
-  return `${timePart} ${dayPeriod}`;
+  const period = isPM ? 'مساءً' : 'صباحاً';
+  return `${hours.toString().padStart(2, '0')}:${minutes} ${period}`;
 };
 
 

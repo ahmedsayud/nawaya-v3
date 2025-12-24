@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, SubscriptionStatus } from '../types';
 import { VideoIcon, LoginIcon, InformationCircleIcon } from './icons';
+import { formatArabicDate, formatArabicTime } from '../utils';
 
 interface LiveStreamCardProps {
     workshopId: number;
@@ -172,14 +173,9 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                         <div dir="ltr" className="text-[10px] sm:text-xs text-slate-400 font-medium leading-relaxed">
                             {(() => {
                                 if (!startTime || !startDate) return "";
-                                const cleanTime = startTime.toLowerCase().trim();
-                                const timeMatch = cleanTime.match(/(\d{1,2}:\d{2})/);
-                                const amPmMatch = cleanTime.match(/(pm|am|مساءً|صباحاً)/);
-                                const time = timeMatch ? timeMatch[1] : cleanTime;
-                                const amPm = amPmMatch ? (amPmMatch[1] === 'مساءً' ? 'pm' : amPmMatch[1] === 'صباحاً' ? 'am' : amPmMatch[1]) : '';
                                 return (
                                     <div className="flex flex-col items-center gap-1">
-                                        <span className="text-slate-100 font-bold">{`${amPm} ${time} | ${startDate}`}</span>
+                                        <span className="text-slate-100 font-bold">{formatArabicTime(startTime)} | {formatArabicDate(startDate)}</span>
                                         <p className="text-xs text-pink-300 font-black uppercase tracking-tight">
                                             (بتوقيت دولة الإمارات العربية المتحدة)
                                         </p>

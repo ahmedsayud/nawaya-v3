@@ -563,7 +563,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                 <div className="flex items-center justify-center md:justify-start gap-2 font-bold">
                                                     <CalendarIcon className="w-4 h-4" />
                                                     <span>
-                                                        {formatArabicDate(nextLiveWorkshop.startDate)} الساعة {formatArabicTime(nextLiveWorkshop.startTime)}
+                                                        {formatArabicTime(nextLiveWorkshop.startTime)} | {formatArabicDate(nextLiveWorkshop.startDate)}
                                                     </span>
                                                 </div>
                                                 <p className="text-xs font-black text-fuchsia-400 text-center md:text-right">

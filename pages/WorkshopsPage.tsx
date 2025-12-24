@@ -5,7 +5,7 @@ import WorkshopCard from '../components/WorkshopCard';
 import LiveStreamCard from '../components/LiveStreamCard';
 import Hero from '../components/Hero';
 import { useUser } from '../context/UserContext';
-import { isWorkshopExpired } from '../utils';
+import { isWorkshopExpired, parseWorkshopDateTime } from '../utils';
 import HowToAttendModal from '../components/HowToAttendModal';
 
 interface WorkshopsPageProps {
@@ -82,8 +82,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
     const now = new Date();
     // Use the first workshop from the sorted newWorkshops list that hasn't started yet or is very recent
     const candidate = newWorkshops.find(w => {
-      const [hours, minutes] = (w.startTime || '00:00').split(':').map(p => parseInt(p) || 0);
-      const target = new Date(`${w.startDate}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00+04:00`);
+      const target = parseWorkshopDateTime(w.startDate, w.startTime);
       // Keep it as a candidate if it's in the future OR started less than 4 hours ago (still live)
       return target.getTime() + (4 * 60 * 60 * 1000) > now.getTime();
     }) || null;
