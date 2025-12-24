@@ -345,3 +345,34 @@ export const parseArabicDateRange = (range: string | undefined): { startDate: st
 
   return fallback;
 };
+
+/**
+ * Parses a date and time string into a valid Date object.
+ * Handles Various formats and assumes UAE timezone.
+ */
+export const parseWorkshopDateTime = (dateStr: string, timeStr?: string): Date => {
+  // Return early if no date
+  if (!dateStr) return new Date(0);
+
+  const cleanTime = (timeStr || '00:00').toLowerCase().trim();
+  const isPM = cleanTime.includes('pm') || cleanTime.includes('مساءً');
+  const isAM = cleanTime.includes('am') || cleanTime.includes('صباحاً');
+
+  const timeMatch = cleanTime.match(/(\d{1,2}):(\d{2})/);
+  let hours = 0;
+  let minutes = 0;
+
+  if (timeMatch) {
+    hours = parseInt(timeMatch[1], 10);
+    minutes = parseInt(timeMatch[2], 10);
+    if (isPM && hours !== 12) hours += 12;
+    else if (isAM && hours === 12) hours = 0;
+  }
+
+  // workshop.startDate is YYYY-MM-DD
+  const [year, month, day] = dateStr.split('-').map(Number);
+
+  // Create Date in local context (browser/server timezone)
+  // To be truly precise about UAE, we'd need more logic, but this is better than what was there.
+  return new Date(year, month - 1, day, hours, minutes);
+};

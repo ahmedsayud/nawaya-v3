@@ -4,7 +4,7 @@ import { Workshop, Subscription, User, NoteResource, Recording, ConsultationRequ
 import { CloseIcon, VideoIcon, CalendarIcon, ChevronDownIcon, EyeIcon, AcademicCapIcon, UserCircleIcon, LightBulbIcon, DocumentTextIcon, StarIcon, ChatBubbleLeftRightIcon, CreditCardIcon, ShieldCheckIcon, TrashIcon, PencilIcon, GlobeAltIcon, ReceiptTaxIcon, CheckCircleIcon, InformationCircleIcon, EnvelopeIcon, PhoneIcon, MusicalNoteIcon, ClockIcon } from '../components/icons';
 import { useUser } from '../context/UserContext';
 import { API_BASE_URL, API_ENDPOINTS } from '../constants';
-import { formatArabicDate, formatArabicTime, isWorkshopExpired, toEnglishDigits, parseArabicDateRange } from '../utils';
+import { formatArabicDate, formatArabicTime, isWorkshopExpired, toEnglishDigits, parseArabicDateRange, parseWorkshopDateTime } from '../utils';
 import { CertificateModal } from '../components/CertificateModal';
 import { GoogleGenAI, Type } from '@google/genai';
 import { ConfirmationModal } from '../components/ConfirmationModal';
@@ -374,14 +374,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                 const w = workshop!;
                 if (w.zoomLink) return true; // Keep if it has a link
 
-                // If no link, check if it's expired or if its start time has passed substantially (e.g., more than 4 hours ago)
-                const start = new Date(`${w.startDate}T${w.startTime || '00:00'}:00Z`);
+                const start = parseWorkshopDateTime(w.startDate, w.startTime);
                 const isPassed = isWorkshopExpired(w) || (start.getTime() + 4 * 60 * 60 * 1000 < now.getTime());
                 return !isPassed;
             })
             .sort((a, b) => {
-                const startA = new Date(`${a.workshop!.startDate}T${a.workshop!.startTime || '00:00'}:00Z`);
-                const startB = new Date(`${b.workshop!.startDate}T${b.workshop!.startTime || '00:00'}:00Z`);
+                const startA = parseWorkshopDateTime(a.workshop!.startDate, a.workshop!.startTime);
+                const startB = parseWorkshopDateTime(b.workshop!.startDate, b.workshop!.startTime);
                 return startA.getTime() - startB.getTime();
             })[0]?.sub;
     }, [subscriptions, apiWorkshops]);
@@ -403,7 +402,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
         const getSortTime = (sub: Subscription) => {
             const w = apiWorkshops.find(wk => wk.id === sub.workshopId);
             if (!w) return 0;
-            return new Date(`${w.startDate}T${w.startTime || '00:00'}:00Z`).getTime();
+            return parseWorkshopDateTime(w.startDate, w.startTime).getTime();
         };
 
         return [...subscriptions].sort((a, b) => {
@@ -564,7 +563,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                 <div className="flex items-center justify-center md:justify-start gap-2 font-bold">
                                                     <CalendarIcon className="w-4 h-4" />
                                                     <span>
-                                                        {formatArabicDate(nextLiveWorkshop.startDate)} - {formatArabicTime(nextLiveWorkshop.startTime)}
+                                                        {formatArabicDate(nextLiveWorkshop.startDate)} الساعة {formatArabicTime(nextLiveWorkshop.startTime)}
                                                     </span>
                                                 </div>
                                                 <p className="text-xs font-black text-fuchsia-400 text-center md:text-right">
