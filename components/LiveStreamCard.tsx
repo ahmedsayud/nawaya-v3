@@ -152,7 +152,15 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                     انضم الآن لتجربة تفاعلية مباشرة. البث بدأ بالفعل!
                 </p>
 
-                {(!timeLeft || !zoomLink) && (
+                {zoomLink ? (
+                    <button
+                        onClick={handleLinkClick}
+                        className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10 mb-6"
+                    >
+                        <LoginIcon className="w-5 h-5" />
+                        <span>الدخول إلى البث</span>
+                    </button>
+                ) : (
                     <div className="flex flex-col items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/10 w-full mb-6">
                         <div className="flex items-center gap-2 text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
                             <InformationCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -170,27 +178,16 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                                 const time = timeMatch ? timeMatch[1] : cleanTime;
                                 const amPm = amPmMatch ? (amPmMatch[1] === 'مساءً' ? 'pm' : amPmMatch[1] === 'صباحاً' ? 'am' : amPmMatch[1]) : '';
                                 return (
-                                    <div className="flex items-center gap-2 justify-center">
+                                    <div className="flex flex-col items-center gap-1">
                                         <span className="text-slate-100 font-bold">{`${amPm} ${time} | ${startDate}`}</span>
-                                        <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/20 shadow-inner">
-                                            <span className="text-sm" role="img" aria-label="UAE Flag">🇦🇪</span>
-                                            <span className="text-xs font-black text-slate-300 uppercase tracking-tighter">UAE</span>
-                                        </div>
+                                        <p className="text-xs text-pink-300 font-black uppercase tracking-tight">
+                                            (بتوقيت دولة الإمارات العربية المتحدة)
+                                        </p>
                                     </div>
                                 );
                             })()}
                         </div>
                     </div>
-                )}
-
-                {!timeLeft && zoomLink && (
-                    <button
-                        onClick={handleLinkClick}
-                        className="inline-flex items-center justify-center gap-x-2 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/30 hover:shadow-pink-500/30 text-sm sm:text-base border border-white/10"
-                    >
-                        <LoginIcon className="w-5 h-5" />
-                        <span>الدخول إلى البث</span>
-                    </button>
                 )}
 
                 {!user && <p className="text-pink-200/60 text-center mt-4 text-[10px] sm:text-xs font-bold">يجب تسجيل الدخول أولاً للتحقق من اشتراكك.</p>}

@@ -1,5 +1,7 @@
 import { Workshop, User, CertificateTemplate } from './types';
 
+export const TIMEZONE_LABEL_AR = '(بتوقيت دولة الإمارات العربية المتحدة)';
+
 declare const jspdf: any;
 declare const html2canvas: any;
 

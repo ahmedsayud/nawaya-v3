@@ -1,155 +1,248 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <!-- FIX: viewport-fit=cover prevents white bars on phones with notches -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Nawaya Events</title>
-    <link rel="manifest" href="/manifest.json">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-      :root {
-        /* Luxury Dark Purple Palette */
-        --color-bg-primary: #2e1065; /* بنفسجي غامق جداً - Dark Purple */
-        --color-bg-secondary: #581c87; /* بنفسجي - Purple */
-        --color-accent-gold: #fbbf24; /* ذهبي */
-        --color-accent-fuchsia: #db2777; /* وردي متوسط الغمق - Medium Dark Pink */
-        
-        /* Scrollbar Colors */
-        --scrollbar-track: #1e1b4b;
-        --scrollbar-thumb: #7c3aed;
-        --scrollbar-thumb-hover: #db2777;
-        
-        /* Glow Effect */
-        --glow-color: rgba(219, 39, 119, 0.6); /* Adjusted Glow */
-      }
 
-      /* FIX: Ensure html/body take full height and cover background to prevent white bleeds */
-      html {
-        height: 100%;
-        background-color: var(--color-bg-primary);
-      }
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/logo-icon.svg" />
+  <!-- FIX: viewport-fit=cover prevents white bars on phones with notches -->
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Nawaya Events</title>
+  <link rel="manifest" href="/manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Luxury Dark Purple Palette */
+      --color-bg-primary: #2e1065;
+      /* بنفسجي غامق جداً - Dark Purple */
+      --color-bg-secondary: #581c87;
+      /* بنفسجي - Purple */
+      --color-accent-gold: #fbbf24;
+      /* ذهبي */
+      --color-accent-fuchsia: #db2777;
+      /* وردي متوسط الغمق - Medium Dark Pink */
 
-      body {
-        min-height: 100%;
-        margin: 0;
-        padding: 0;
-        background-color: var(--color-bg-primary);
-        color: #e2e8f0; /* نص فاتح للقراءة */
-        font-family: 'Noto Sans Arabic', sans-serif;
-        overflow-x: hidden; /* Prevent horizontal scroll */
-        -webkit-font-smoothing: antialiased;
-      }
+      /* Scrollbar Colors */
+      --scrollbar-track: #1e1b4b;
+      --scrollbar-thumb: #7c3aed;
+      --scrollbar-thumb-hover: #db2777;
 
-      /* FIX: Reset images to prevent layout shifts */
-      img, video {
-        max-width: 100%;
-        height: auto;
-        display: block;
-      }
+      /* Glow Effect */
+      --glow-color: rgba(219, 39, 119, 0.6);
+      /* Adjusted Glow */
+    }
 
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar { width: 10px; height: 10px; }
-      ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-      ::-webkit-scrollbar-thumb { 
-        background: linear-gradient(to bottom, var(--scrollbar-thumb), var(--scrollbar-thumb-hover)); 
-        border-radius: 5px; 
-        border: 2px solid var(--scrollbar-track);
-      }
-      ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+    /* FIX: Ensure html/body take full height and cover background to prevent white bleeds */
+    html {
+      height: 100%;
+      background-color: var(--color-bg-primary);
+    }
 
-      /* Input Autofill Fix for Dark Mode */
-      input:-webkit-autofill,
-      input:-webkit-autofill:hover, 
-      input:-webkit-autofill:focus, 
-      input:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 30px #2e1065 inset !important;
-          -webkit-text-fill-color: white !important;
-          transition: background-color 5000s ease-in-out 0s;
-      }
+    body {
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: var(--color-bg-primary);
+      color: #e2e8f0;
+      /* نص فاتح للقراءة */
+      font-family: 'Noto Sans Arabic', sans-serif;
+      overflow-x: hidden;
+      /* Prevent horizontal scroll */
+      -webkit-font-smoothing: antialiased;
+    }
 
-      /* Animations */
-      .nawaya-intro-text {
-        color: white;
-        text-shadow: 0 0 10px var(--glow-color), 0 0 20px rgba(124, 58, 237, 0.4);
-        animation: intro-text-animation 1.8s ease-out forwards;
+    /* FIX: Reset images to prevent layout shifts */
+    img,
+    video {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(to bottom, var(--scrollbar-thumb), var(--scrollbar-thumb-hover));
+      border-radius: 5px;
+      border: 2px solid var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--scrollbar-thumb-hover);
+    }
+
+    /* Input Autofill Fix for Dark Mode */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px #2e1065 inset !important;
+      -webkit-text-fill-color: white !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+
+    /* Animations */
+    .nawaya-intro-text {
+      color: white;
+      text-shadow: 0 0 10px var(--glow-color), 0 0 20px rgba(124, 58, 237, 0.4);
+      animation: intro-text-animation 1.8s ease-out forwards;
+      opacity: 0;
+    }
+
+    @keyframes intro-text-animation {
+      0% {
         opacity: 0;
-      }
-      @keyframes intro-text-animation {
-          0% { opacity: 0; transform: scale(0.9) translateY(10px); }
-          70% { opacity: 1; transform: scale(1.05) translateY(0); }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
-      }
-      
-      .text-glow-animation { animation: text-glow 3s infinite ease-in-out; }
-      @keyframes text-glow {
-        0%, 100% { text-shadow: 0 0 5px var(--glow-color); }
-        50% { text-shadow: 0 0 15px var(--glow-color), 0 0 25px var(--color-accent-fuchsia); }
-      }
-      
-      main, header, footer { position: relative; z-index: 1; }
-
-      /* Gradient Classes */
-      .bg-theme-header-gradient {
-        background: linear-gradient(135deg, #1e1b4b 0%, #2e1065 70%, #4c1d95 100%);
-        backdrop-filter: blur(10px);
-      }
-      .bg-theme-gradient-btn {
-        background-image: linear-gradient(to right, #6b21a8, #db2777);
-      }
-      .bg-theme-gradient-btn:hover {
-        background-image: linear-gradient(to right, #7e22ce, #ec4899);
+        transform: scale(0.9) translateY(10px);
       }
 
-      /* Card Border Animation */
-      @property --border-angle {
-        syntax: '<angle>';
-        initial-value: 0deg;
-        inherits: false;
+      70% {
+        opacity: 1;
+        transform: scale(1.05) translateY(0);
       }
 
-      .card-animated-border { position: relative; overflow: hidden; }
-      .card-animated-border::before {
-        content: ''; position: absolute; inset: 0;
-        border-radius: inherit; padding: 2px;
-        background: conic-gradient(from var(--border-angle), #d946ef, #a855f7, #d946ef);
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor; mask-composite: exclude;
-        animation: rotate-border 4s linear infinite;
-        pointer-events: none;
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
       }
-      @keyframes rotate-border { 
-        to { --border-angle: 360deg; }
+    }
+
+    .text-glow-animation {
+      animation: text-glow 3s infinite ease-in-out;
+    }
+
+    @keyframes text-glow {
+
+      0%,
+      100% {
+        text-shadow: 0 0 5px var(--glow-color);
       }
 
-      /* Chatbot */
-      .chatbot-fab {
-        position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 45;
-        width: 4rem; height: 4rem; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        color: white; background: linear-gradient(135deg, #6b21a8, #db2777);
-        box-shadow: 0 4px 15px rgba(219, 39, 119, 0.4);
-        transition: all 0.3s; border: 2px solid rgba(255,255,255,0.2);
+      50% {
+        text-shadow: 0 0 15px var(--glow-color), 0 0 25px var(--color-accent-fuchsia);
       }
-      .chatbot-fab:hover { transform: scale(1.1) rotate(5deg); }
-      .glowing-chatbot-animation { animation: glowing-pulse 2.5s infinite; }
-      @keyframes glowing-pulse { 0% { box-shadow: 0 0 10px rgba(219, 39, 119, 0.4); } 50% { box-shadow: 0 0 25px rgba(219, 39, 119, 0.7); } 100% { box-shadow: 0 0 10px rgba(219, 39, 119, 0.4); } }
+    }
 
-      .ltr-input { direction: ltr; text-align: left; }
-      .ltr-input::placeholder { direction: rtl; text-align: right; }
-      
-      .bg-theme-gradient {
-        background-image: linear-gradient(to bottom right, var(--color-bg-from) var(--color-bg-balance, 50%), var(--color-bg-to));
-        background-attachment: fixed;
+    main,
+    header,
+    footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Gradient Classes */
+    .bg-theme-header-gradient {
+      background: linear-gradient(135deg, #1e1b4b 0%, #2e1065 70%, #4c1d95 100%);
+      backdrop-filter: blur(10px);
+    }
+
+    .bg-theme-gradient-btn {
+      background-image: linear-gradient(to right, #6b21a8, #db2777);
+    }
+
+    .bg-theme-gradient-btn:hover {
+      background-image: linear-gradient(to right, #7e22ce, #ec4899);
+    }
+
+    /* Card Border Animation */
+    @property --border-angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    .card-animated-border {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-animated-border::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 2px;
+      background: conic-gradient(from var(--border-angle), #d946ef, #a855f7, #d946ef);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: rotate-border 4s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotate-border {
+      to {
+        --border-angle: 360deg;
+      }
+    }
+
+    /* Chatbot */
+    .chatbot-fab {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      z-index: 45;
+      width: 4rem;
+      height: 4rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      background: linear-gradient(135deg, #6b21a8, #db2777);
+      box-shadow: 0 4px 15px rgba(219, 39, 119, 0.4);
+      transition: all 0.3s;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .chatbot-fab:hover {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .glowing-chatbot-animation {
+      animation: glowing-pulse 2.5s infinite;
+    }
+
+    @keyframes glowing-pulse {
+      0% {
+        box-shadow: 0 0 10px rgba(219, 39, 119, 0.4);
       }
 
-    </style>
-    <script type="importmap">
+      50% {
+        box-shadow: 0 0 25px rgba(219, 39, 119, 0.7);
+      }
+
+      100% {
+        box-shadow: 0 0 10px rgba(219, 39, 119, 0.4);
+      }
+    }
+
+    .ltr-input {
+      direction: ltr;
+      text-align: left;
+    }
+
+    .ltr-input::placeholder {
+      direction: rtl;
+      text-align: right;
+    }
+
+    .bg-theme-gradient {
+      background-image: linear-gradient(to bottom right, var(--color-bg-from) var(--color-bg-balance, 50%), var(--color-bg-to));
+      background-attachment: fixed;
+    }
+  </style>
+  <script type="importmap">
     {
       "imports": {
         "react": "https://aistudiocdn.com/react@^19.2.0",
@@ -159,23 +252,25 @@
       }
     }
     </script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            registration.unregister().then(function(boolean) {
-                console.log('Service Worker unregistered: ', boolean);
-            });
-          }
-        });
-      }
-    </script>
-  </body>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+          registration.unregister().then(function (boolean) {
+            console.log('Service Worker unregistered: ', boolean);
+          });
+        }
+      });
+    }
+  </script>
+</body>
+
 </html>

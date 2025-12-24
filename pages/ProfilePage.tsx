@@ -366,15 +366,59 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
     }, [consultationRequests, user]);
 
     const nextLiveSub = useMemo(() => {
-        return subscriptions.find(sub => {
-            const w = apiWorkshops.find(wk => wk.id === sub.workshopId);
-            return w && !w.isRecorded && !isWorkshopExpired(w);
-        });
+        const now = new Date();
+        return subscriptions
+            .map(sub => ({ sub, workshop: apiWorkshops.find(wk => wk.id === sub.workshopId) }))
+            .filter(({ workshop }) => workshop && !workshop.isRecorded)
+            .filter(({ workshop }) => {
+                const w = workshop!;
+                if (w.zoomLink) return true; // Keep if it has a link
+
+                // If no link, check if it's expired or if its start time has passed substantially (e.g., more than 4 hours ago)
+                const start = new Date(`${w.startDate}T${w.startTime || '00:00'}:00Z`);
+                const isPassed = isWorkshopExpired(w) || (start.getTime() + 4 * 60 * 60 * 1000 < now.getTime());
+                return !isPassed;
+            })
+            .sort((a, b) => {
+                const startA = new Date(`${a.workshop!.startDate}T${a.workshop!.startTime || '00:00'}:00Z`);
+                const startB = new Date(`${b.workshop!.startDate}T${b.workshop!.startTime || '00:00'}:00Z`);
+                return startA.getTime() - startB.getTime();
+            })[0]?.sub;
     }, [subscriptions, apiWorkshops]);
 
     const nextLiveWorkshop = useMemo(() => {
         return nextLiveSub ? apiWorkshops.find(w => w.id === nextLiveSub.workshopId) : null;
     }, [nextLiveSub, apiWorkshops]);
+
+    const sortedSubscriptions = useMemo(() => {
+        const now = new Date();
+        const getGroup = (sub: Subscription) => {
+            const w = apiWorkshops.find(wk => wk.id === sub.workshopId);
+            if (!w) return 4;
+            if (w.isRecorded) return 3;
+            if (isWorkshopExpired(w)) return 2;
+            return 1; // Upcoming/Active Live
+        };
+
+        const getSortTime = (sub: Subscription) => {
+            const w = apiWorkshops.find(wk => wk.id === sub.workshopId);
+            if (!w) return 0;
+            return new Date(`${w.startDate}T${w.startTime || '00:00'}:00Z`).getTime();
+        };
+
+        return [...subscriptions].sort((a, b) => {
+            const groupA = getGroup(a);
+            const groupB = getGroup(b);
+
+            if (groupA !== groupB) return groupA - groupB;
+
+            const timeA = getSortTime(a);
+            const timeB = getSortTime(b);
+
+            if (groupA === 1) return timeA - timeB; // Upcoming: Closest first
+            return timeB - timeA; // Other: Most recent first
+        });
+    }, [subscriptions, apiWorkshops]);
 
     // Auto-expand the first upcoming live workshop
     useEffect(() => {
@@ -516,13 +560,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                 بث مباشر قادم
                                             </div>
                                             <h3 className="text-2xl font-black text-white mb-2">{nextLiveWorkshop.title}</h3>
-                                            <p className="text-fuchsia-200 text-sm mb-4 flex items-center justify-center md:justify-start gap-2">
-                                                <CalendarIcon className="w-4 h-4" />
-                                                <span>
-                                                    من: {formatArabicDate(nextLiveWorkshop.startDate)}
-                                                    {nextLiveWorkshop.endDate && ` - إلى: ${formatArabicDate(nextLiveWorkshop.endDate)}`}
-                                                </span>
-                                            </p>
+                                            <div className="text-fuchsia-200 text-sm mb-4 space-y-1">
+                                                <div className="flex items-center justify-center md:justify-start gap-2 font-bold">
+                                                    <CalendarIcon className="w-4 h-4" />
+                                                    <span>
+                                                        {formatArabicDate(nextLiveWorkshop.startDate)} - {formatArabicTime(nextLiveWorkshop.startTime)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs font-black text-fuchsia-400 text-center md:text-right">
+                                                    (بتوقيت دولة الإمارات العربية المتحدة)
+                                                </p>
+                                            </div>
                                         </div>
 
                                         {nextLiveWorkshop && (
@@ -553,12 +601,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                         <p className="text-sm text-slate-300 mb-6 font-bold leading-relaxed">
                                             سيتم تفعيل رابط البث قبل موعد الورشة
                                         </p>
-                                        <div className="flex items-center justify-center gap-2 mt-4">
+                                        <div className="flex flex-col items-center gap-1 mt-4">
                                             <span className="text-white font-bold">{formatArabicDate(comingSoonModalWorkshop.startDate)} الساعة {formatArabicTime(comingSoonModalWorkshop.startTime)}</span>
-                                            <div className="flex items-center gap-2 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/20">
-                                                <span className="text-sm">🇦🇪</span>
-                                                <span className="text-xs font-black text-slate-300">UAE</span>
-                                            </div>
+                                            <p className="text-xs text-fuchsia-400 font-black">
+                                                (بتوقيت دولة الإمارات العربية المتحدة)
+                                            </p>
                                         </div>
 
                                         <button
@@ -572,11 +619,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                             )}
 
                             {/* Subscribed Workshops List */}
-                            {subscriptions.length > 0 && (
+                            {sortedSubscriptions.length > 0 && (
                                 <section>
-                                    <h3 className="text-base font-bold text-fuchsia-300 mb-4">كل الورش ({subscriptions.length})</h3>
+                                    <h3 className="text-base font-bold text-fuchsia-300 mb-4">كل الورش ({sortedSubscriptions.length})</h3>
                                     <div className="flex flex-col space-y-4">
-                                        {subscriptions.map((sub, index) => {
+                                        {sortedSubscriptions.map((sub, index) => {
                                             const workshop = apiWorkshops.find(w => w.id === sub.workshopId);
                                             if (!workshop) return null;
 

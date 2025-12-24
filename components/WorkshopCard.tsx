@@ -87,21 +87,20 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
                 <CalendarIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0 mt-0.5`} />
                 <span className="font-medium leading-tight">{workshop.date_range || dateDisplay}</span>
               </div>
-              <div className="flex items-start gap-x-3 text-slate-600">
-                <ClockIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0 mt-0.5`} />
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-x-1.5 min-w-0">
-                    <span className="font-medium leading-tight truncate">
-                      {workshop.start_time ?
-                        `${workshop.start_time}${workshop.end_time ? ` - ${workshop.end_time}` : ''}` :
-                        `${formatArabicTime(workshop.startTime)}${workshop.endTime ? ` - ${formatArabicTime(workshop.endTime)}` : ''}`
-                      }
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm flex-shrink-0">
-                    <span className="text-sm" role="img" aria-label="UAE Flag">🇦🇪</span>
-                    <span className="text-xs font-black text-slate-500 tracking-tighter">UAE</span>
-                  </div>
+              <div className="flex flex-col gap-1 text-slate-600">
+                <div className="flex items-start gap-x-3">
+                  <ClockIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0 mt-0.5`} />
+                  <span className="font-medium leading-tight" dir="ltr">
+                    {workshop.start_time ?
+                      `${workshop.start_time}${workshop.end_time ? ` - ${workshop.end_time}` : ''}` :
+                      `${formatArabicTime(workshop.startTime)}${workshop.endTime ? ` - ${formatArabicTime(workshop.endTime)}` : ''}`
+                    }
+                  </span>
+                </div>
+                <div className="pr-7 sm:pr-8">
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-500">
+                    (بتوقيت دولة الإمارات العربية المتحدة)
+                  </p>
                 </div>
               </div>
             </>
