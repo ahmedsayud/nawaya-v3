@@ -15,84 +15,51 @@ interface ProductCheckoutModalProps {
 type PaymentMethod = 'CARD' | 'BANK_TRANSFER';
 
 const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onClose, onConfirm, onCardPaymentConfirm, onRequestLogin, currentUser }) => {
-  const { products, drhopeData, cart, createOrder } = useUser();
+  const { products, cart, createOrder, fetchOrderSummary } = useUser();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('CARD');
-  const [cardName, setCardName] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [cardError, setCardError] = useState('');
+  const [orderSummary, setOrderSummary] = useState<any>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 
   const cartItems = useMemo(() => {
     return cart?.items || [];
   }, [cart]);
 
+  React.useEffect(() => {
+    if (isOpen && currentUser) {
+      const loadSummary = async () => {
+        setIsLoadingSummary(true);
+        const summary = await fetchOrderSummary();
+        if (summary && summary.key === 'success') {
+          setOrderSummary(summary.data);
+        }
+        setIsLoadingSummary(false);
+      };
+      loadSummary();
+    }
+  }, [isOpen, currentUser, fetchOrderSummary]);
+
   const subtotal = useMemo(() => {
+    if (orderSummary?.prices?.products_price) return orderSummary.prices.products_price;
     if (!cart || !cart.items) return 0;
     return cart.items.reduce((sum, item) => {
-      // Fallback to local product price if item.price not populated
       const price = item.price || item.product?.price || 0;
       return sum + (price * item.quantity);
     }, 0);
-  }, [cart]);
+  }, [cart, orderSummary]);
 
-  const taxAmount = subtotal * 0.05;
-  const totalAmount = subtotal + taxAmount;
+  const taxAmount = orderSummary?.prices?.tax ?? (subtotal * 0.05);
+  const totalAmount = orderSummary?.prices?.total_price ?? (subtotal + taxAmount);
 
   if (!isOpen) return null;
 
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (cardExpiry.length > value.length && cardExpiry.includes(' / ')) {
-      value = value.slice(0, 2);
-    } else if (value.length > 2) {
-      value = value.slice(0, 2) + ' / ' + value.slice(2, 4);
-    }
-    setCardExpiry(value);
-  };
-
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 16);
-    const formattedValue = value.replace(/(.{4})/g, '$1 ').trim();
-    setCardNumber(formattedValue);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setCardError('');
-
-    if (!currentUser) {
-      onRequestLogin();
-      return;
-    }
-
-    // No local validation needed for CARD because it redirects to external gateway
-
-    setIsProcessing(true);
-
-    try {
-      const paymentMethod = selectedMethod === 'CARD' ? 'online' : 'bank_transfer';
-      const response = await createOrder(paymentMethod);
-
-      setIsProcessing(false);
-
-      const data = response.data as any;
-      if (response.key === 'success' || (response as any).status === 'success') {
-        // Success
-        if (paymentMethod === 'online' && data?.invoice_url) {
-          // Redirect to payment gateway instead of opening in a new tab
-          window.location.href = data.invoice_url;
-        } else {
-          // For bank transfer or if no URL, just confirm
-          onConfirm();
-        }
-      } else {
-        setCardError(response.msg || 'حدث خطأ أثناء إنشاء الطلب');
-      }
-    } catch (error) {
-      setIsProcessing(false);
-      setCardError('حدث خطأ في الاتصال بالخادم');
+    if (selectedMethod === 'BANK_TRANSFER') {
+      handleSubmitDirect('BANK_TRANSFER');
+    } else {
+      handleSubmitDirect('CARD');
     }
   };
 
@@ -100,7 +67,34 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
     `flex-1 py-4 px-2 text-sm font-bold rounded-xl transition-all border flex items-center justify-center gap-x-2 relative overflow-hidden group ${selectedMethod === method
       ? 'bg-gradient-to-r from-purple-800 to-pink-600 border-pink-400 text-white shadow-lg shadow-purple-500/20'
       : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:border-white/20'
-    }`;
+    } ${(isProcessing || isLoadingSummary) ? 'opacity-50 cursor-not-allowed' : ''}`;
+
+  const handleSubmitDirect = async (method: PaymentMethod) => {
+    if (!currentUser) {
+      onRequestLogin();
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const paymentMethod = method === 'CARD' ? 'online' : 'bank_transfer';
+      const response = await createOrder(paymentMethod);
+      if (response.key === 'success' || (response as any).status === 'success') {
+        const data = response.data as any;
+        if (paymentMethod === 'online' && data?.invoice_url) {
+          window.location.href = data.invoice_url;
+          return;
+        }
+        onConfirm();
+      } else {
+        setCardError(response.msg || 'حدث خطأ أثناء إنشاء الطلب');
+      }
+    } catch (error) {
+      setCardError('حدث خطأ في الاتصال بالخادم');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[70] p-4 backdrop-blur-sm">
@@ -131,10 +125,24 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
           <div>
             <h3 className="text-sm font-bold text-slate-300 mb-3 px-1">اختر طريقة الدفع</h3>
             <div className="flex gap-4">
-              <button type="button" onClick={() => setSelectedMethod('CARD')} className={methodButtonClass('CARD')}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMethod('CARD');
+                  // Trigger direct submission for card
+                  handleSubmitDirect('CARD');
+                }}
+                className={methodButtonClass('CARD')}
+                disabled={isProcessing || isLoadingSummary}
+              >
                 <CreditCardIcon className="w-6 h-6" /> <span>بطاقة بنكية</span>
               </button>
-              <button type="button" onClick={() => setSelectedMethod('BANK_TRANSFER')} className={methodButtonClass('BANK_TRANSFER')}>
+              <button
+                type="button"
+                onClick={() => setSelectedMethod('BANK_TRANSFER')}
+                className={methodButtonClass('BANK_TRANSFER')}
+                disabled={isProcessing || isLoadingSummary}
+              >
                 <BanknotesIcon className="w-6 h-6" /> <span>تحويل بنكي</span>
               </button>
             </div>
@@ -161,22 +169,30 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
               <div className="space-y-4 text-center">
                 <h3 className="font-bold text-fuchsia-300 text-sm">تفاصيل الحساب البنكي للتحويل</h3>
                 <div className="bg-white/5 p-5 rounded-2xl border border-white/10 space-y-3 text-right text-sm">
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-slate-400">اسم صاحب الحساب</span>
-                    <span className="font-bold text-white">{drhopeData.accountHolderName || 'غير متوفر'}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-slate-400">اسم البنك</span>
-                    <span className="font-bold text-white">{drhopeData.bankName || 'غير متوفر'}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-slate-400">رقم IBAN</span>
-                    <span dir="ltr" className="font-mono text-fuchsia-300 select-all">{drhopeData.ibanNumber || 'غير متوفر'}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-slate-400">رقم الحساب</span>
-                    <span dir="ltr" className="font-mono text-white select-all">{drhopeData.accountNumber || 'غير متوفر'}</span>
-                  </div>
+                  {isLoadingSummary ? (
+                    <div className="py-8 text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-fuchsia-500 mx-auto"></div></div>
+                  ) : orderSummary?.bank_account ? (
+                    <>
+                      <div className="flex justify-between border-b border-white/5 pb-2">
+                        <span className="text-slate-400">اسم صاحب الحساب</span>
+                        <span className="font-bold text-white">{orderSummary.bank_account.account_name}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-white/5 pb-2">
+                        <span className="text-slate-400">اسم البنك</span>
+                        <span className="font-bold text-white">{orderSummary.bank_account.bank_name}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-white/5 pb-2">
+                        <span className="text-slate-400">رقم IBAN</span>
+                        <span dir="ltr" className="font-mono text-fuchsia-300 select-all">{orderSummary.bank_account.IBAN_number}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-white/5 pb-2">
+                        <span className="text-slate-400">رقم الحساب</span>
+                        <span dir="ltr" className="font-mono text-white select-all">{orderSummary.bank_account.account_number}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-4 text-center text-red-300">بيانات البنك غير متوفرة حالياً</div>
+                  )}
                 </div>
                 <div className="bg-amber-500/10 p-3 rounded-lg border border-amber-500/30 flex items-start gap-2 text-right">
                   <span className="text-amber-400 text-lg">⚠️</span>
