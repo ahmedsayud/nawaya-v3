@@ -486,6 +486,14 @@ export interface SubscriptionCreateResponse {
         online_payment: boolean;
         bank_transfer: boolean;
     };
+    subscription_id?: number;
+    subscription_details?: {
+        workshop_id: number;
+        workshop_title: string;
+        package_id: string | number;
+        package_title: string;
+        price: number;
+    };
     subscriptions: {
         subscription_id: number;
         subscription_details: {
@@ -525,7 +533,7 @@ export interface PaymentProcessResponse {
 }
 
 export interface PaymentProcessInput {
-    subscription_id: number;
+    subscription_id: number | number[];
     payment_type: 'online' | 'bank_transfer';
 }
 

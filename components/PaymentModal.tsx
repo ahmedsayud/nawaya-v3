@@ -23,12 +23,13 @@ interface PaymentModalProps {
         account_number: string;
         swift: string;
     };
+    recipientDetails?: any;
     onBack?: () => void;
 }
 
 type PaymentMethod = 'CARD' | 'BANK_TRANSFER';
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaymentSubmit, onBankPaymentSubmit, itemTitle, itemPackageName, amount, currentUser, onRequestLogin, paymentType, paymentOptions, bankAccount, onBack }) => {
+const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaymentSubmit, onBankPaymentSubmit, itemTitle, itemPackageName, amount, currentUser, onRequestLogin, paymentType, paymentOptions, bankAccount, recipientDetails, onBack }) => {
     const { drhopeData } = useUser();
 
     const paymentSettings = useMemo(() => ({
@@ -49,16 +50,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
     useEffect(() => {
         if (isOpen) setSelectedMethod(initialMethod);
     }, [isOpen, initialMethod]);
-    const [cardName, setCardName] = useState('');
-    const [cardNumber, setCardNumber] = useState('');
-    const [cardExpiry, setCardExpiry] = useState('');
-    const [cardCvv, setCardCvv] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [cardError, setCardError] = useState('');
 
     const isPaymentDisabled = useMemo(() => {
         if (amount === 0) return false;
-        if (paymentType === 'gift') return !paymentSettings.cardPaymentsEnabled;
+        if (paymentType === 'gift') return !paymentSettings.cardPaymentsEnabled && !paymentSettings.bankTransfersEnabled;
         return !paymentSettings.cardPaymentsEnabled && !paymentSettings.bankTransfersEnabled;
     }, [paymentType, paymentSettings, amount]);
 
@@ -83,32 +80,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
 
     if (!isOpen) return null;
 
-    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const input = e.target.value;
-        // Strip all non-digits
-        let digits = input.replace(/\D/g, '');
 
-        // Limit to 4 digits (MMYY)
-        if (digits.length > 4) {
-            digits = digits.slice(0, 4);
-        }
-
-        let formatted = digits;
-        if (digits.length > 2) {
-            formatted = digits.slice(0, 2) + ' / ' + digits.slice(2);
-        } else if (digits.length === 2 && (input.includes('/') || input.endsWith(' '))) {
-            // If user explicitly typed slash or space after 2 digits, add separator
-            formatted = digits + ' / ';
-        }
-
-        setCardExpiry(formatted);
-    };
-
-    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '').slice(0, 16);
-        const formattedValue = value.replace(/(.{4})/g, '$1 ').trim();
-        setCardNumber(formattedValue);
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -133,15 +105,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
         if (selectedMethod === 'BANK_TRANSFER') {
             onBankPaymentSubmit();
         } else if (selectedMethod === 'CARD') {
-            if (!cardName.trim() || cardNumber.replace(/\s/g, '').length !== 16 || cardExpiry.length !== 7 || cardCvv.length < 3) {
-                setCardError('يرجى ملء جميع بيانات البطاقة بشكل صحيح.');
-                return;
-            }
             setIsProcessing(true);
-            setTimeout(() => {
-                setIsProcessing(false);
-                onCardPaymentSubmit();
-            }, 1500);
+            onCardPaymentSubmit();
         }
     };
 
@@ -179,6 +144,30 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
                         <p className="font-bold text-lg text-white">{itemTitle}</p>
                         {itemPackageName && <p className="text-sm text-slate-300 mt-1">الباقة: <span className="text-white">{itemPackageName}</span></p>}
 
+                        {paymentType === 'gift' && recipientDetails?.recipients && (
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                                <h4 className="text-xs font-bold text-fuchsia-300 mb-2 uppercase tracking-wide">المهدى لهن:</h4>
+                                <div className="space-y-1">
+                                    {recipientDetails.recipients.map((r: any, idx: number) => (
+                                        <div key={idx} className="flex items-center gap-2 text-sm">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-fuchsia-400"></div>
+                                            <span className="text-white font-medium">{r.name}</span>
+                                            <span className="text-slate-400 text-xs">({r.whatsapp})</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {paymentType === 'payItForward' && recipientDetails?.seats && (
+                            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+                                <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wide">عدد المقاعد المتبرع بها:</h4>
+                                <div className="bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
+                                    <span className="text-white font-bold">{recipientDetails.seats} مقاعد</span>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="text-center mt-6 pt-4 border-t border-white/10">
                             <p className="text-xs text-slate-400 font-medium">المبلغ الإجمالي للدفع</p>
                             <div className="flex items-center justify-center gap-2 mt-1">
@@ -188,17 +177,31 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
                         </div>
                     </div>
 
-                    {amount > 0 && paymentType !== 'gift' && (
+                    {amount > 0 && (
                         <div>
                             <h3 className="text-sm font-bold text-slate-300 mb-3 px-1">اختر طريقة الدفع</h3>
                             <div className="flex gap-4">
                                 {paymentSettings.cardPaymentsEnabled && (
-                                    <button type="button" onClick={() => setSelectedMethod('CARD')} className={methodButtonClass('CARD')}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedMethod('CARD');
+                                            setIsProcessing(true);
+                                            onCardPaymentSubmit();
+                                        }}
+                                        className={methodButtonClass('CARD')}
+                                        disabled={isProcessing}
+                                    >
                                         <CreditCardIcon className="w-6 h-6" /> <span>بطاقة بنكية</span>
                                     </button>
                                 )}
                                 {paymentSettings.bankTransfersEnabled && (
-                                    <button type="button" onClick={() => setSelectedMethod('BANK_TRANSFER')} className={methodButtonClass('BANK_TRANSFER')}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedMethod('BANK_TRANSFER')}
+                                        className={methodButtonClass('BANK_TRANSFER')}
+                                        disabled={isProcessing}
+                                    >
                                         <BanknotesIcon className="w-6 h-6" />
                                         <span>تحويل بنكي</span>
                                     </button>
@@ -216,37 +219,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onCardPaym
 
                     <div>
                         {amount > 0 && selectedMethod === 'CARD' ? (
-                            <div className="bg-black/20 p-5 rounded-2xl border border-fuchsia-500/20 space-y-4">
-                                <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-2">
-                                    <h3 className="font-bold text-white text-sm">بيانات البطاقة</h3>
-                                    <div className="flex items-center gap-x-2 opacity-80">
-                                        <VisaIcon className="w-8" />
-                                        <MastercardIcon className="w-8" />
-                                    </div>
+                            <div className="bg-black/20 p-8 rounded-2xl border border-fuchsia-500/20 text-center space-y-4">
+                                <div className="w-16 h-16 bg-fuchsia-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <LockClosedIcon className="w-8 h-8 text-fuchsia-400" />
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 mb-1.5 block">رقم البطاقة</label>
-                                    <div className="relative">
-                                        <input type="tel" value={cardNumber} onChange={handleCardNumberChange} placeholder="0000 0000 0000 0000" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg ltr-input focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" maxLength={19} required />
-                                        <LockClosedIcon className="w-4 h-4 text-slate-500 absolute right-3 top-3.5" />
-                                    </div>
+                                <h3 className="font-bold text-white text-lg">بوابة دفع آمنة</h3>
+                                <p className="text-slate-300 text-sm leading-relaxed">
+                                    سيتم تحويلك الآن إلى بوابة الدفع الخارجية لإتمام العملية بأمان.
+                                </p>
+                                <div className="flex items-center justify-center gap-4 pt-2 opacity-70">
+                                    <VisaIcon className="w-10" />
+                                    <MastercardIcon className="w-10" />
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 mb-1.5 block">الاسم على البطاقة</label>
-                                    <input type="text" value={cardName} onChange={e => setCardName(e.target.value)} placeholder="Full Name" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" required />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-400 mb-1.5 block">تاريخ الانتهاء</label>
-                                        <input type="text" value={cardExpiry} onChange={handleExpiryChange} placeholder="MM / YY" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg ltr-input focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" required />
-                                        <p className="text-[10px] text-slate-500 mt-1 text-left dir-ltr">Ex: 05 / 26</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-400 mb-1.5 block">CVV</label>
-                                        <input type="tel" value={cardCvv} onChange={e => setCardCvv(e.target.value.replace(/\D/g, ''))} placeholder="123" className="w-full p-3 bg-white/5 border border-white/10 rounded-lg ltr-input focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-white placeholder-slate-600" maxLength={4} required />
-                                    </div>
-                                </div>
-                                {cardError && <p className="text-sm text-red-400 text-center bg-red-900/20 p-2 rounded border border-red-500/20">{cardError}</p>}
                             </div>
                         ) : amount > 0 && selectedMethod === 'BANK_TRANSFER' ? (
                             <div className="space-y-4 text-center">

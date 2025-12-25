@@ -303,14 +303,14 @@ const PublicApp: React.FC = () => {
         if (!paymentModalIntent || !currentUser || !subscriptionApiResponse) return;
         const { type, item, pkg, amount, recipientDetails } = paymentModalIntent;
 
-        const subscriptionId = subscriptionApiResponse.subscriptions[0]?.subscription_id;
-        if (!subscriptionId) {
+        const subscriptionIds = subscriptionApiResponse.subscriptions.map(s => s.subscription_id);
+        if (subscriptionIds.length === 0) {
             showToast('خطأ في بيانات الاشتراك.', 'error');
             return;
         }
 
         const paymentResult = await processSubscriptionPayment({
-            subscription_id: subscriptionId,
+            subscription_id: subscriptionIds.length === 1 ? subscriptionIds[0] : subscriptionIds,
             payment_type: method === 'CARD' ? 'online' : 'bank_transfer'
         });
 
@@ -320,7 +320,7 @@ const PublicApp: React.FC = () => {
                 return;
             }
 
-            showToast(paymentResult.msg || 'تم الاشتراك بنجاح!', 'success');
+            showToast(paymentResult.data?.message || paymentResult.msg || 'تم الاشتراك بنجاح!', 'success');
             setIsPaymentModalOpen(false);
             setPaymentModalIntent(null);
             setSubscriptionApiResponse(null);
@@ -345,7 +345,7 @@ const PublicApp: React.FC = () => {
                 return;
             }
 
-            showToast(paymentResult.msg || 'تمت المساهمة بنجاح!', 'success');
+            showToast(paymentResult.data?.message || paymentResult.msg || 'تمت المساهمة بنجاح!', 'success');
             setIsPaymentModalOpen(false);
             setPaymentModalIntent(null);
             setCharityApiResponse(null);
@@ -486,6 +486,7 @@ const PublicApp: React.FC = () => {
                     paymentType={paymentModalIntent.type}
                     paymentOptions={paymentModalIntent.type === 'payItForward' ? charityApiResponse?.payment_options : subscriptionApiResponse?.payment_options}
                     bankAccount={paymentModalIntent.type === 'payItForward' ? charityApiResponse?.bank_account : subscriptionApiResponse?.bank_account}
+                    recipientDetails={paymentModalIntent.recipientDetails}
                     onBack={paymentModalIntent.type === 'workshop' ? () => {
                         // Close payment modal
                         setIsPaymentModalOpen(false);

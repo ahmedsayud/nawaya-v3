@@ -1720,7 +1720,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             const data = await response.json();
             if (response.ok && data.key === 'success') {
-                return data.data;
+                const rawData = data.data;
+                // Normalize response: if it's 'myself', the API returns subscription_id directly.
+                // We wrap it in a subscriptions array to maintain a consistent structure across the app.
+                if (rawData.subscription_id && !rawData.subscriptions) {
+                    return {
+                        ...rawData,
+                        subscriptions: [{
+                            subscription_id: rawData.subscription_id,
+                            subscription_details: rawData.subscription_details
+                        }]
+                    };
+                }
+                return rawData;
             }
             return null;
         } catch (error) {
@@ -1735,7 +1747,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!token) return null;
 
             const formData = new FormData();
-            formData.append('subscription_id', input.subscription_id.toString());
+            if (Array.isArray(input.subscription_id)) {
+                input.subscription_id.forEach((id, i) => formData.append(`subscription_ids[${i}]`, id.toString()));
+            } else {
+                formData.append('subscription_id', input.subscription_id.toString());
+            }
             formData.append('payment_type', input.payment_type);
 
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.SUBSCRIPTIONS.PROCESS}`, {
