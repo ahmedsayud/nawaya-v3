@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Workshop, Package } from '../types';
-import { CloseIcon, HeartIcon, GiftIcon, UserIcon, PlusCircleIcon, TrashIcon, UserAddIcon, ArrowRightIcon } from './icons';
+import { CloseIcon, HeartIcon, GiftIcon, UserIcon, PlusCircleIcon, TrashIcon, UserAddIcon } from './icons';
 import { useUser } from '../context/UserContext';
 import { toEnglishDigits } from '../utils';
 
@@ -9,7 +9,6 @@ interface UnifiedGiftModalProps {
     workshop: Workshop;
     selectedPackage: Package | null;
     onClose: () => void;
-    onBack?: () => void;
     onProceed: (data: { type: 'friend' | 'fund'; recipients?: any[]; giftMessage?: string; seats?: number; totalAmount: number }) => void;
 }
 
@@ -20,7 +19,7 @@ interface Recipient {
     countryCode: string;
 }
 
-const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedPackage, onClose, onBack, onProceed }) => {
+const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedPackage, onClose, onProceed }) => {
     const [activeTab, setActiveTab] = useState<'friend' | 'fund'>('friend');
 
     // Friend Gift State (Multiple individual recipients)
@@ -107,15 +106,9 @@ const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedP
                         <GiftIcon className="w-6 h-6 text-fuchsia-400" />
                         <span>إهداء مقعد</span>
                     </h3>
-                    {onBack ? (
-                        <button onClick={onBack} className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors transform hover:-translate-x-1">
-                            <ArrowRightIcon className="w-6 h-6" />
-                        </button>
-                    ) : (
-                        <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors">
-                            <CloseIcon className="w-6 h-6" />
-                        </button>
-                    )}
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors">
+                        <CloseIcon className="w-6 h-6" />
+                    </button>
                 </header>
 
                 {/* Tabs */}

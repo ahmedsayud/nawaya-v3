@@ -487,50 +487,17 @@ const PublicApp: React.FC = () => {
                     paymentOptions={paymentModalIntent.type === 'payItForward' ? charityApiResponse?.payment_options : subscriptionApiResponse?.payment_options}
                     bankAccount={paymentModalIntent.type === 'payItForward' ? charityApiResponse?.bank_account : subscriptionApiResponse?.bank_account}
                     recipientDetails={paymentModalIntent.recipientDetails}
-                    onBack={() => {
+                    onBack={paymentModalIntent.type === 'workshop' ? () => {
                         // Close payment modal
                         setIsPaymentModalOpen(false);
-                        // Re-open previous modal based on paymentType
-                        if (paymentModalIntent.type === 'workshop') {
-                            setOpenedWorkshopId(paymentModalIntent.item.id);
-                        } else if (paymentModalIntent.type === 'gift' || paymentModalIntent.type === 'payItForward') {
-                            setGiftModalIntent({
-                                workshop: paymentModalIntent.item as Workshop,
-                                pkg: paymentModalIntent.pkg || (paymentModalIntent.item as Workshop).packages?.[0] || null
-                            });
-                            setIsGiftModalOpen(true);
-                        }
-                    }}
+                        // Re-open workshop details
+                        setOpenedWorkshopId(paymentModalIntent.item.id);
+                    } : undefined}
                 />
             )}
-            {isGiftModalOpen && giftModalIntent && (
-                <UnifiedGiftModal
-                    workshop={giftModalIntent.workshop}
-                    selectedPackage={giftModalIntent.pkg}
-                    onClose={() => setIsGiftModalOpen(false)}
-                    onBack={() => {
-                        setIsGiftModalOpen(false);
-                        setOpenedWorkshopId(giftModalIntent.workshop.id);
-                    }}
-                    onProceed={handleGiftProceed}
-                />
-            )}
+            {isGiftModalOpen && giftModalIntent && <UnifiedGiftModal workshop={giftModalIntent.workshop} selectedPackage={giftModalIntent.pkg} onClose={() => setIsGiftModalOpen(false)} onProceed={handleGiftProceed} />}
             {isBoutiqueModalOpen && <BoutiqueModal isOpen={isBoutiqueModalOpen} onClose={() => setIsBoutiqueModalOpen(false)} onCheckout={handleCheckout} onRequestLogin={() => handleLoginClick(false)} initialView={boutiqueInitialView} />}
-            {isProductCheckoutOpen && (
-                <ProductCheckoutModal
-                    isOpen={isProductCheckoutOpen}
-                    onClose={() => setIsProductCheckoutOpen(false)}
-                    onBack={() => {
-                        setIsProductCheckoutOpen(false);
-                        setBoutiqueInitialView('cart');
-                        setIsBoutiqueModalOpen(true);
-                    }}
-                    onConfirm={() => handleProductOrderConfirm(false)}
-                    onCardPaymentConfirm={() => handleProductOrderConfirm(true)}
-                    onRequestLogin={() => { setIsProductCheckoutOpen(false); handleLoginClick(false); }}
-                    currentUser={currentUser}
-                />
-            )}
+            {isProductCheckoutOpen && <ProductCheckoutModal isOpen={isProductCheckoutOpen} onClose={() => setIsProductCheckoutOpen(false)} onConfirm={() => handleProductOrderConfirm(false)} onCardPaymentConfirm={() => handleProductOrderConfirm(true)} onRequestLogin={() => { setIsProductCheckoutOpen(false); handleLoginClick(false); }} currentUser={currentUser} />}
             {isProfileOpen && <ProfilePage isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={currentUser} onZoomRedirect={(link) => setZoomRedirectLink(link)} onPlayRecording={(w, r) => setWatchData({ workshop: w, recording: r })} onViewAttachment={(note) => setAttachmentToView(note)} onViewRecommendedWorkshop={(id) => { setIsProfileOpen(false); setOpenedWorkshopId(id); }} showToast={showToast} onPayForConsultation={() => { }} onViewInvoice={(details) => setInvoiceToView(details)} onViewCertificate={(details) => setCertificateToView(details)} />}
 
             {isVideoModalOpen && <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} />}
