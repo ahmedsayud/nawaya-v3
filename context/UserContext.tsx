@@ -157,6 +157,7 @@ interface UserContextType {
     updatePartner: (partner: Partner) => void;
     deletePartner: (id: string) => void;
     addBroadcastToHistory: (campaign: Omit<BroadcastCampaign, 'id' | 'timestamp'>) => BroadcastCampaign;
+    fetchDrHopeContent: () => Promise<void>;
 
     // Expenses
     addExpense: (expense: Omit<Expense, 'id'>) => void;
@@ -408,6 +409,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // 1. Fetch Products (Boutique)
             try {
                 const productData = await fetchData(API_ENDPOINTS.DRHOPE.PRODUCTS);
+                console.log('[fetchDrHopeContent] Products API response:', { key: productData.key, dataSize: productData.data?.length });
                 if (productData.key === 'success' && Array.isArray(productData.data)) {
                     const mappedProducts: Product[] = productData.data.map((p: any) => ({
                         id: p.id,
@@ -417,8 +419,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         description: p.description
                     }));
                     setProducts(mappedProducts);
+                    console.log('[fetchDrHopeContent] Products mapped and set:', mappedProducts.length);
+                } else {
+                    console.warn('[fetchDrHopeContent] Products fetch returned success key but invalid data structure', productData);
                 }
-            } catch (e) { console.error('Failed to fetch products', e); }
+            } catch (e) {
+                console.error('[fetchDrHopeContent] Failed to fetch products', e);
+            }
 
             // 2. Fetch Partners
             try {
@@ -1898,7 +1905,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         addPendingGift, checkAndClaimPendingGifts, donateToPayItForward, grantPayItForwardSeat, updatePendingGift, deletePendingGift, restorePendingGift, permanentlyDeletePendingGift, adminManualClaimGift,
 
-        markNotificationsAsRead, markNotificationAsRead, deleteNotification, addNotificationForMultipleUsers, updateDrhopeData, addPartner, updatePartner, deletePartner, addBroadcastToHistory,
+        markNotificationsAsRead, markNotificationAsRead, deleteNotification, addNotificationForMultipleUsers, updateDrhopeData, addPartner, updatePartner, deletePartner, addBroadcastToHistory, fetchDrHopeContent,
 
         addExpense, updateExpense, deleteExpense, restoreExpense, permanentlyDeleteExpense,
 
@@ -1922,7 +1929,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Charity Actions
         buyCharitySeats,
         processCharityPayment
-    }), [currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, pendingGifts, expenses, broadcastHistory, cart, paginationMeta, countries, countriesDebugInfo, createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop, fetchEarliestWorkshop]);
+    }), [currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, pendingGifts, expenses, broadcastHistory, cart, paginationMeta, countries, countriesDebugInfo, createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop, fetchEarliestWorkshop, fetchDrHopeContent]);
 
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

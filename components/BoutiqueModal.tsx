@@ -16,8 +16,15 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
   isOpen, onClose, onCheckout, onRequestLogin, initialView = 'products'
 }) => {
   const [view, setView] = useState<'products' | 'cart'>(initialView);
-  const { products, cart, addToCart, updateCartItem, removeFromCart, currentUser } = useUser();
+  const { products, cart, addToCart, updateCartItem, removeFromCart, currentUser, fetchDrHopeContent } = useUser();
   const visibleProducts = products.filter(p => !p.isDeleted);
+
+  React.useEffect(() => {
+    if (isOpen && visibleProducts.length === 0) {
+      console.log('[BoutiqueModal] Products list empty, triggering re-fetch...');
+      fetchDrHopeContent();
+    }
+  }, [isOpen, visibleProducts.length, fetchDrHopeContent]);
 
   const cartItemCount = useMemo(() => {
     if (!cart || !cart.items) return 0;
