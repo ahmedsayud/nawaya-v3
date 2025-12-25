@@ -60,37 +60,48 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
     setIsLoading(false);
   };
 
-  const handlePageChange = (page: number) => {
-    if (page < 1 || (paginationMeta && page > paginationMeta.last_page)) return;
-    handleFetch(page, searchTerm, activeFilter);
-    // Scroll to section after page change
-    const section = document.getElementById('workshops_section');
-    if (section) section.scrollIntoView({ behavior: 'smooth' });
-  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const visibleWorkshops = workshops.filter(w => w.isVisible);
 
-  // Still separate into sections manually from the current page's results
-  // Sort by date to ensure chronological order for the countdown candidate
-
-
-  // Sort by Date Descending for Display (User Request: "Furthest workshop first")
+  // Sorting logic (moved up for use in pagination)
   const upcomingSortedById = [...visibleWorkshops]
-    .filter(w => !w.isRecorded && !isWorkshopExpired(w))
+    .filter(w => !w.isRecorded)
     .sort((a, b) => {
       const dateA = parseWorkshopDateTime(a.startDate, a.startTime).getTime();
       const dateB = parseWorkshopDateTime(b.startDate, b.startTime).getTime();
-      return dateB - dateA; // Furthest first
+      return dateB - dateA;
     });
 
-  // Sort by Date Ascending for Display
   const recordedWorkshops = visibleWorkshops
     .filter(w => w.isRecorded)
     .sort((a, b) => {
       const dateA = parseWorkshopDateTime(a.startDate, a.startTime).getTime();
       const dateB = parseWorkshopDateTime(b.startDate, b.startTime).getTime();
-      return dateA - dateB; // Oldest first
+      return dateA - dateB;
     });
+
+  // Combine for total count but we might still display in sections
+  const allSortedWorkshops = [...upcomingSortedById, ...recordedWorkshops];
+  const totalItems = allSortedWorkshops.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  // Get current page items
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentItems = allSortedWorkshops.slice(startIndex, endIndex);
+
+  // Split current items back into upcoming/recorded for sectional display
+  const paginatedUpcoming = currentItems.filter(w => !w.isRecorded);
+  const paginatedRecorded = currentItems.filter(w => w.isRecorded);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    onScrollToSection('workshops_section');
+  };
 
   // Sort by Date Ascending for "Next Up" Logic
   const upcomingSortedByDate = [...visibleWorkshops]
@@ -209,7 +220,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
           </div>
         ) : (
           <>
-            {upcomingSortedById.length > 0 && (
+            {paginatedUpcoming.length > 0 && (
               <section id="live_events" className="text-right mb-12">
                 <div className="relative mb-8">
                   <h2 className="text-xl font-bold text-slate-900 pb-2 tracking-wider inline-flex items-center gap-2">
@@ -218,14 +229,14 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
                   </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                  {upcomingSortedById.map(workshop => (
+                  {paginatedUpcoming.map(workshop => (
                     <WorkshopCard key={workshop.id} workshop={workshop} user={user} onEnroll={() => { }} onOpenDetails={onOpenWorkshopDetails} />
                   ))}
                 </div>
               </section>
             )}
 
-            {recordedWorkshops.length > 0 && (
+            {paginatedRecorded.length > 0 && (
               <section id="record_events" className="text-right">
                 <div className="relative mb-8">
                   <h2 className="text-xl font-bold text-slate-900 pb-2 tracking-wider inline-flex items-center gap-2">
@@ -234,37 +245,38 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
                   </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                  {recordedWorkshops.map(workshop => (
+                  {paginatedRecorded.map(workshop => (
                     <WorkshopCard key={workshop.id} workshop={workshop} user={user} onEnroll={() => { }} onOpenDetails={onOpenWorkshopDetails} />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Pagination Controls */}
-            {paginationMeta && paginationMeta.last_page > 1 && (
-              <div className="mt-12 flex flex-col items-center gap-4">
-                <div className="flex items-center justify-center gap-2">
+            {/* Pagination Controls - Updated for client-side */}
+            {totalPages > 1 && (
+              <div className="mt-16 flex flex-col items-center gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-center gap-4 flex-wrap">
                   <button
-                    onClick={() => handlePageChange(paginationMeta.current_page - 1)}
-                    disabled={paginationMeta.current_page === 1 || isLoading}
-                    className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1 || isLoading}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 border-slate-200 text-slate-700 hover:border-pink-500 hover:text-pink-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm bg-white shadow-sm"
                     aria-label="Previous Page"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
+                    <span>السابق</span>
                   </button>
 
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: paginationMeta.last_page }, (_, i) => i + 1).map(page => (
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
                         disabled={isLoading}
-                        className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${paginationMeta.current_page === page
-                          ? 'bg-gradient-to-r from-purple-800 to-pink-600 text-white shadow-md'
-                          : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200'
+                        className={`w-12 h-12 rounded-xl text-sm font-black transition-all transform hover:scale-105 ${currentPage === page
+                          ? 'bg-gradient-to-r from-purple-800 to-pink-600 text-white shadow-xl scale-110 ring-4 ring-pink-500/20'
+                          : 'bg-white text-slate-600 hover:bg-slate-100 border-2 border-slate-100 hover:border-slate-300'
                           }`}
                       >
                         {page}
@@ -273,19 +285,23 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
                   </div>
 
                   <button
-                    onClick={() => handlePageChange(paginationMeta.current_page + 1)}
-                    disabled={paginationMeta.current_page === paginationMeta.last_page || isLoading}
-                    className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages || isLoading}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 border-slate-200 text-slate-700 hover:border-pink-500 hover:text-pink-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm bg-white shadow-sm"
                     aria-label="Next Page"
                   >
+                    <span>التالي</span>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
                 </div>
-                <p className="text-slate-500 text-sm font-medium">
-                  عرض {visibleWorkshops.length} من {paginationMeta.total} ورشة
-                </p>
+                <div className="flex flex-col items-center gap-1">
+                  <p className="text-slate-500 text-sm font-bold bg-white px-4 py-1.5 rounded-full border border-slate-100 shadow-inner">
+                    عرض {currentItems.length} من {totalItems} ورشة
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium">الصفحة {currentPage} من {totalPages}</p>
+                </div>
               </div>
             )}
           </>

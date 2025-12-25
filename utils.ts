@@ -80,16 +80,26 @@ export const isWorkshopExpired = (workshop: Workshop): boolean => {
     return false; // If there's no date, it cannot be expired.
   }
 
-  // Parse the full start date and time to check if workshop has begun
+  // Parse the full start date and time
   const startDateTime = parseWorkshopDateTime(workshop.startDate, workshop.startTime);
   if (isNaN(startDateTime.getTime())) {
-    return false; // Invalid date string, assume not expired.
+    return false;
   }
 
   const now = new Date();
 
-  // Workshop is expired if it has already started
-  return startDateTime < now;
+  // If there's an end date, use it for expiration
+  if (workshop.endDate) {
+    const endDateTime = parseWorkshopDateTime(workshop.endDate, workshop.endTime || '23:59');
+    if (!isNaN(endDateTime.getTime())) {
+      return now > endDateTime;
+    }
+  }
+
+  // Fallback: If no end date, allow it to show for 24 hours after it starts
+  // This ensures a "Live" workshop doesn't disappear the second it begins.
+  const twentyFourHoursAfterStart = new Date(startDateTime.getTime() + (24 * 60 * 60 * 1000));
+  return now > twentyFourHoursAfterStart;
 };
 
 /**

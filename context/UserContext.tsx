@@ -237,6 +237,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchWorkshops = async (options?: { page?: number; type?: string; search?: string }) => {
         try {
             const queryParams = new URLSearchParams();
+            queryParams.append('per_page', '10');
             if (options?.page) queryParams.append('page', options.page.toString());
             if (options?.type) queryParams.append('type', options.type);
             if (options?.search) queryParams.append('search', options.search);
@@ -287,8 +288,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const mappedRecorded = recorded_workshops.map((w: any) => mapWorkshop(w, true));
 
                 setWorkshops([...mappedLive, ...mappedRecorded]);
-                if (data.data.pagination) {
-                    setPaginationMeta(data.data.pagination);
+                // Robust pagination extraction
+                const pagination = data.data.pagination || data.pagination;
+                if (pagination) {
+                    setPaginationMeta(pagination);
                 }
             }
         } catch (error) {
