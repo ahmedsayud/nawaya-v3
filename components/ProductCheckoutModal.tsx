@@ -148,6 +148,12 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
             </div>
           </div>
 
+          {cardError && (
+            <div className="bg-red-500/10 p-4 rounded-xl border border-red-500/30 text-center animate-shake">
+              <p className="text-sm font-bold text-red-300">{cardError}</p>
+            </div>
+          )}
+
           <div>
             {selectedMethod === 'CARD' ? (
               <div className="bg-black/20 p-5 rounded-2xl border border-fuchsia-500/20 space-y-4">
