@@ -21,6 +21,7 @@ interface Recipient {
 }
 
 const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedPackage, onClose, onBack, onProceed }) => {
+    const { countries } = useUser();
     const [activeTab, setActiveTab] = useState<'friend' | 'fund'>('friend');
 
     // Friend Gift State (Multiple individual recipients)
@@ -178,10 +179,15 @@ const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedP
                                                     <select
                                                         value={recipient.countryCode}
                                                         onChange={e => updateRecipient(recipient.id, 'countryCode', e.target.value)}
-                                                        className={`${inputClass} w-32`}
+                                                        className="w-32 p-3 bg-white border border-slate-600 rounded-md text-black"
+                                                        style={{ color: 'black', backgroundColor: 'white' }}
                                                     >
-                                                        <option value="" className="text-gray-500 bg-white" style={{ color: '#6b7280', backgroundColor: 'white' }}>الدولة</option>
-                                                        {useUser().countries.map(c => <option key={c.id} value={c.code} className="text-black bg-white" style={{ color: 'black', backgroundColor: 'white' }}>{c.name}</option>)}
+                                                        <option value="" disabled className="text-gray-500 bg-white" style={{ color: '#6b7280', backgroundColor: 'white' }}>الدولة</option>
+                                                        {countries.map(c => (
+                                                            <option key={c.id} value={c.code} className="text-black bg-white" style={{ color: 'black', backgroundColor: 'white' }}>
+                                                                {c.name} (+{c.code})
+                                                            </option>
+                                                        ))}
                                                         <option value="OTHER" className="text-black bg-white" style={{ color: 'black', backgroundColor: 'white' }}>أخرى</option>
                                                     </select>
                                                 </div>

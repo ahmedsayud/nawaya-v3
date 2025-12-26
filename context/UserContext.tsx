@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, createContext, useContext } from 'react';
+import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../constants';
 import { User, Workshop, DrhopeData, Notification, SubscriptionStatus, Subscription, Product, Order, OrderStatus, Partner, ConsultationRequest, Theme, ThemeColors, CreditTransaction, PendingGift, Expense, BroadcastCampaign, Review, Country, Cart, CartItem, OrderSummaryResponse, CreateOrderResponse, PaginationMeta, Package, SubscriptionCreateResponse, SubscriptionCreateInput, PaymentProcessResponse, PaymentProcessInput, CharityCreateResponse, CharityCreateInput, CharityProcessInput, EarliestWorkshopData, EarliestWorkshopResponse } from '../types';
 import { normalizePhoneNumber, parseArabicDateRange } from '../utils';
@@ -1865,27 +1866,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
                 const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.COUNTRIES}`;
                 console.log('Fetching countries from:', url);
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP Error ${response.status}`);
-                }
 
-                // Clone response to check if it matches expected JSON
-                const text = await response.text();
-                try {
-                    const data = JSON.parse(text);
-                    console.log('Countries API response:', data);
-                    if (data.key === 'success' && Array.isArray(data.data)) {
-                        setCountries(data.data);
-                        setCountriesDebugInfo(`Success (${data.data.length})`);
-                        console.log('Countries set in state:', data.data.length);
-                    } else {
-                        setCountriesDebugInfo(`Invalid Data Key: ${data.key}`);
-                        console.error('Countries API returned unexpected format:', data);
-                    }
-                } catch (e) {
-                    setCountriesDebugInfo(`Parse Error: ${text.substring(0, 50)}...`);
-                    console.error('JSON Parse Error', e);
+                const response = await axios.get(url);
+                const data = response.data;
+
+                console.log('Countries API response:', data);
+                if (data.key === 'success' && Array.isArray(data.data)) {
+                    setCountries(data.data);
+                    setCountriesDebugInfo(`Success (${data.data.length})`);
+                    console.log('Countries set in state:', data.data.length);
+                } else {
+                    setCountriesDebugInfo(`Invalid Data Key: ${data.key}`);
+                    console.error('Countries API returned unexpected format:', data);
                 }
             } catch (error: any) {
                 setCountriesDebugInfo(`Fetch Error: ${error.message}`);
