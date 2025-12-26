@@ -43,7 +43,7 @@ export const API_ENDPOINTS = {
         CREATE: '/api/subscriptions/create',
         PROCESS: '/api/subscriptions/process-payment',
         BUY_CHARITY: '/api/subscriptions/buy-charity',
-        PROCESS_CHARITY: '/api/subscriptions/process-charity-payment',
+        PROCESS_CHARITY: '/api/subscriptions/process-charity',
     },
     NOTIFICATIONS: {
         GET_ALL: '/api/notifications',

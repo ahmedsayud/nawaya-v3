@@ -384,32 +384,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
     }, [nextLiveSub, apiWorkshops]);
 
     const sortedSubscriptions = useMemo(() => {
-        const now = new Date();
-        const getGroup = (sub: Subscription) => {
-            const w = apiWorkshops.find(wk => wk.id === sub.workshopId);
-            if (!w) return 4;
-            if (w.isRecorded) return 3;
-            if (isWorkshopExpired(w)) return 2;
-            return 1; // Upcoming/Active Live
-        };
-
-        const getSortTime = (sub: Subscription) => {
-            const w = apiWorkshops.find(wk => wk.id === sub.workshopId);
-            if (!w) return 0;
-            return parseWorkshopDateTime(w.startDate, w.startTime).getTime();
-        };
-
         return [...subscriptions].sort((a, b) => {
-            const groupA = getGroup(a);
-            const groupB = getGroup(b);
+            const wA = apiWorkshops.find(wk => wk.id === a.workshopId);
+            const wB = apiWorkshops.find(wk => wk.id === b.workshopId);
 
-            if (groupA !== groupB) return groupA - groupB;
+            if (!wA || !wB) return 0;
 
-            const timeA = getSortTime(a);
-            const timeB = getSortTime(b);
+            const timeA = parseWorkshopDateTime(wA.startDate, wA.startTime).getTime();
+            const timeB = parseWorkshopDateTime(wB.startDate, wB.startTime).getTime();
 
-            // All groups: Soonest first (Next workshop -> Later workshops)
-            return timeA - timeB;
+            // Sort by Date Descending (Newest First)
+            return timeB - timeA;
         });
     }, [subscriptions, apiWorkshops]);
 
@@ -674,6 +659,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                         <div className="flex flex-col gap-1">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-white text-lg">{workshop.title}</span>
+                                                                {/* Date Next to Title (if available) - Requested */}
+                                                                {dateValue && (
+                                                                    <span className="text-xs text-fuchsia-300 font-normal opacity-80 border-r-2 border-slate-600 pr-2 mr-2">
+                                                                        {dateValue}
+                                                                    </span>
+                                                                )}
                                                                 {showLiveStreamButton && (
                                                                     <span className="inline-flex items-center gap-1 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">LIVE</span>
                                                                 )}
