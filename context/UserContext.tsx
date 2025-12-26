@@ -93,6 +93,7 @@ interface UserContextType {
 
     // Auth & User Actions
     login: (email: string, phone: string) => Promise<{ user?: User; error?: string }>;
+    adminLogin: (userData: any) => void;
     logout: () => void;
     register: (fullName: string, email: string, phone: string, countryId: number) => Promise<{ user?: User; error?: string }>;
     checkRegistrationAvailability: (email: string, phone: string) => RegistrationAvailability;
@@ -1274,6 +1275,37 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const adminLogin = (userData: any) => {
+        const { token, user } = userData;
+        if (!token || !user) return;
+
+        const newUser: User = {
+            id: user.id,
+            fullName: user.name,
+            email: user.email,
+            phone: user.phone || '', // Admin link payload might not have phone
+            token: token,
+            subscriptions: [],
+            orders: [],
+            notifications: [],
+            creditTransactions: [],
+            isDeleted: false
+        };
+
+        localStorage.setItem('auth_token', token);
+        setCurrentUser(newUser);
+
+        // Check if user exists in local state to update or add
+        const existingUserIndex = users.findIndex(u => u.id === newUser.id);
+        if (existingUserIndex === -1) {
+            setUsers(prev => [...prev, newUser]);
+        } else {
+            setUsers(prev => prev.map(u => u.id === newUser.id ? newUser : u));
+        }
+
+        trackEvent('login', { method: 'admin_link' }, newUser);
+    };
+
     const findUserByCredential = (type: 'email' | 'phone', value: string) => {
         const normalizedValue = type === 'phone' ? normalizePhoneNumber(value) : value.toLowerCase();
         return users.find(u => !u.isDeleted && (type === 'phone' ? normalizePhoneNumber(u.phone) === normalizedValue : u.email.toLowerCase() === normalizedValue)) || null;
@@ -1885,7 +1917,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 if (response.status === 401) {
                     console.warn('Session expired orinvalidated (possibly logged in from another device). Logging out.');
-                    logout();
+                    await logout();
                     // Optionally force reload to clear all states cleanly
                     window.location.href = '/';
                 }
@@ -1914,7 +1946,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         countriesDebugInfo,
 
         // Auth & User Actions
-        login, logout, register, fetchProfile, payForConsultation,
+        login, logout, register, fetchProfile, payForConsultation, adminLogin,
         addUser, updateUser, deleteUser, restoreUser, permanentlyDeleteUser, convertToInternalCredit,
         findUserByCredential, checkRegistrationAvailability,
 

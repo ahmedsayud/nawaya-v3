@@ -37,7 +37,8 @@ import { isWorkshopExpired } from '../utils';
 const PublicApp: React.FC = () => {
     const {
         currentUser, workshops, products, placeOrder, addSubscription, addPendingGift, donateToPayItForward, cart,
-        createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop
+        createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop,
+        adminLogin
     } = useUser();
 
     // Navigation State
@@ -112,6 +113,39 @@ const PublicApp: React.FC = () => {
             if (postLoginGiftIntent) { setGiftModalIntent(postLoginGiftIntent); setIsGiftModalOpen(true); setPostLoginGiftIntent(null); }
         }
     }, [currentUser, postLoginPaymentIntent, postLoginGiftIntent]);
+
+    // Handle Admin Impersonation Link
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const authParam = searchParams.get('auth');
+
+        if (authParam) {
+            try {
+                // Decode Base64
+                const decodedJson = atob(authParam);
+                const authData = JSON.parse(decodedJson);
+
+                if (authData && authData.token && authData.user) {
+                    console.log('✅ Admin Impersonation Detected', authData.user.name);
+
+                    // Call UserContext to set user
+                    adminLogin(authData);
+
+                    // Clean URL
+                    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                    window.history.replaceState({ path: newUrl }, '', newUrl);
+
+                    // Open Profile
+                    setIsProfileOpen(true);
+                    setIsNavigationHubOpen(false); // Close hub if open to focus on profile
+                    showToast(`تم تسجيل الدخول كـ ${authData.user.name}`, 'success');
+                }
+            } catch (e) {
+                console.error('❌ Failed to process admin auth link', e);
+                showToast('رابط الدخول غير صالح', 'error');
+            }
+        }
+    }, []);
 
     // Determine if there is an active live stream right now
     const activeLiveWorkshop = useMemo(() => {
