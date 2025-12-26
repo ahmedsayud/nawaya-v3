@@ -492,7 +492,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
             if (result.success && result.invoiceUrl) {
                 showToast('جاري توجيهك إلى بوابة الدفع...', 'success');
                 // Redirect to payment gateway
-                window.location.href = result.invoiceUrl;
+                window.open(result.invoiceUrl, '_blank');
             } else {
                 showToast(result.message || 'حدث خطأ أثناء معالجة الدفع', 'error');
             }

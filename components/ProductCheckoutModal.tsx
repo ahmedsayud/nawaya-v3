@@ -83,7 +83,7 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
       if (response.key === 'success' || (response as any).status === 'success') {
         const data = response.data as any;
         if (paymentMethod === 'online' && data?.invoice_url) {
-          window.location.href = data.invoice_url;
+          window.open(data.invoice_url, '_blank');
           return;
         }
         onConfirm();

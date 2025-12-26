@@ -316,7 +316,7 @@ const PublicApp: React.FC = () => {
 
         if (paymentResult?.key === 'success') {
             if (method === 'CARD' && paymentResult.data.invoice_url) {
-                window.location.href = paymentResult.data.invoice_url;
+                window.open(paymentResult.data.invoice_url, '_blank');
                 return;
             }
 
@@ -341,7 +341,7 @@ const PublicApp: React.FC = () => {
 
         if (paymentResult?.key === 'success') {
             if (method === 'CARD' && paymentResult.data.invoice_url) {
-                window.location.href = paymentResult.data.invoice_url;
+                window.open(paymentResult.data.invoice_url, '_blank');
                 return;
             }
 
