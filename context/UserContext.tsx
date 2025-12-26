@@ -148,7 +148,6 @@ interface UserContextType {
     payForConsultation: (consultationId: number) => Promise<{ success: boolean; invoiceUrl?: string; message?: string }>;
 
     // General & Content
-    markNotificationsAsRead: () => void;
     markNotificationAsRead: (notificationId: string | number) => Promise<boolean>;
     deleteNotification: (notificationId: string | number) => Promise<boolean>;
     addNotificationForMultipleUsers: (userIds: number[], message: string) => void;
@@ -1543,8 +1542,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const markNotificationsAsRead = () => { if (currentUser) setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, notifications: u.notifications.map(n => ({ ...n, read: true })) } : u)); };
-
     const markNotificationAsRead = async (notificationId: string | number): Promise<boolean> => {
         try {
             const token = localStorage.getItem('auth_token');
@@ -1591,6 +1588,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const token = localStorage.getItem('auth_token');
             if (!token || !currentUser) return false;
 
+            // Optimistic update: Remove from UI immediately
+            setCurrentUser(prev => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    notifications: prev.notifications?.filter(n =>
+                        String(n.id) !== String(notificationId)
+                    ) || []
+                };
+            });
+
+            // Then call API
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.DELETE(notificationId)}`, {
                 method: 'DELETE',
                 headers: {
@@ -1600,32 +1609,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             if (!response.ok) {
-                console.error('[deleteNotification] ❌ Failed:', response.status);
+                console.error('[deleteNotification] ❌ API Failed:', response.status);
+                // We could revert state here if strict consistency is needed, 
+                // but for "delete" actions, users prefer it just going away.
                 return false;
             }
 
-            const result = await response.json();
-
-            if (result.key === 'success') {
-                // Remove notification from local state
-                setCurrentUser(prev => {
-                    if (!prev) return null;
-                    return {
-                        ...prev,
-                        notifications: prev.notifications?.filter(n =>
-                            String(n.id) !== String(notificationId)
-                        ) || []
-                    };
-                });
-                return true;
-            }
-
-            return false;
+            return true;
         } catch (error) {
             console.error('[deleteNotification] ❌ Error:', error);
             return false;
         }
     };
+
 
     const payForConsultation = async (consultationId: number): Promise<{ success: boolean; invoiceUrl?: string; message?: string }> => {
         try {
@@ -1924,7 +1920,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         addPendingGift, checkAndClaimPendingGifts, donateToPayItForward, grantPayItForwardSeat, updatePendingGift, deletePendingGift, restorePendingGift, permanentlyDeletePendingGift, adminManualClaimGift,
 
-        markNotificationsAsRead, markNotificationAsRead, deleteNotification, addNotificationForMultipleUsers, updateDrhopeData, addPartner, updatePartner, deletePartner, addBroadcastToHistory, fetchDrHopeContent,
+        markNotificationAsRead, deleteNotification, addNotificationForMultipleUsers, updateDrhopeData, addPartner, updatePartner, deletePartner, addBroadcastToHistory, fetchDrHopeContent,
 
         addExpense, updateExpense, deleteExpense, restoreExpense, permanentlyDeleteExpense,
 

@@ -46,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({
   isMobileMenuOpen, setIsMobileMenuOpen, onBoutiqueClick, onRequestConsultationClick, onOpenNavigationHub, isHomePage = false,
   isVisible = true
 }) => {
-  const { currentUser: user, logout: onLogout, notifications, drhopeData, markNotificationsAsRead } = useUser();
+  const { currentUser: user, logout: onLogout, notifications, drhopeData } = useUser();
   const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
   const [isMobileNotificationsOpen, setIsMobileNotificationsOpen] = useState(false);
   const [showGuestNotificationMessage, setShowGuestNotificationMessage] = useState(false);
@@ -98,7 +98,7 @@ const Header: React.FC<HeaderProps> = ({
     handleCloseMobileMenu();
     const willOpen = !isNotificationsPanelOpen;
     if (willOpen && unreadCount > 0) {
-      markNotificationsAsRead();
+      // Mark as read logic is now handled individually
     }
     setIsNotificationsPanelOpen(willOpen);
     setShowGuestNotificationMessage(false);
@@ -112,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({
     handleCloseMobileMenu();
     const willOpen = !isMobileNotificationsOpen;
     if (willOpen && unreadCount > 0) {
-      markNotificationsAsRead();
+      // Mark as read logic is now handled individually
     }
     setIsMobileNotificationsOpen(willOpen);
     setShowGuestNotificationMessage(false);

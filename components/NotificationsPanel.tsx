@@ -55,8 +55,11 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onClose, isMobi
               </div>
               {!notification.read && <span className="absolute top-4 left-4 h-2 w-2 rounded-full bg-fuchsia-500 animate-pulse"></span>}
               <button
-                onClick={(e) => handleDeleteClick(e, notification.id)}
-                className="flex-shrink-0 p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleDeleteClick(e, notification.id);
+                }}
+                className="flex-shrink-0 p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
                 aria-label="حذف الإشعار"
               >
                 <TrashIcon className="w-4 h-4" />
