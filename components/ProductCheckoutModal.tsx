@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useUser } from '../context/UserContext';
-import { CloseIcon, BanknotesIcon, CreditCardIcon, LockClosedIcon, VisaIcon, MastercardIcon } from './icons';
+import { CloseIcon, BanknotesIcon, CreditCardIcon, LockClosedIcon, VisaIcon, MastercardIcon, ArrowRightIcon } from './icons';
 import { User } from '../types';
 
 interface ProductCheckoutModalProps {
@@ -8,13 +8,14 @@ interface ProductCheckoutModalProps {
   onClose: () => void;
   onConfirm: () => void; // For bank transfers
   onCardPaymentConfirm: () => void; // For successful card payments
+  onBack?: () => void;
   onRequestLogin: () => void;
   currentUser: User | null;
 }
 
 type PaymentMethod = 'CARD' | 'BANK_TRANSFER';
 
-const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onClose, onConfirm, onCardPaymentConfirm, onRequestLogin, currentUser }) => {
+const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onClose, onConfirm, onCardPaymentConfirm, onBack, onRequestLogin, currentUser }) => {
   const { products, cart, createOrder, fetchOrderSummary } = useUser();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('CARD');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -101,7 +102,15 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
       <div className="bg-gradient-to-br from-[#2e0235] via-[#3b0764] to-[#4c1d95] text-slate-200 rounded-2xl shadow-2xl w-full max-w-lg border border-fuchsia-500/30 flex flex-col max-h-[90vh] animate-fade-in-up">
         <header className="p-5 flex justify-between items-center border-b border-fuchsia-500/20 flex-shrink-0 bg-black/20">
           <h2 className="text-xl font-bold text-white">تأكيد الطلب والدفع</h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors"><CloseIcon className="w-6 h-6" /></button>
+          {onBack ? (
+            <button onClick={onBack} className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors transform hover:-translate-x-1">
+              <ArrowRightIcon className="w-6 h-6" />
+            </button>
+          ) : (
+            <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors">
+              <CloseIcon className="w-6 h-6" />
+            </button>
+          )}
         </header>
 
         <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto p-6 space-y-6 custom-scrollbar">

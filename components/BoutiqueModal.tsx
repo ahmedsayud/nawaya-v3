@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useUser } from '../context/UserContext';
 import { Product } from '../types';
-import { CloseIcon, ShoppingCartIcon, TrashIcon, ArrowLeftIcon } from './icons';
+import { CloseIcon, ShoppingCartIcon, TrashIcon, ArrowRightIcon } from './icons';
 import ProductCard from './ProductCard';
 
 interface BoutiqueModalProps {
@@ -64,21 +64,13 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
       >
         {/* Header */}
         <header className="flex-shrink-0 flex justify-between items-center p-5 border-b border-fuchsia-500/20 bg-black/20">
-          <div className="flex items-center gap-x-3">
-            {view === 'cart' && (
-              <button onClick={() => setView('products')} className="p-2 rounded-full hover:bg-white/10 text-slate-300">
-                <ArrowLeftIcon className="w-5 h-5" />
-              </button>
-            )}
-            <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <span className="text-fuchsia-400">🛍️</span>
-                {view === 'products' ? 'بوتيك دكتور هوب' : 'سلة المشتريات'}
-              </h2>
-              {view === 'products' && <p className="text-xs text-fuchsia-300 mt-0.5">منتجات مختارة لدعم رحلتك</p>}
-            </div>
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <span className="text-fuchsia-400">🛍️</span>
+              {view === 'products' ? 'بوتيك دكتور هوب' : 'سلة المشتريات'}
+            </h2>
+            {view === 'products' && <p className="text-xs text-fuchsia-300 mt-0.5">منتجات مختارة لدعم رحلتك</p>}
           </div>
-
           <div className="flex items-center gap-x-4">
             <button
               onClick={() => setView(v => v === 'products' ? 'cart' : 'products')}
@@ -92,9 +84,15 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
                 </span>
               )}
             </button>
-            <button onClick={onClose} className="p-2 rounded-full text-slate-300 hover:bg-white/20 transition-colors" aria-label="إغلاق">
-              <CloseIcon className="w-6 h-6" />
-            </button>
+            {view === 'cart' ? (
+              <button onClick={() => setView('products')} className="p-2 rounded-full hover:bg-white/10 text-slate-300 transition-colors transform hover:-translate-x-1" aria-label="رجوع">
+                <ArrowRightIcon className="w-6 h-6" />
+              </button>
+            ) : (
+              <button onClick={onClose} className="p-2 rounded-full text-slate-300 hover:bg-white/20 transition-colors" aria-label="إغلاق">
+                <CloseIcon className="w-6 h-6" />
+              </button>
+            )}
           </div>
         </header>
 
@@ -178,26 +176,28 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
         </div>
 
         {/* Footer (Cart View Only) */}
-        {view === 'cart' && cartItems.length > 0 && (
-          <footer className="flex-shrink-0 p-5 border-t border-fuchsia-500/20 bg-black/30 backdrop-blur-md">
-            <div className="max-w-3xl mx-auto">
-              <div className="space-y-2 text-sm mb-4">
-                <div className="flex justify-between text-slate-300"><p>المجموع الفرعي:</p><p className="font-mono">{subtotal.toFixed(2)}</p></div>
-                <div className="flex justify-between text-slate-300"><p>ضريبة القيمة المضافة (5%):</p><p className="font-mono">{taxAmount.toFixed(2)}</p></div>
-                <div className="h-px bg-white/10 my-2"></div>
-                <div className="flex justify-between text-white font-bold text-xl"><p>الإجمالي:</p><p className="font-mono text-fuchsia-300">{totalAmount.toFixed(2)} <span className="text-sm font-normal text-slate-400">درهم</span></p></div>
+        {
+          view === 'cart' && cartItems.length > 0 && (
+            <footer className="flex-shrink-0 p-5 border-t border-fuchsia-500/20 bg-black/30 backdrop-blur-md">
+              <div className="max-w-3xl mx-auto">
+                <div className="space-y-2 text-sm mb-4">
+                  <div className="flex justify-between text-slate-300"><p>المجموع الفرعي:</p><p className="font-mono">{subtotal.toFixed(2)}</p></div>
+                  <div className="flex justify-between text-slate-300"><p>ضريبة القيمة المضافة (5%):</p><p className="font-mono">{taxAmount.toFixed(2)}</p></div>
+                  <div className="h-px bg-white/10 my-2"></div>
+                  <div className="flex justify-between text-white font-bold text-xl"><p>الإجمالي:</p><p className="font-mono text-fuchsia-300">{totalAmount.toFixed(2)} <span className="text-sm font-normal text-slate-400">درهم</span></p></div>
+                </div>
+                <button
+                  onClick={onCheckout}
+                  className="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-purple-900/30 transform hover:scale-[1.01] border border-fuchsia-500/20"
+                >
+                  الانتقال إلى الدفع الآمن
+                </button>
               </div>
-              <button
-                onClick={onCheckout}
-                className="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-purple-900/30 transform hover:scale-[1.01] border border-fuchsia-500/20"
-              >
-                الانتقال إلى الدفع الآمن
-              </button>
-            </div>
-          </footer>
-        )}
-      </div>
-    </div>
+            </footer>
+          )
+        }
+      </div >
+    </div >
   );
 };
 
