@@ -47,7 +47,7 @@ export const API_ENDPOINTS = {
     },
     NOTIFICATIONS: {
         GET_ALL: '/api/notifications',
-        MARK_AS_READ: (id: string | number) => `/api/notifications/${id}/mark-as-read`,
+        MARK_AS_READ: (id: string | number) => `/api/notifications/${id}/read`,
         DELETE: (id: string | number) => `/api/notifications/${id}`,
     }
 };

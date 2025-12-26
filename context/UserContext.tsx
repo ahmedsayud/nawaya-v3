@@ -1547,7 +1547,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const token = localStorage.getItem('auth_token');
             if (!token || !currentUser) return false;
 
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.MARK_AS_READ(notificationId)}`, {
+            const url = `${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.MARK_AS_READ(notificationId)}`;
+            console.log('[markNotificationAsRead] 🔄 Calling API:', url);
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -1599,25 +1602,30 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 };
             });
 
-            // Then call API
-            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.DELETE(notificationId)}`, {
-                method: 'DELETE',
+            // Use 'mark as read' API since it effectively removes the notification from view
+            // as confirmed by user ("when marked as read, it doesn't show here")
+            const url = `${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.MARK_AS_READ(notificationId)}`;
+            console.log('[deleteNotification] 🔄 Calling API (Mark as Read):', url);
+
+            const response = await fetch(url, {
+                method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Accept': 'application/json'
                 }
             });
 
             if (!response.ok) {
                 console.error('[deleteNotification] ❌ API Failed:', response.status);
-                // We could revert state here if strict consistency is needed, 
-                // but for "delete" actions, users prefer it just going away.
+                // If API fails, revert the change
+                await fetchProfile();
                 return false;
             }
 
             return true;
         } catch (error) {
             console.error('[deleteNotification] ❌ Error:', error);
+            await fetchProfile();
             return false;
         }
     };
