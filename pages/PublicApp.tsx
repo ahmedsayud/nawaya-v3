@@ -80,7 +80,7 @@ const PublicApp: React.FC = () => {
 
     const [watchData, setWatchData] = useState<{ workshop: Workshop, recording: Recording } | null>(null);
     const [paymentModalIntent, setPaymentModalIntent] = useState<PaymentIntent | null>(null);
-    const [giftModalIntent, setGiftModalIntent] = useState<{ workshop: Workshop, pkg: Package | null } | null>(null);
+    const [giftModalIntent, setGiftModalIntent] = useState<{ workshop: Workshop, pkg: Package | null, initialData?: any } | null>(null);
 
     // Dynamic Payment Info from Subscription API
     const [subscriptionApiResponse, setSubscriptionApiResponse] = useState<SubscriptionCreateResponse | null>(null);
@@ -89,7 +89,7 @@ const PublicApp: React.FC = () => {
 
     // Authentication & Navigation Flow State
     const [postLoginPaymentIntent, setPostLoginPaymentIntent] = useState<PaymentIntent | null>(null);
-    const [postLoginGiftIntent, setPostLoginGiftIntent] = useState<{ workshop: Workshop, pkg: Package | null } | null>(null);
+    const [postLoginGiftIntent, setPostLoginGiftIntent] = useState<{ workshop: Workshop, pkg: Package | null, initialData?: any } | null>(null);
 
     // New state to handle Navigation Hub logic
     const [returnToHub, setReturnToHub] = useState(false);
@@ -109,7 +109,16 @@ const PublicApp: React.FC = () => {
 
     useEffect(() => {
         if (currentUser) {
-            if (postLoginPaymentIntent) { setPaymentModalIntent(postLoginPaymentIntent); setIsPaymentModalOpen(true); setPostLoginPaymentIntent(null); }
+            if (postLoginPaymentIntent) {
+                if (postLoginPaymentIntent.type === 'workshop') {
+                    // Re-trigger enroll request to create subscription and get real price
+                    handleEnrollRequest(postLoginPaymentIntent.item as Workshop, postLoginPaymentIntent.pkg || null);
+                } else {
+                    setPaymentModalIntent(postLoginPaymentIntent);
+                    setIsPaymentModalOpen(true);
+                }
+                setPostLoginPaymentIntent(null);
+            }
             if (postLoginGiftIntent) { setGiftModalIntent(postLoginGiftIntent); setIsGiftModalOpen(true); setPostLoginGiftIntent(null); }
         }
     }, [currentUser, postLoginPaymentIntent, postLoginGiftIntent]);
@@ -126,7 +135,7 @@ const PublicApp: React.FC = () => {
                 const authData = JSON.parse(decodedJson);
 
                 if (authData && authData.token && authData.user) {
-                    
+
 
                     // Call UserContext to set user
                     adminLogin(authData);
@@ -141,7 +150,7 @@ const PublicApp: React.FC = () => {
                     showToast(`تم تسجيل الدخول كـ ${authData.user.name}`, 'success');
                 }
             } catch (e) {
-                
+
                 showToast('رابط الدخول غير صالح', 'error');
             }
         }
@@ -288,7 +297,12 @@ const PublicApp: React.FC = () => {
         setOpenedWorkshopId(null);
 
         if (!currentUser) {
-            setPostLoginPaymentIntent({ type: 'workshop', item: workshop, pkg: selectedPackage });
+            setPostLoginPaymentIntent({
+                type: 'workshop',
+                item: workshop,
+                pkg: selectedPackage,
+                amount: selectedPackage.discountPrice ?? selectedPackage.price ?? 0
+            });
             handleLoginClick(false);
             return;
         }
@@ -394,7 +408,7 @@ const PublicApp: React.FC = () => {
         const { workshop, pkg } = giftModalIntent;
 
         if (!currentUser) {
-            setPostLoginGiftIntent({ workshop, pkg });
+            setPostLoginGiftIntent({ workshop, pkg, initialData: data });
             handleLoginClick(false);
             return;
         }
@@ -547,6 +561,7 @@ const PublicApp: React.FC = () => {
                         setOpenedWorkshopId(giftModalIntent.workshop.id);
                     }}
                     onProceed={handleGiftProceed}
+                    initialData={giftModalIntent.initialData}
                 />
             )}
             {isBoutiqueModalOpen && <BoutiqueModal isOpen={isBoutiqueModalOpen} onClose={() => setIsBoutiqueModalOpen(false)} onCheckout={handleCheckout} onRequestLogin={() => handleLoginClick(false)} initialView={boutiqueInitialView} />}

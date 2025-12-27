@@ -11,6 +11,7 @@ interface UnifiedGiftModalProps {
     onClose: () => void;
     onBack?: () => void;
     onProceed: (data: { type: 'friend' | 'fund'; recipients?: any[]; giftMessage?: string; seats?: number; totalAmount: number }) => void;
+    initialData?: { type: 'friend' | 'fund'; recipients?: any[]; seats?: number };
 }
 
 interface Recipient {
@@ -20,17 +21,22 @@ interface Recipient {
     countryCode: string;
 }
 
-const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedPackage, onClose, onBack, onProceed }) => {
+const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedPackage, onClose, onBack, onProceed, initialData }) => {
     const { countries } = useUser();
-    const [activeTab, setActiveTab] = useState<'friend' | 'fund'>('friend');
+    const [activeTab, setActiveTab] = useState<'friend' | 'fund'>(initialData?.type || 'friend');
 
     // Friend Gift State (Multiple individual recipients)
-    const [friendRecipients, setFriendRecipients] = useState<Recipient[]>([
-        { id: Date.now(), name: '', phone: '', countryCode: '' }
-    ]);
+    const [friendRecipients, setFriendRecipients] = useState<Recipient[]>(
+        initialData?.recipients?.map((r: any) => ({
+            id: Date.now() + Math.random(),
+            name: r.name || '',
+            phone: r.originalPhone || r.phone || '', // Use preserved originalPhone
+            countryCode: r.countryCode || ''        // Use preserved countryCode
+        })) || [{ id: Date.now(), name: '', phone: '', countryCode: '' }]
+    );
 
     // Fund Gift State - Starts at 0 now
-    const [fundSeats, setFundSeats] = useState(0);
+    const [fundSeats, setFundSeats] = useState(initialData?.seats || 0);
     const [error, setError] = useState('');
 
     const pricePerSeat = selectedPackage?.discountPrice ?? selectedPackage?.price ?? workshop.price ?? 0;
@@ -73,7 +79,9 @@ const UnifiedGiftModal: React.FC<UnifiedGiftModalProps> = ({ workshop, selectedP
 
             const formattedRecipients = friendRecipients.map(r => ({
                 name: r.name,
-                whatsapp: r.countryCode === 'OTHER' ? r.phone : r.countryCode + r.phone
+                whatsapp: r.countryCode === 'OTHER' ? r.phone : r.countryCode + r.phone,
+                countryCode: r.countryCode, // Preserving this
+                originalPhone: r.phone      // Preserving this
             }));
 
             onProceed({

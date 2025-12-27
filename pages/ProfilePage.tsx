@@ -108,7 +108,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
             formData.append('rating', String(rating));
             formData.append('review', comment);
 
-            
+
 
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.ADD_REVIEW}`, {
                 method: 'POST',
@@ -119,7 +119,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
             });
 
             const data = await response.json();
-            
+
 
             if (response.ok && data.key === 'success') {
                 // Also update local state
@@ -139,7 +139,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
                 setError(data.msg || 'حدث خطأ أثناء إرسال التقييم');
             }
         } catch (err) {
-            
+
             setError('حدث خطأ أثناء إرسال التقييم');
         } finally {
             setIsSubmitting(false);
@@ -272,11 +272,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                 const updatedProfile = await fetchProfile();
                 if (updatedProfile) {
                     setProfileData(updatedProfile);
-                    
+
                 }
 
             } catch (error) {
-                
+
             } finally {
                 setIsLoadingProfile(false);
             }
@@ -461,7 +461,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
             setRecommendations(recs);
 
         } catch (error) {
-            
+
             showToast('حدث خطأ أثناء توليد الاقتراحات.', 'error');
         } finally {
             setIsLoadingRecs(false);
@@ -497,7 +497,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                 showToast(result.message || 'حدث خطأ أثناء معالجة الدفع', 'error');
             }
         } catch (error) {
-            
+
             showToast('حدث خطأ غير متوقع', 'error');
         } finally {
             setIsPaying(null);
@@ -660,11 +660,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-white text-lg">{workshop.title}</span>
                                                                 {/* Date Next to Title (if available) - Requested */}
-                                                                {dateValue && (
-                                                                    <span className="text-xs text-fuchsia-300 font-normal opacity-80 border-r-2 border-slate-600 pr-2 mr-2">
-                                                                        {dateValue}
-                                                                    </span>
-                                                                )}
+                                                                {/* Date removed as requested to avoid duplication */}
                                                                 {showLiveStreamButton && (
                                                                     <span className="inline-flex items-center gap-1 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">LIVE</span>
                                                                 )}
