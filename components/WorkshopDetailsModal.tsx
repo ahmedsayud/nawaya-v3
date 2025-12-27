@@ -92,9 +92,11 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
         setSelectedPackage(pkg);
     }
 
-    const dateDisplay = activeWorkshop.date_range || (activeWorkshop.endDate
-        ? `من ${formatArabicDate(activeWorkshop.startDate)} إلى ${formatArabicDate(activeWorkshop.endDate)}`
-        : formatArabicDate(activeWorkshop.startDate));
+    const dateDisplay = activeWorkshop.isRecorded
+        ? 'الورشة مسجلة ومتاحة للمشاهدة فور الاشتراك'
+        : (activeWorkshop.date_range || (activeWorkshop.endDate
+            ? `من ${formatArabicDate(activeWorkshop.startDate)} إلى ${formatArabicDate(activeWorkshop.endDate)}`
+            : formatArabicDate(activeWorkshop.startDate)));
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
@@ -154,7 +156,7 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                         </div>
                     )}
 
-                    {activeWorkshop.isRecorded ? (
+                    {activeWorkshop.isRecorded && allPackages.length === 0 ? (
                         <>
                             <div className="mt-6 text-center border-t border-white/20 pt-4">
                                 <p className="text-sm text-slate-400">السعر</p>
@@ -164,7 +166,7 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                             <div className="mt-8 text-right p-4 bg-black/20 rounded-lg border border-white/10 text-xs sm:text-sm">
                                 <h4 className="font-bold text-fuchsia-400 mb-3">شروط عامة :</h4>
                                 <ul className="list-decimal list-inside space-y-2 text-slate-300">
-                                    {drhopeData.recordedWorkshopTerms?.split('\n').map((line, index) => (
+                                    {(drhopeData.recordedWorkshopTerms || "الاشتراك يمنحك حق الوصول للمحتوى المسجل.\nيمنع إعادة بيع أو توزيع المحتوى.\nخدمة المشاهدة متاحة عبر المتصفح.").split('\n').map((line, index) => (
                                         <li key={index}>{line}</li>
                                     ))}
                                 </ul>
@@ -172,7 +174,9 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                         </>
                     ) : (
                         <div className="mt-6 border-t border-white/20 pt-6 sm:pt-10">
-                            <h3 className="text-sm font-bold mb-6 sm:mb-10 text-center text-white">اختر الباقة المناسبة</h3>
+                            <h3 className="text-sm font-bold mb-6 sm:mb-10 text-center text-white">
+                                {activeWorkshop.isRecorded ? 'اختر الباقة المناسبة للورشة المسجلة' : 'اختر الباقة المناسبة'}
+                            </h3>
                             <div className="space-y-4">
                                 {allPackages.map(pkg => {
                                     const isSelected = selectedPackage?.id === pkg.id;
@@ -243,20 +247,22 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                         </div>
                     )}
 
-                    {!activeWorkshop.isRecorded && (
-                        <div className="mt-8 text-right p-4 bg-black/20 rounded-lg border border-white/10 text-xs sm:text-sm">
-                            <h4 className="text-sm font-bold text-white mb-3">سياسة الإسترجاع :</h4>
-                            {activeWorkshop.workshop_returning_policy ? (
-                                <div className="text-slate-300 space-y-2" dangerouslySetInnerHTML={{ __html: activeWorkshop.workshop_returning_policy }} />
-                            ) : (
-                                <ul className="list-decimal list-inside space-y-2 text-slate-300">
-                                    {drhopeData.liveWorkshopRefundPolicy?.split('\n').map((line, index) => (
-                                        <li key={index}>{line}</li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    )}
+                    <div className="mt-8 text-right p-4 bg-black/20 rounded-lg border border-white/10 text-xs sm:text-sm">
+                        <h4 className="text-sm font-bold text-white mb-3">{activeWorkshop.isRecorded ? 'شروط عامة :' : 'سياسة الإسترجاع :'}</h4>
+                        {activeWorkshop.workshop_returning_policy ? (
+                            <div className="text-slate-300 space-y-2" dangerouslySetInnerHTML={{ __html: activeWorkshop.workshop_returning_policy }} />
+                        ) : (
+                            <ul className="list-decimal list-inside space-y-2 text-slate-300">
+                                {(activeWorkshop.isRecorded
+                                    ? (drhopeData.recordedWorkshopTerms || "الاشتراك يمنحك حق الوصول للمحتوى المسجل.\nيمنع إعادة بيع أو توزيع المحتوى.\nخدمة المشاهدة متاحة عبر المتصفح.")
+                                    : drhopeData.liveWorkshopRefundPolicy || ""
+                                ).split('\n').map((line, index) => (
+                                    <li key={index}>{line}</li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
                 </div>
                 <footer className="p-4 border-t border-violet-500/30 flex-shrink-0 bg-black/10 grid grid-cols-2 gap-4">
                     <button

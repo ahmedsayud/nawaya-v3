@@ -278,8 +278,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         zoomLink: '',
                         isVisible: true,
                         has_multiple_packages: w.has_multiple_packages,
-                        price: 0, // Price is usually in packages
-                        packages: [], // Packages would be fetched separately in details if not here
+                        price: w.price || 0,
+                        packages: [],
                         reviews: [],
                         certificatesIssued: true,
                     };
@@ -338,7 +338,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     startTime: existing?.startTime || '',
                     location: existing?.location || 'أونلاين',
                     country: existing?.country || '',
-                    isRecorded: existing?.isRecorded || false,
+                    isRecorded: w.type_label === 'مسجلة' || existing?.isRecorded || false,
+                    price: w.price || packages[0]?.discountPrice || packages[0]?.price || existing?.price || 0,
                     zoomLink: existing?.zoomLink || '',
                     isVisible: true,
                 } as Workshop;
