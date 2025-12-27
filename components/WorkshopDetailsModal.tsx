@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Workshop, Package, SubscriptionStatus } from '../types';
 import { CloseIcon, EyeIcon, AcademicCapIcon, GiftIcon, CalendarIcon, HeartIcon } from './icons';
 import { useUser } from '../context/UserContext';
@@ -19,21 +19,31 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
     const { currentUser, drhopeData, fetchWorkshopDetails } = useUser();
     const [details, setDetails] = useState<Workshop | null>(null);
 
-    // Combine props workshop with fetched details
     const activeWorkshop = details || workshop;
+    const allPackages = activeWorkshop.packages || [];
+    const activePackages = useMemo(() => {
+        return allPackages.filter(pkg => pkg.isActive !== false);
+    }, [allPackages]);
 
-    // Update selected package when details loaded or workshop changes
+    // Update selected package when activePackages change
     useEffect(() => {
-        if (activeWorkshop.packages && activeWorkshop.packages.length > 0) {
+        if (activePackages.length > 0) {
             // Find currently selected package in new packages list to preserve selection if possible
             const currentId = selectedPackage?.id;
-            const newPkg = activeWorkshop.packages.find(p => p.id === currentId) || activeWorkshop.packages[0];
-            setSelectedPackage(newPkg);
+            const isCurrentActive = activePackages.some(p => p.id === currentId);
+
+            if (!isCurrentActive) {
+                setSelectedPackage(activePackages[0]);
+            }
+        } else if (allPackages.length > 0) {
+            // If none are active, maybe select the first one but it will be disabled
+            setSelectedPackage(null);
         }
-    }, [activeWorkshop]); // Only when activeWorkshop object changes identity
+    }, [activePackages, allPackages]);
 
     const [selectedPackage, setSelectedPackage] = useState<Package | null>(() => {
-        return workshop.packages?.[0] || null;
+        const initialActive = allPackages.filter(pkg => pkg.isActive !== false);
+        return initialActive[0] || null;
     });
 
     useEffect(() => {
@@ -46,6 +56,11 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
     }, [workshop.id]);
 
     const handleEnrollClick = () => {
+        if (!selectedPackage || selectedPackage.isActive === false) {
+            showToast('نعتذر، انتهت فترة التسجيل في هذه الباقة.', 'error');
+            return;
+        }
+
         // FIX: Ensure donation records don't block user from subscribing for themselves
         const isSubscribed = currentUser?.subscriptions.some(
             sub => sub.workshopId === workshop.id &&
@@ -62,10 +77,18 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
     };
 
     const handleGiftClick = () => {
+        if (!selectedPackage || selectedPackage.isActive === false) {
+            showToast('نعتذر، انتهت فترة التسجيل في هذه الباقة.', 'error');
+            return;
+        }
         onGiftRequest(activeWorkshop, selectedPackage);
     };
 
     const handlePackageSelect = (pkg: Package) => {
+        if (pkg.isActive === false) {
+            showToast('نعتذر، انتهت فترة التسجيل في هذه الباقة.', 'error');
+            return;
+        }
         setSelectedPackage(pkg);
     }
 
@@ -151,16 +174,22 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                         <div className="mt-6 border-t border-white/20 pt-6 sm:pt-10">
                             <h3 className="text-sm font-bold mb-6 sm:mb-10 text-center text-white">اختر الباقة المناسبة</h3>
                             <div className="space-y-4">
-                                {activeWorkshop.packages?.map(pkg => {
+                                {allPackages.map(pkg => {
                                     const isSelected = selectedPackage?.id === pkg.id;
+                                    const isInactive = pkg.isActive === false;
 
                                     return (
                                         <div
                                             key={pkg.id}
                                             onClick={() => handlePackageSelect(pkg)}
-                                            className={`relative rounded-lg p-4 border-2 transition-all duration-300 cursor-pointer ${isSelected ? 'border-fuchsia-400 bg-fuchsia-500/20 shadow-lg shadow-fuchsia-500/20' : 'border-slate-700 hover:border-slate-500 bg-white/5'}`}
+                                            className={`relative rounded-lg p-4 border-2 transition-all duration-300 cursor-pointer ${isInactive ? 'opacity-50 grayscale border-slate-800' : isSelected ? 'border-fuchsia-400 bg-fuchsia-500/20 shadow-lg shadow-fuchsia-500/20' : 'border-slate-700 hover:border-slate-500 bg-white/5'}`}
                                         >
-                                            {pkg.availability && (
+                                            {isInactive && (
+                                                <div className="absolute -top-4 left-4 bg-white text-red-600 text-sm px-4 py-1.5 rounded-full font-bold shadow-xl z-20 border-2 border-red-600 animate-pulse">
+                                                    SOLD OUT / انتهى
+                                                </div>
+                                            )}
+                                            {pkg.availability && !isInactive && (
                                                 <div className="absolute -top-3 right-3 bg-fuchsia-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
                                                     عرض خاص
                                                 </div>
@@ -170,18 +199,20 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                                                     {isSelected && <div className="w-2.5 h-2.5 bg-fuchsia-400 rounded-full"></div>}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h4 className="font-bold text-sm text-slate-100 text-center">{pkg.name}</h4>
+                                                    <h4 className={`font-bold text-sm text-slate-100 text-center ${isInactive ? 'line-through' : ''}`}>{pkg.name}</h4>
                                                 </div>
                                                 <div className="text-left">
-                                                    {pkg.discountPrice ? (
-                                                        <div className="flex items-center gap-x-2">
-                                                            <span className="font-bold text-xl sm:text-2xl text-fuchsia-300">{pkg.discountPrice}</span>
-                                                            <span className="text-sm text-slate-400 line-through">{pkg.price}</span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="font-bold text-xl sm:text-2xl text-fuchsia-300">{pkg.price}</span>
-                                                    )}
-                                                    <span className="text-sm text-slate-400"> درهم</span>
+                                                    <div className={isInactive ? 'line-through opacity-60' : ''}>
+                                                        {pkg.discountPrice ? (
+                                                            <div className="flex items-center gap-x-2">
+                                                                <span className="font-bold text-xl sm:text-2xl text-fuchsia-300">{pkg.discountPrice}</span>
+                                                                <span className="text-sm text-slate-400 line-through">{pkg.price}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="font-bold text-xl sm:text-2xl text-fuchsia-300">{pkg.price}</span>
+                                                        )}
+                                                        <span className="text-sm text-slate-400"> درهم</span>
+                                                    </div>
                                                 </div>
                                             </div>
 

@@ -318,6 +318,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     price: p.price,
                     discountPrice: p.is_offer ? p.offer_price : undefined,
                     features: p.features, // Can be string (HTML) or array
+                    isActive: p.is_active,
                     attendanceType: existing?.location === 'حضوري' ? 'حضوري' : 'أونلاين', // Infer or default
                     availability: p.offer_expiry_date ? { endDate: p.offer_expiry_date } : undefined
                 })) || existing?.packages || [];

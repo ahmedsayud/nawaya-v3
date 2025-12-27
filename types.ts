@@ -95,6 +95,7 @@ export interface Package {
     discountPrice?: number;
     features: string[] | string;
     paymentLink?: string;
+    isActive?: boolean;
     availability?: {
         endDate?: string;
     };
