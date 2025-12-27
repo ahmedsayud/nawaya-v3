@@ -30,9 +30,9 @@ const MusicPlayer: React.FC = () => {
   useEffect(() => {
     if (hasInteracted && musicUrl && audioRef.current) {
       if (audioRef.current.src !== musicUrl) {
-          audioRef.current.src = musicUrl;
+        audioRef.current.src = musicUrl;
       }
-      audioRef.current.play().catch(e => 
+      audioRef.current.play().catch(() => { });
     }
   }, [hasInteracted, musicUrl]);
 
@@ -56,20 +56,20 @@ const MusicPlayer: React.FC = () => {
       setIsMuted(true);
     }
   };
-  
+
   if (!musicUrl) {
     return null;
   }
 
   return (
-    <div 
+    <div
       className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 group"
       onMouseEnter={() => setShowSlider(true)}
       onMouseLeave={() => setShowSlider(false)}
     >
       <audio ref={audioRef} loop />
       <div className="relative flex flex-col items-center">
-        <div 
+        <div
           className={`absolute bottom-full mb-3 p-2 bg-black/60 backdrop-blur-xl border border-fuchsia-500/20 rounded-full transition-all duration-300 origin-bottom ${showSlider ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}
           style={{ pointerEvents: showSlider ? 'auto' : 'none' }}
         >
