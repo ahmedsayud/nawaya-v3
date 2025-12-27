@@ -207,7 +207,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const stored = localStorage.getItem('currentUser');
             return stored ? JSON.parse(stored) : null;
         } catch (e) {
-            console.error('Failed to parse currentUser from localStorage', e);
+
             localStorage.removeItem('currentUser'); // Clear corrupted data
             return null;
         }
@@ -296,7 +296,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             }
         } catch (error) {
-            console.error('Failed to fetch workshops:', error);
+
         }
     };
 
@@ -346,7 +346,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             return null;
         } catch (error) {
-            console.error('Failed to fetch workshop details:', error);
+
             return null;
         }
     };
@@ -362,16 +362,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.GENERAL.EARLIEST_WORKSHOP}`, { headers });
             if (!response.ok) {
-                console.warn(`Earliest Workshop HTTP Error ${response.status}`);
+
                 return;
             }
 
             const data: EarliestWorkshopResponse = await response.json();
-            console.log('🔍 RAW Earliest Workshop API Response:', data);
+
 
             if (data.key === 'success' && data.data) {
                 const w = data.data as any;
-                console.log('🔍 Raw workshop object before normalization:', w);
+
 
                 // Normalize data to avoid static fallbacks in UI
                 const normalized: EarliestWorkshopData = {
@@ -386,11 +386,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     instructor: w.instructor || w.teacher || w.teacher_name || "",
                 };
 
-                console.log('🔍 Normalized earliest workshop:', normalized);
+
                 setEarliestWorkshop(normalized);
             }
         } catch (error) {
-            console.error('Failed to fetch earliest workshop:', error);
+
         }
     };
 
@@ -413,7 +413,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // 1. Fetch Products (Boutique)
             try {
                 const productData = await fetchData(API_ENDPOINTS.DRHOPE.PRODUCTS);
-                console.log('[fetchDrHopeContent] Products API response:', { key: productData.key, dataSize: productData.data?.length });
+
                 if (productData.key === 'success' && Array.isArray(productData.data)) {
                     const mappedProducts: Product[] = productData.data.map((p: any) => ({
                         id: p.id,
@@ -423,12 +423,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         description: p.description
                     }));
                     setProducts(mappedProducts);
-                    console.log('[fetchDrHopeContent] Products mapped and set:', mappedProducts.length);
+
                 } else {
-                    console.warn('[fetchDrHopeContent] Products fetch returned success key but invalid data structure', productData);
+
                 }
             } catch (e) {
-                console.error('[fetchDrHopeContent] Failed to fetch products', e);
+
             }
 
             // 2. Fetch Partners
@@ -446,7 +446,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }));
                     setPartners(mappedPartners);
                 }
-            } catch (e) { console.error('Failed to fetch partners', e); }
+            } catch (e) { }
 
             // 3. Fetch Dr Hope Specifics (Videos, Gallery, Insta, Reviews)
             const results = await Promise.allSettled([
@@ -500,21 +500,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
         } catch (error) {
-            console.error('Error in fetchDrHopeContent', error);
+
         }
     };
 
     const fetchSettings = async () => {
         try {
             const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.SETTINGS}`;
-            console.log('Fetching settings from:', url);
+
             const response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
 
             const data = await response.json();
             if (data.key === 'success' && data.data) {
                 const settings = data.data;
-                console.log('Settings fetched:', settings);
+
 
                 setDrhopeData(prev => ({
                     ...prev,
@@ -532,7 +532,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }));
             }
         } catch (error) {
-            console.error('Failed to fetch settings:', error);
+
         }
     };
 
@@ -541,7 +541,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Fetch profile data when user logs in
     useEffect(() => {
         if (currentUser && currentUser.token) {
-            console.log('[useEffect] User logged in, fetching profile...');
+
             fetchProfile();
         }
     }, [currentUser?.id]); // Only trigger when user ID changes (login/logout)
@@ -571,7 +571,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             }
         } catch (error) {
-            console.error('Failed to fetch cart', error);
+
         }
     };
 
@@ -595,18 +595,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             return false;
         } catch (error) {
-            console.error('Add to cart failed', error);
+
             return false;
         }
     };
 
     const updateCartItem = async (cartItemId: number, quantity: number) => {
-        console.log('[updateCartItem] Starting...', { cartItemId, quantity });
+
 
         // Optimistic Update
         const previousCart = cart;
         if (cart) {
-            console.log('[updateCartItem] Optimistically updating cart state');
+
             setCart({
                 ...cart,
                 items: cart.items.map(item =>
@@ -625,7 +625,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             body.append('items[0][cart_item_id]', cartItemId.toString());
             body.append('items[0][quantity]', quantity.toString());
 
-            console.log('[updateCartItem] Sending API Request (PUT)...', body.toString());
+
 
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CART.UPDATE}`, {
                 method: 'PUT',
@@ -636,26 +636,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 body: body.toString()
             });
 
-            console.log('[updateCartItem] Response status:', response.status);
+
 
             if (response.ok) {
-                console.log('[updateCartItem] Success! Fetching authoritative cart...');
+
                 fetchCart();
                 return true;
             } else {
-                console.error('[updateCartItem] Failed! Reverting state.');
+
                 if (previousCart) setCart(previousCart);
                 return false;
             }
         } catch (error) {
-            console.error('Update cart item failed', error);
+
             if (previousCart) setCart(previousCart);
             return false;
         }
     };
 
     const removeFromCart = async (cartItemId: number) => {
-        console.log('[removeFromCart] Starting...', cartItemId);
+
 
         // Optimistic Update
         const previousCart = cart;
@@ -671,7 +671,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const body = new URLSearchParams();
             body.append('cart_item_id', cartItemId.toString()); // Postman confirmed key
 
-            console.log('[removeFromCart] Sending API Request (DELETE)...', body.toString());
+
 
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CART.REMOVE_ITEM}`, {
                 method: 'DELETE',
@@ -682,18 +682,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 body: body.toString()
             });
 
-            console.log('[removeFromCart] Response status:', response.status);
+
 
             if (response.ok) {
                 fetchCart();
                 return true;
             } else {
-                console.error('[removeFromCart] Failed. Reverting.');
+
                 if (previousCart) setCart(previousCart);
                 return false;
             }
         } catch (error) {
-            console.error('Remove from cart failed', error);
+
             if (previousCart) setCart(previousCart);
             return false;
         }
@@ -714,7 +714,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             return null;
         } catch (error) {
-            console.error('Failed to fetch order summary', error);
+
             return null;
         }
     };
@@ -744,7 +744,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             return data;
         } catch (error) {
-            console.error('Create order failed', error);
+
             return {
                 key: 'failure',
                 msg: 'حدث خطأ غير متوقع أثناء إنشاء الطلب',
@@ -1132,7 +1132,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return { success: false, message: data.msg || 'فشل إرسال الطلب' };
             }
         } catch (error) {
-            console.error('Add Consultation Error:', error);
+
             return { success: false, message: 'حدث خطأ في الاتصال بالخادم' };
         }
     };
@@ -1267,11 +1267,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return { user: user };
             } else {
                 // Handle API errors
-                console.error('Login failed:', data);
+
                 return { error: data.msg || 'فشل تسجيل الدخول' };
             }
         } catch (error) {
-            console.error('Login error:', error);
+
             return { error: 'حدث خطأ في الاتصال بالخادم' };
         }
     };
@@ -1363,11 +1363,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 trackEvent('register', { method: 'api' }, user);
                 return { user: user };
             } else {
-                console.error('Registration failed:', data);
+
                 return { error: data.msg || 'فشل إنشاء الحساب' };
             }
         } catch (error) {
-            console.error('Registration error:', error);
+
             return { error: 'حدث خطأ في الاتصال بالخادم' };
         }
     };
@@ -1375,15 +1375,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('auth_token');
-            console.log('[fetchProfile] Token:', token ? 'exists' : 'missing');
-            console.log('[fetchProfile] CurrentUser:', currentUser ? currentUser.id : 'null');
+
+
 
             if (!token || !currentUser) {
-                console.log('[fetchProfile] Skipping - no token or user');
+
                 return;
             }
 
-            console.log('[fetchProfile] Calling API...');
+
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.DETAILS}`, {
                 method: 'GET',
                 headers: {
@@ -1393,11 +1393,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             const data = await response.json();
-            console.log('[fetchProfile] API Response:', data);
+
 
             if (response.ok && data.key === 'success' && data.data) {
                 const profileData = data.data;
-                console.log('[fetchProfile] Active subscriptions count:', profileData.active_subscriptions?.length);
+
 
                 // Extract workshops from API subscriptions and add to workshops state
                 const apiWorkshops: Workshop[] = (profileData.active_subscriptions || [])
@@ -1450,7 +1450,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     })
                     .filter(Boolean) as Workshop[];
 
-                console.log('[fetchProfile] Extracted workshops:', apiWorkshops.length);
+
 
                 // Add API workshops to workshops state (merge, don't duplicate)
                 setWorkshops(prev => {
@@ -1476,7 +1476,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         paymentMethod: 'LINK' as const,
                     }));
 
-                console.log('[fetchProfile] Mapped subscriptions:', subscriptions);
+
 
                 // Extract and map consultations from support_messages
                 const consultations: ConsultationRequest[] = (profileData.support_messages || []).map((msg: any) => ({
@@ -1498,32 +1498,32 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     fee: typeof msg.price === 'number' ? msg.price : undefined,
                 }));
 
-                console.log('[fetchProfile] Mapped consultations:', consultations.length);
+
 
                 // Update consultation requests state
                 setConsultationRequests(consultations);
 
                 // Update current user with fetched subscriptions
                 setCurrentUser(prev => {
-                    console.log('[fetchProfile] Updating user, prev:', prev?.id);
+
                     return prev ? {
                         ...prev,
                         subscriptions: subscriptions
                     } : null;
                 });
 
-                console.log('[fetchProfile] ✅ Profile fetched successfully');
+
 
                 // Fetch notifications after profile is loaded
                 fetchNotifications();
 
                 return profileData;
             } else {
-                console.error('[fetchProfile] ❌ Failed:', data);
+
                 return null;
             }
         } catch (error) {
-            console.error('[fetchProfile] ❌ Error:', error);
+
             return null;
         }
     };
@@ -1542,7 +1542,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             if (!response.ok) {
-                console.error('[fetchNotifications] ❌ Failed:', response.status);
+
                 return;
             }
 
@@ -1571,7 +1571,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
             }
         } catch (error) {
-            console.error('[fetchNotifications] ❌ Error:', error);
+
         }
     };
 
@@ -1581,7 +1581,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!token || !currentUser) return false;
 
             const url = `${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.MARK_AS_READ(notificationId)}`;
-            console.log('[markNotificationAsRead] 🔄 Calling API:', url);
+
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -1592,7 +1592,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             if (!response.ok) {
-                console.error('[markNotificationAsRead] ❌ Failed:', response.status);
+
                 return false;
             }
 
@@ -1614,7 +1614,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             return false;
         } catch (error) {
-            console.error('[markNotificationAsRead] ❌ Error:', error);
+
             return false;
         }
     };
@@ -1638,7 +1638,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Use 'mark as read' API since it effectively removes the notification from view
             // as confirmed by user ("when marked as read, it doesn't show here")
             const url = `${API_BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.MARK_AS_READ(notificationId)}`;
-            console.log('[deleteNotification] 🔄 Calling API (Mark as Read):', url);
+
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -1649,7 +1649,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             if (!response.ok) {
-                console.error('[deleteNotification] ❌ API Failed:', response.status);
+
                 // If API fails, revert the change
                 await fetchProfile();
                 return false;
@@ -1657,7 +1657,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             return true;
         } catch (error) {
-            console.error('[deleteNotification] ❌ Error:', error);
+
             await fetchProfile();
             return false;
         }
@@ -1669,7 +1669,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const token = localStorage.getItem('auth_token');
             if (!token) return { success: false, message: 'يرجى تسجيل الدخول أولاً' };
 
-            console.log(`[payForConsultation] 🔄 Initiating payment for ID: ${consultationId}`);
+
 
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.PAY_CONSULTATION(consultationId)}`, {
                 method: 'POST',
@@ -1680,7 +1680,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             const data = await response.json();
-            console.log('[payForConsultation] 📥 API Response:', data);
+
 
             if (response.ok && data.key === 'success' && data.data?.invoice_url) {
                 return {
@@ -1699,7 +1699,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 message: data.msg || 'حدث خطأ أثناء معالجة الدفع'
             };
         } catch (error) {
-            console.error('[payForConsultation] ❌ Error:', error);
+
             return {
                 success: false,
                 message: 'حدث خطأ في الاتصال بالخادم'
@@ -1720,7 +1720,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
             }
         } catch (error) {
-            console.error('Logout API failed:', error);
+
         } finally {
             if (currentUser) trackEvent('logout', {}, currentUser);
             setCurrentUser(null);
@@ -1773,7 +1773,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             return null;
         } catch (error) {
-            console.error('Create subscription failed:', error);
+
             return null;
         }
     };
@@ -1803,7 +1803,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             return data;
         } catch (error) {
-            console.error('Process payment failed:', error);
+
             return null;
         }
     };
@@ -1829,7 +1829,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             return null;
         } catch (error) {
-            console.error('Buy charity seats failed:', error);
+
             return null;
         }
     };
@@ -1855,7 +1855,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             return data;
         } catch (error) {
-            console.error('Process charity payment failed:', error);
+
             return null;
         }
     };
@@ -1865,23 +1865,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const fetchCountries = async () => {
             try {
                 const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.COUNTRIES}`;
-                console.log('Fetching countries from:', url);
+
 
                 const response = await axios.get(url);
                 const data = response.data;
 
-                console.log('Countries API response:', data);
+
                 if (data.key === 'success' && Array.isArray(data.data)) {
                     setCountries(data.data);
                     setCountriesDebugInfo(`Success (${data.data.length})`);
-                    console.log('Countries set in state:', data.data.length);
+
                 } else {
                     setCountriesDebugInfo(`Invalid Data Key: ${data.key}`);
-                    console.error('Countries API returned unexpected format:', data);
+
                 }
             } catch (error: any) {
                 setCountriesDebugInfo(`Fetch Error: ${error.message}`);
-                console.error('Failed to fetch countries:', error);
+
             }
         };
         fetchCountries();
@@ -1908,13 +1908,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
 
                 if (response.status === 401) {
-                    console.warn('Session expired orinvalidated (possibly logged in from another device). Logging out.');
+
                     await logout();
                     // Optionally force reload to clear all states cleanly
                     window.location.href = '/';
                 }
             } catch (error) {
-                console.error('Session check failed:', error);
+
             }
         };
 

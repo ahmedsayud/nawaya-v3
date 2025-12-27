@@ -43,7 +43,7 @@ const PartnersModal: React.FC<PartnersModalProps> = ({ isOpen, onClose }) => {
             setDetailsError(data.msg);
           }
         } catch (err) {
-          console.error("Failed to fetch partner details", err);
+          
           setDetailsError("تعذر تحميل التفاصيل من الخادم");
         } finally {
           setIsLoadingDetails(false);

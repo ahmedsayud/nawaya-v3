@@ -32,7 +32,7 @@ const MusicPlayer: React.FC = () => {
       if (audioRef.current.src !== musicUrl) {
           audioRef.current.src = musicUrl;
       }
-      audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+      audioRef.current.play().catch(e => 
     }
   }, [hasInteracted, musicUrl]);
 

@@ -163,7 +163,7 @@ const AudienceManagementModal: React.FC<AudienceManagementModalProps> = ({ isOpe
                 showToast(`تم استيراد ${ newRecipients.length } من جهات الاتصال بنجاح.`, 'success');
 
             } catch (err) {
-                console.error('Error parsing Excel file:', err);
+                
                 showToast('حدث خطأ أثناء قراءة ملف Excel.', 'error');
             } finally {
                 if (e.target) e.target.value = ''; // Reset file input

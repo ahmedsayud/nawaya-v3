@@ -18,7 +18,7 @@ const BoutiquePage: React.FC<BoutiquePageProps> = ({ showToast, onLoginRequest, 
 
   React.useEffect(() => {
     if (visibleProducts.length === 0) {
-      console.log('[BoutiquePage] Products list empty, triggering re-fetch...');
+      
       fetchDrHopeContent();
     }
   }, [visibleProducts.length, fetchDrHopeContent]);

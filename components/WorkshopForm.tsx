@@ -98,7 +98,7 @@ export const WorkshopForm: React.FC<WorkshopFormProps> = ({ workshop, onClose })
         return { ...prev, notes: newNotes };
       });
     } catch (error) {
-      console.error("Error converting file to data URL:", error);
+      
     }
   };
 
@@ -162,7 +162,7 @@ export const WorkshopForm: React.FC<WorkshopFormProps> = ({ workshop, onClose })
         return { ...prev, mediaFiles: newMediaFiles };
       });
     } catch (error) {
-      console.error("Error converting media file to data URL:", error);
+      
     }
   };
 

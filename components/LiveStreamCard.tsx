@@ -91,7 +91,7 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                     setTimeLeft(null);
                 }
             } catch (e) {
-                console.error("Card countdown failed", e);
+                
                 setTimeLeft(null);
             }
         };

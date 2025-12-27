@@ -126,7 +126,7 @@ const PublicApp: React.FC = () => {
                 const authData = JSON.parse(decodedJson);
 
                 if (authData && authData.token && authData.user) {
-                    console.log('✅ Admin Impersonation Detected', authData.user.name);
+                    
 
                     // Call UserContext to set user
                     adminLogin(authData);
@@ -141,7 +141,7 @@ const PublicApp: React.FC = () => {
                     showToast(`تم تسجيل الدخول كـ ${authData.user.name}`, 'success');
                 }
             } catch (e) {
-                console.error('❌ Failed to process admin auth link', e);
+                
                 showToast('رابط الدخول غير صالح', 'error');
             }
         }

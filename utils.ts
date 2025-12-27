@@ -18,7 +18,7 @@ export const formatArabicDate = (dateString: string | undefined): string => {
 
   // Check for validity. An invalid date string (e.g., from an empty field) results in `NaN`.
   if (isNaN(date.getTime())) {
-    console.warn(`Invalid date string passed to formatArabicDate: "${dateString}"`);
+    
     return ''; // Return empty string for invalid dates to prevent crashes.
   }
 
@@ -181,7 +181,7 @@ export const timeSince = (dateString: string): string => {
 export const downloadHtmlAsPdf = async (htmlContent: string, filename: string = 'report.pdf', orientation: 'portrait' | 'landscape' = 'landscape') => {
   if (typeof jspdf === 'undefined' || typeof html2canvas === 'undefined') {
     alert('مكتبات إنشاء الشهادة غير متاحة. يرجى المحاولة مرة أخرى أو تحديث الصفحة.');
-    console.error('jsPDF or html2canvas not loaded');
+    
     return;
   }
 
@@ -269,7 +269,7 @@ export const downloadHtmlAsPdf = async (htmlContent: string, filename: string = 
 
     pdf.save(filename);
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    
     alert("حدث خطأ أثناء إنشاء ملف PDF. قد يكون بسبب صورة معطوبة أو مشكلة في الشبكة. يرجى المحاولة مرة أخرى.");
   } finally {
     document.body.removeChild(tempContainer);
@@ -349,7 +349,7 @@ export const parseArabicDateRange = (range: string | undefined): { startDate: st
       }
     }
   } catch (error) {
-    console.error('Error parsing Arabic date range:', range, error);
+    
   }
 
   return fallback;

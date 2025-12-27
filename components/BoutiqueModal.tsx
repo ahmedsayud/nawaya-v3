@@ -21,7 +21,7 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen && visibleProducts.length === 0) {
-      console.log('[BoutiqueModal] Products list empty, triggering re-fetch...');
+      
       fetchDrHopeContent();
     }
   }, [isOpen, visibleProducts.length, fetchDrHopeContent]);

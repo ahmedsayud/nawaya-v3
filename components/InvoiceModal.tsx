@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Subscription, Workshop } from '../types';
 import { CloseIcon, PrintIcon } from './icons';
 import { API_BASE_URL, API_ENDPOINTS } from '../constants';
@@ -40,7 +40,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
             try {
                 const token = localStorage.getItem('auth_token');
                 if (!token) {
-                    setError('يرجى تسجيل الدخول أولا');
+                    setError('???? ????? ?????? ????');
                     setIsLoading(false);
                     return;
                 }
@@ -74,11 +74,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                         setInvoiceUrl(url);
                     }
                 } else {
-                    setError(`فشل تحميل الفاتورة (${response.status})`);
+                    setError(`??? ????? ???????? (${response.status})`);
                 }
             } catch (err) {
-                console.error('[InvoiceModal] Error fetching invoice:', err);
-                setError('حدث خطأ أثناء تحميل الفاتورة');
+                
+                setError('??? ??? ????? ????? ????????');
             } finally {
                 setIsLoading(false);
             }
@@ -109,7 +109,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[100] p-4" onClick={(e) => e.stopPropagation()}>
             <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-4xl border border-fuchsia-500/50 h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <header className="p-3 bg-slate-800 flex justify-between items-center flex-shrink-0 rounded-t-lg">
-                    <h2 className="text-lg font-bold text-white">الفاتورة الضريبية</h2>
+                    <h2 className="text-lg font-bold text-white">???????? ????????</h2>
                     <div className="flex items-center gap-x-3">
                         {invoiceUrl && (
                             <a
@@ -118,7 +118,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                                 className="flex items-center gap-x-2 py-2 px-3 rounded-md bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold text-sm shadow-lg shadow-purple-500/30 transition-all transform hover:scale-105 border border-fuchsia-500/20"
                             >
                                 <PrintIcon className="w-5 h-5" />
-                                <span>تحميل PDF</span>
+                                <span>????? PDF</span>
                             </a>
                         )}
                         <button onClick={onClose} className="p-2 rounded-full text-white hover:bg-white/10">
@@ -132,13 +132,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
                                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-fuchsia-500"></div>
-                                <p className="mt-4 text-slate-700">جاري تحميل الفاتورة...</p>
+                                <p className="mt-4 text-slate-700">???? ????? ????????...</p>
                             </div>
                         </div>
                     ) : error ? (
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center text-red-600">
-                                <p className="text-xl mb-2">⚠️</p>
+                                <p className="text-xl mb-2">??</p>
                                 <p>{error}</p>
                             </div>
                         </div>

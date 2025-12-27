@@ -14,12 +14,12 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keyList) => {
       return Promise.all(
         keyList.map((key) => {
-          console.log('Deleting cache:', key);
+
           return caches.delete(key);
         })
       );
     }).then(() => {
-        return self.clients.claim();
+      return self.clients.claim();
     })
   );
 });

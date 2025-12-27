@@ -85,7 +85,7 @@ const DynamicCertificateRenderer: React.FC<DynamicCertificateRendererProps> = ({
 export const generateCertificate = async (template: CertificateTemplate, workshop: Workshop, user: User) => {
   if (typeof jspdf === 'undefined' || typeof html2canvas === 'undefined') {
     alert('مكتبات إنشاء الشهادة غير متاحة. يرجى المحاولة مرة أخرى أو تحديث الصفحة.');
-    console.error('jsPDF or html2canvas not loaded');
+    
     return;
   }
 
@@ -127,7 +127,7 @@ export const generateCertificate = async (template: CertificateTemplate, worksho
     pdf.save(`Certificate-${user.fullName.replace(/\s/g, '_')}.pdf`);
 
   } catch (error) {
-    console.error("Error generating PDF certificate:", error);
+    
     alert("حدث خطأ أثناء إنشاء ملف الشهادة. يرجى المحاولة مرة أخرى.");
   } finally {
     root.unmount();

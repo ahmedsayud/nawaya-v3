@@ -28,7 +28,7 @@ const Chatbot: React.FC = () => {
   useEffect(() => {
     const initChat = () => {
       if (!process.env.API_KEY) {
-          console.warn("Gemini API Key is missing. Chatbot disabled.");
+          
           setIsAvailable(false);
           setMessages([{ role: 'model', text: 'عذراً، خدمة المساعد الذكي غير مفعلة حالياً.' }]);
           return;
@@ -76,7 +76,7 @@ const Chatbot: React.FC = () => {
           { role: 'model', text: 'أهلاً بك في منصة نوايا! 💜 أنا هنا لمساعدتك في اختيار ورشتك القادمة.' }
         ]);
       } catch (error) {
-        console.error("Error initializing Gemini Chat:", error);
+        
         setIsAvailable(false);
         setMessages([
           { role: 'model', text: 'عذراً، المساعد الذكي يواجه مشكلة تقنية حالياً.' }
@@ -115,7 +115,7 @@ const Chatbot: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Gemini API error:", error);
+      
       setMessages(prev => {
         const newMessages = [...prev];
         const errorMessage = 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.';

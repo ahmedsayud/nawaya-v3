@@ -22,7 +22,7 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) => {
   const allReviews = useMemo(() => {
     // 1. Try to use reviews from DrHope API (Global Reviews)
     if (drhopeData.reviews && drhopeData.reviews.length > 0) {
-      console.log('ReviewsModal: Using API data. Count:', drhopeData.reviews.length);
+      
       return drhopeData.reviews.map(r => {
         // Parse "Name Date" format if possible
         let name = r.user_name_and_date || 'Unknown';
@@ -54,7 +54,7 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({ isOpen, onClose }) => {
     }
 
     // 2. Fallback to extracting from workshops (Original Logic)
-    console.log('ReviewsModal: Using local fallback');
+    
     return workshops
       .flatMap(w => (w.reviews || []).map(r => ({ ...r, workshopTitle: w.title, workshopInstructor: w.instructor })))
       .filter(r => !r.isDeleted)

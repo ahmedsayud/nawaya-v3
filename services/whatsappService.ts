@@ -20,14 +20,14 @@ export interface WhatsAppMedia {
  */
 export const sendWhatsAppMessage = async (phoneNumber: string, message: string, media?: WhatsAppMedia): Promise<void> => {
   const normalizedNumber = normalizePhoneNumber(phoneNumber);
-  
+
   if (!normalizedNumber) {
-    console.error('WhatsApp Service: Invalid or empty phone number provided.', { original: phoneNumber });
+
     return;
   }
-  
+
   if (media) {
-    console.warn('WhatsApp Service: Media attachments are not supported when sending via wa.me links. The message will be sent without the attachment.');
+
   }
 
   const encodedMessage = encodeURIComponent(message);
@@ -35,16 +35,8 @@ export const sendWhatsAppMessage = async (phoneNumber: string, message: string, 
 
   // Open the link in a new tab. This will prompt the user to open their WhatsApp client.
   window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-  
-  console.log(`
-    ================================================
-    == OPENING WHATSAPP SEND DIALOG ==
-    ------------------------------------------------
-    Recipient: ${normalizedNumber}
-    URL: ${whatsappUrl}
-    Timestamp: ${new Date().toISOString()}
-    ================================================
-  `);
+
+
 
   return Promise.resolve();
 };

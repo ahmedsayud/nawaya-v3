@@ -26,7 +26,7 @@ export const trackEvent = (type: string, details: Record<string, any> = {}, user
     // Keep only the last 100 events
     localStorage.setItem('userActivityLog', JSON.stringify(events.slice(0, 100)));
   } catch (error) {
-    console.error('Failed to track event:', error);
+    
   }
 };
 
@@ -35,7 +35,7 @@ export const getEvents = (): ActivityEvent[] => {
     const storedEvents = localStorage.getItem('userActivityLog');
     return storedEvents ? JSON.parse(storedEvents) : [];
   } catch (error) {
-    console.error('Failed to get events:', error);
+    
     return [];
   }
 };

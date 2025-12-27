@@ -79,12 +79,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
 
         if (response.data.key === 'success' && Array.isArray(response.data.data)) {
           setCountries(response.data.data);
-          console.log('Countries loaded successfully:', response.data.data.length);
+          
         } else {
-          console.error('Invalid countries response:', response.data);
+          
         }
       } catch (error) {
-        console.error('Failed to fetch countries:', error);
+        
       } finally {
         setCountriesLoading(false);
       }

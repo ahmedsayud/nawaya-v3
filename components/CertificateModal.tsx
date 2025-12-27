@@ -74,7 +74,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
                     setError(`فشل تحميل الشهادة (${response.status})`);
                 }
             } catch (err) {
-                console.error('[CertificateModal] Error fetching certificate:', err);
+                
                 setError('حدث خطأ أثناء تحميل الشهادة');
             } finally {
                 setIsLoading(false);

@@ -108,7 +108,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
             formData.append('rating', String(rating));
             formData.append('review', comment);
 
-            console.log('[AddReviewForm] Submitting review:', { subscriptionId: rawSubId, workshopId, rating, review: comment });
+            
 
             const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.ADD_REVIEW}`, {
                 method: 'POST',
@@ -119,7 +119,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
             });
 
             const data = await response.json();
-            console.log('[AddReviewForm] Response:', data);
+            
 
             if (response.ok && data.key === 'success') {
                 // Also update local state
@@ -139,7 +139,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
                 setError(data.msg || 'حدث خطأ أثناء إرسال التقييم');
             }
         } catch (err) {
-            console.error('[AddReviewForm] Error submitting review:', err);
+            
             setError('حدث خطأ أثناء إرسال التقييم');
         } finally {
             setIsSubmitting(false);
@@ -272,11 +272,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                 const updatedProfile = await fetchProfile();
                 if (updatedProfile) {
                     setProfileData(updatedProfile);
-                    console.log('[ProfilePage] Syncing internal profileData from context fetch');
+                    
                 }
 
             } catch (error) {
-                console.error('[ProfilePage] Error fetching profile:', error);
+                
             } finally {
                 setIsLoadingProfile(false);
             }
@@ -461,7 +461,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
             setRecommendations(recs);
 
         } catch (error) {
-            console.error('Error generating recommendations:', error);
+            
             showToast('حدث خطأ أثناء توليد الاقتراحات.', 'error');
         } finally {
             setIsLoadingRecs(false);
@@ -497,7 +497,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                 showToast(result.message || 'حدث خطأ أثناء معالجة الدفع', 'error');
             }
         } catch (error) {
-            console.error('[ProfilePage] Payment error:', error);
+            
             showToast('حدث خطأ غير متوقع', 'error');
         } finally {
             setIsPaying(null);
