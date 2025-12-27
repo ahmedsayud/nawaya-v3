@@ -186,7 +186,7 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                                         >
                                             {isInactive && (
                                                 <div className="absolute -top-4 left-4 bg-white text-red-600 text-sm px-4 py-1.5 rounded-full font-bold shadow-xl z-20 border-2 border-red-600 animate-pulse">
-                                                    SOLD OUT / انتهى
+                                                    SOLD OUT / غير متاحة
                                                 </div>
                                             )}
                                             {pkg.availability && !isInactive && (
