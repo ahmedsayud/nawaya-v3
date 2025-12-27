@@ -18,7 +18,7 @@ const BoutiquePage: React.FC<BoutiquePageProps> = ({ showToast, onLoginRequest, 
 
   React.useEffect(() => {
     if (visibleProducts.length === 0) {
-      
+
       fetchDrHopeContent();
     }
   }, [visibleProducts.length, fetchDrHopeContent]);
@@ -53,6 +53,7 @@ const BoutiquePage: React.FC<BoutiquePageProps> = ({ showToast, onLoginRequest, 
               key={product.id}
               product={product}
               onAddToCart={() => onAddToCart(product.id)}
+              isInCart={cart.has(product.id)}
             />
           ))}
         </div>

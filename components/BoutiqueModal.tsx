@@ -21,7 +21,7 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
 
   React.useEffect(() => {
     if (isOpen && visibleProducts.length === 0) {
-      
+
       fetchDrHopeContent();
     }
   }, [isOpen, visibleProducts.length, fetchDrHopeContent]);
@@ -102,13 +102,18 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
             visibleProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {visibleProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onAddToCart={async () => {
-                    const success = await addToCart(product.id);
-                    if (!success && !currentUser) {
-                      onRequestLogin();
-                    }
-                    return success;
-                  }} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isInCart={cartItems.some(item => Number(item.product.id) === Number(product.id))}
+                    onAddToCart={async () => {
+                      const success = await addToCart(product.id);
+                      if (!success && !currentUser) {
+                        onRequestLogin();
+                      }
+                      return success;
+                    }}
+                  />
                 ))}
               </div>
             ) : (
