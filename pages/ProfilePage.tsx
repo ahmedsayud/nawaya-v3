@@ -745,7 +745,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                                         const disabled = access.status !== 'AVAILABLE';
 
                                                                         let dateString = '';
-                                                                        if (access.status === 'NOT_YET_AVAILABLE' && access.startDate) {
+                                                                        if (rec.availability) {
+                                                                            dateString = rec.availability;
+                                                                        } else if (access.status === 'NOT_YET_AVAILABLE' && access.startDate) {
                                                                             dateString = `سيكون متاحاً في: ${formatArabicDate(access.startDate)}`;
                                                                         } else if (access.status === 'EXPIRED' && access.endDate) {
                                                                             dateString = `انتهت صلاحية المشاهدة في: ${formatArabicDate(access.endDate)}`;
@@ -755,7 +757,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                                             } else if (access.endDate) {
                                                                                 dateString = `متاح حتى: ${formatArabicDate(access.endDate)}`;
                                                                             } else {
-                                                                                dateString = "غير متاحة حاليا";
+                                                                                dateString = "متاح للمشاهدة";
                                                                             }
                                                                         }
 

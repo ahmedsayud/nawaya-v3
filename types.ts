@@ -113,6 +113,7 @@ export interface Recording {
     url: string;
     accessStartDate?: string;
     accessEndDate?: string;
+    availability?: string;
 }
 
 export interface MediaResource {

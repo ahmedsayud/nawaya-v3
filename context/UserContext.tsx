@@ -1436,7 +1436,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 name: r.title,
                                 url: r.link,
                                 accessStartDate: undefined,
-                                accessEndDate: undefined
+                                accessEndDate: undefined,
+                                availability: r.availability
                             })) || [],
                             mediaFiles: sub.attachments?.map((a: any) => ({
                                 type: a.type as 'audio' | 'video',
