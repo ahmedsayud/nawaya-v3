@@ -1505,13 +1505,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 // Update consultation requests state
                 setConsultationRequests(consultations);
 
-                // Update current user with fetched subscriptions
+                // Update current user with fetched data from profile
                 setCurrentUser(prev => {
+                    if (!prev) return null;
+                    const name = profileData.name || profileData.full_name || profileData.fullName;
+                    const email = profileData.email;
+                    const phone = profileData.mobile || profileData.phone || profileData.phone_number;
 
-                    return prev ? {
+                    return {
                         ...prev,
+                        fullName: name || prev.fullName,
+                        email: email || prev.email,
+                        phone: phone || prev.phone,
                         subscriptions: subscriptions
-                    } : null;
+                    };
                 });
 
 

@@ -527,10 +527,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                 <EnvelopeIcon className="w-4 h-4 text-slate-400" />
                                 <span>{user.email}</span>
                             </div>
-                            <div className="flex items-center gap-x-2">
-                                <PhoneIcon className="w-4 h-4 text-slate-400" />
-                                <span>{user.phone}</span>
-                            </div>
+                            {user.phone && (
+                                <div className="flex items-center gap-x-2">
+                                    <PhoneIcon className="w-4 h-4 text-slate-400" />
+                                    <span>{user.phone}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

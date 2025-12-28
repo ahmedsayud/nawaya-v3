@@ -23,8 +23,8 @@ interface HeaderProps {
 }
 
 const LogoButton: React.FC<{ logoUrl?: string; onClick: () => void; isMobile?: boolean }> = ({ logoUrl, onClick, isMobile }) => {
-  const sizeClasses = isMobile ? 'w-12 h-12' : 'w-14 h-14 md:w-20 md:h-20';
-  const btnClasses = `group ${sizeClasses} flex items-center justify-center rounded-full text-xl font-bold tracking-wider transition-all duration-300 transform hover:scale-110 focus:outline-none shadow-lg hover:shadow-xl bg-white/5 text-pink-400 border border-white/10 hover:shadow-[0_0_20px_rgba(236,72,153,0.6)]`;
+  const sizeClasses = isMobile ? 'w-12 h-12' : 'w-16 h-16 md:w-20 md:h-20';
+  const btnClasses = `group ${sizeClasses} flex items-center justify-center rounded-full transition-all duration-500 transform hover:scale-105 focus:outline-none shadow-[0_0_15px_rgba(0,0,0,0.2)] hover:shadow-[0_0_25px_rgba(236,72,153,0.4)] bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden`;
 
   return (
     <button
@@ -33,9 +33,15 @@ const LogoButton: React.FC<{ logoUrl?: string; onClick: () => void; isMobile?: b
       aria-label="الصفحة الرئيسية"
     >
       {logoUrl ? (
-        <img src={logoUrl} alt="Nawaya Logo" className="w-full h-full object-cover rounded-full transition-transform duration-300 group-hover:rotate-6" />
+        <div className="w-full h-full p-1.5 flex items-center justify-center">
+          <img
+            src={logoUrl}
+            alt="Nawaya Logo"
+            className="w-full h-full object-contain transition-all duration-500 group-hover:scale-110 group-hover:rotate-3"
+          />
+        </div>
       ) : (
-        <span>NAWAYA</span>
+        <span className="text-xl font-bold tracking-wider text-pink-400">NAWAYA</span>
       )}
     </button>
   );
