@@ -130,8 +130,11 @@ const PublicApp: React.FC = () => {
 
         if (authParam) {
             try {
-                // Decode Base64
-                const decodedJson = atob(authParam);
+                // Decode Base64 with robust UTF-8 support for Arabic characters
+                const binString = atob(authParam.replace(/-/g, '+').replace(/_/g, '/'));
+                const decodedJson = decodeURIComponent(
+                    binString.split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+                );
                 const authData = JSON.parse(decodedJson);
 
                 if (authData && authData.token && authData.user) {
