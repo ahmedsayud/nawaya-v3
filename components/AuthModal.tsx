@@ -11,7 +11,7 @@ import { API_BASE_URL, API_ENDPOINTS } from '../constants';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (user: User) => void;
+  onSuccess: (user: User, message?: string) => void;
   isClosable?: boolean;
   onBack?: () => void;
   showRegisterView?: boolean;
@@ -79,12 +79,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
 
         if (response.data.key === 'success' && Array.isArray(response.data.data)) {
           setCountries(response.data.data);
-          
+
         } else {
-          
+
         }
       } catch (error) {
-        
+
       } finally {
         setCountriesLoading(false);
       }
@@ -178,7 +178,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
       if (claimedCount > 0) {
         // Notification is handled by the caller or App.tsx via toast usually
       }
-      onSuccess(result.user);
+      onSuccess(result.user, result.message);
     } else {
       setError(result.error || 'فشل إنشاء الحساب');
     }
@@ -193,7 +193,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
     if (result.user) {
       // Auto-claim gifts on login based on phone number
       const claimedCount = checkAndClaimPendingGifts(result.user);
-      onSuccess(result.user);
+      onSuccess(result.user, result.message);
     } else {
       if (result.error === 'concurrent_session') {
         setError('هذا الحساب مسجل دخوله حالياً على جهاز آخر. يرجى تسجيل الخروج أولاً.');

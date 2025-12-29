@@ -254,9 +254,9 @@ const PublicApp: React.FC = () => {
     };
 
     // Handles Auth Modal Success (Login/Register)
-    const handleAuthModalSuccess = (user: User) => {
+    const handleAuthModalSuccess = (user: User, message?: string) => {
         setIsAuthModalOpen(false);
-        showToast(`مرحباً ${user.fullName}`);
+        showToast(message || `مرحباً ${user.fullName}`);
 
         // Check for pending actions (Shared between Hub and Card)
         if (pendingHubAction === 'profile') {

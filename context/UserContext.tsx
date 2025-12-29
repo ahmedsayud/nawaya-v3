@@ -93,10 +93,10 @@ interface UserContextType {
     countriesDebugInfo?: string;
 
     // Auth & User Actions
-    login: (email: string, phone: string) => Promise<{ user?: User; error?: string }>;
+    login: (email: string, phone: string) => Promise<{ user?: User; error?: string; message?: string }>;
     adminLogin: (userData: any) => void;
     logout: () => void;
-    register: (fullName: string, email: string, phone: string, countryId: number) => Promise<{ user?: User; error?: string }>;
+    register: (fullName: string, email: string, phone: string, countryId: number) => Promise<{ user?: User; error?: string; message?: string }>;
     checkRegistrationAvailability: (email: string, phone: string) => RegistrationAvailability;
     findUserByCredential: (type: 'email' | 'phone', value: string) => User | null;
     addUser: (fullName: string, email: string, phone: string) => User;
@@ -1204,7 +1204,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     // --- Helpers ---
-    const login = async (email: string, phone: string) => {
+    const login = async (email: string, phone: string): Promise<{ user?: User; error?: string; message?: string }> => {
         try {
             const formData = new FormData();
             formData.append('email', email);
@@ -1265,8 +1265,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 trackEvent('login', { method: 'api' }, user);
-
-                return { user: user };
+                return { user: user, message: data.msg || data.message };
             } else {
                 // Handle API errors
 
@@ -1323,7 +1322,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     };
 
-    const register = async (fullName: string, email: string, phone: string, countryId: number): Promise<{ user?: User; error?: string }> => {
+    const register = async (fullName: string, email: string, phone: string, countryId: number): Promise<{ user?: User; error?: string; message?: string }> => {
         try {
             const formData = new FormData();
             formData.append('full_name', fullName);
@@ -1363,7 +1362,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUsers(prev => [...prev, user]);
 
                 trackEvent('register', { method: 'api' }, user);
-                return { user: user };
+                return { user: user, message: data.msg || data.message };
             } else {
 
                 return { error: data.msg || 'فشل إنشاء الحساب' };
