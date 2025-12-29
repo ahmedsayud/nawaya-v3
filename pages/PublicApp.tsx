@@ -359,8 +359,16 @@ const PublicApp: React.FC = () => {
             // Also handle potential string '0' response
             const isApiFree = String(apiPrice) === '0';
             const isPackageFree = packagePrice === 0;
+            const isWorkshopFree = workshop.isFree === true;
 
-            const finalPrice = (isApiFree || isPackageFree) ? 0 : packagePrice;
+            const finalPrice = (isApiFree || isPackageFree || isWorkshopFree) ? 0 : packagePrice;
+
+            if (finalPrice === 0) {
+                showToast('تم الاشتراك في الورشة بنجاح!', 'success');
+                // Ideally refresh user data here to reflect subscription
+                fetchProfile();
+                return;
+            }
 
             const intent: PaymentIntent = {
                 type: 'workshop',

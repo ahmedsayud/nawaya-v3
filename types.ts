@@ -155,6 +155,7 @@ export interface Workshop {
     title: string;
     instructor: string;
     teacher?: string; // API field
+    isFree?: boolean; // Mapped from API is_free
     startDate: string;
     endDate?: string;
     date_range?: string; // API field

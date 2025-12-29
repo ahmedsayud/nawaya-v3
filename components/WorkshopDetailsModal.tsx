@@ -160,8 +160,14 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                         <>
                             <div className="mt-6 text-center border-t border-white/20 pt-4">
                                 <p className="text-sm text-slate-400">السعر</p>
-                                <span className="block text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-300 to-fuchsia-400 my-2">{activeWorkshop.price}</span>
-                                <p className="text-xs sm:text-sm text-slate-400">درهم / وما يعادله من عملات اخري</p>
+                                {activeWorkshop.isFree ? (
+                                    <span className="block text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-300 to-fuchsia-400 my-2">مجاناً</span>
+                                ) : (
+                                    <>
+                                        <span className="block text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-300 to-fuchsia-400 my-2">{activeWorkshop.price}</span>
+                                        <p className="text-xs sm:text-sm text-slate-400">درهم / وما يعادله من عملات اخري</p>
+                                    </>
+                                )}
                             </div>
                             <div className="mt-8 text-right p-4 bg-black/20 rounded-lg border border-white/10 text-xs sm:text-sm">
                                 <h4 className="font-bold text-fuchsia-400 mb-3">شروط عامة :</h4>
@@ -276,7 +282,7 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                         onClick={handleEnrollClick}
                         className="bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-900/30 hover:shadow-pink-500/50 text-sm border border-fuchsia-500/20"
                     >
-                        إهداء الورشة لنفسي
+                        {activeWorkshop.isFree ? 'اشتراك مجاني' : 'إهداء الورشة لنفسي'}
                     </button>
                 </footer>
             </div>

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import AudioPlayer from '../components/AudioPlayer';
 import { Workshop, Subscription, User, NoteResource, Recording, ConsultationRequest, SubscriptionStatus } from '../types';
 import { CloseIcon, VideoIcon, CalendarIcon, ChevronDownIcon, EyeIcon, AcademicCapIcon, UserCircleIcon, LightBulbIcon, DocumentTextIcon, StarIcon, ChatBubbleLeftRightIcon, CreditCardIcon, ShieldCheckIcon, TrashIcon, PencilIcon, GlobeAltIcon, ReceiptTaxIcon, CheckCircleIcon, InformationCircleIcon, EnvelopeIcon, PhoneIcon, MusicalNoteIcon, ClockIcon } from '../components/icons';
 import { useUser } from '../context/UserContext';
@@ -773,7 +774,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                                                     </div>
                                                                                     <div className="flex-grow flex flex-col items-start text-right">
                                                                                         <span className="font-bold text-white text-base group-hover:text-purple-300 transition-colors">
-                                                                                            مشاهدة: {rec.name}
+                                                                                            تشغيل: {rec.name}
                                                                                         </span>
                                                                                         {dateString && (
                                                                                             <div className="mt-1.5 text-[11px] text-yellow-400/90 flex items-center gap-x-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
@@ -801,10 +802,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                                                 <div className="flex-grow"><span className="font-bold text-white text-base">{media.name}</span></div>
                                                                             </div>
                                                                             <div className="mt-3 px-1">
-                                                                                {media.type === 'audio' ? (
-                                                                                    <audio controls src={media.value} className="w-full h-10">متصفحك لا يدعم تشغيل الصوت.</audio>
+                                                                                {(media.type === 'audio' || media.value?.toLowerCase().endsWith('.mp3') || media.value?.toLowerCase().endsWith('.m4a') || media.value?.toLowerCase().endsWith('.wav')) ? (
+                                                                                    <AudioPlayer key={index} src={media.value} className="w-full" />
                                                                                 ) : (
-                                                                                    <video controls src={media.value} className="w-full rounded-md">متصفحك لا يدعم تشغيل الفيديو.</video>
+                                                                                    <video controls controlsList="nodownload" onContextMenu={(e: React.MouseEvent) => e.preventDefault()} src={media.value} className="w-full rounded-md">متصفحك لا يدعم تشغيل الفيديو.</video>
                                                                                 )}
                                                                             </div>
                                                                             {media.notes && (

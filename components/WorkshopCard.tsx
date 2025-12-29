@@ -132,6 +132,11 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
           <div className="flex justify-between items-center">
             {workshop.has_multiple_packages ? (
               <div className="text-xs sm:text-sm text-pink-800 font-bold bg-pink-50 px-3 py-1.5 rounded-lg border border-pink-200">باقات متعددة</div>
+            ) : (workshop.isFree) ? (
+              <div className="flex items-center gap-x-1">
+                <TagIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0`} />
+                <span className="text-xl sm:text-2xl font-black text-slate-800">مجاناً</span>
+              </div>
             ) : (priceToDisplay && priceToDisplay > 0) ? (
               <div className="flex items-center gap-x-1">
                 <TagIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0`} />

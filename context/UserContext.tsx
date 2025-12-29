@@ -261,6 +261,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         title: w.title,
                         instructor: w.teacher || '',
                         teacher: w.teacher,
+                        isFree: w.is_free,
                         startDate: startDate || w.start_time || '', // Use parsed date or fallback
                         startTime: w.start_time || '',
                         start_time: w.start_time,
