@@ -51,6 +51,21 @@ const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({ note, onC
       );
     }
 
+    // Check if it's a PDF based on extension or content
+    const isPdf = note.name.toLowerCase().endsWith('.pdf') || note.value.toLowerCase().endsWith('.pdf');
+
+    if (isPdf) {
+      return (
+        <div className="w-full h-full bg-white flex justify-center">
+          <embed
+            src={`${note.value}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+            type="application/pdf"
+            className="w-full h-full border-0"
+          />
+        </div>
+      );
+    }
+
     // Fallback for old link-based attachments, using Google Docs viewer
     const viewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(note.value)}&embedded=true`;
     return <iframe src={viewUrl} className="w-full h-full border-0" title={note.name}></iframe>;
