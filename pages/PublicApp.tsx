@@ -204,8 +204,8 @@ const PublicApp: React.FC = () => {
         setIsAuthModalOpen(true);
     };
 
-    const handleOpenPayment = (url: string) => {
-        setPaymentFrameUrl(url);
+    const handleOpenPayment = (url?: string) => {
+        setPaymentFrameUrl(url || '');
         setIsPaymentFrameOpen(true);
     };
 
@@ -409,6 +409,11 @@ const PublicApp: React.FC = () => {
             return;
         }
 
+        // Open modal immediately for better UX
+        if (method === 'CARD') {
+            handleOpenPayment();
+        }
+
         const paymentResult = await processSubscriptionPayment({
             subscription_id: subscriptionIds.length === 1 ? subscriptionIds[0] : subscriptionIds,
             payment_type: method === 'CARD' ? 'online' : 'bank_transfer'
@@ -425,6 +430,8 @@ const PublicApp: React.FC = () => {
             setPaymentModalIntent(null);
             setSubscriptionApiResponse(null);
         } else {
+            // Close modal if it was opened for card
+            if (method === 'CARD') setIsPaymentFrameOpen(false);
             showToast(paymentResult?.msg || 'فشل إتمام العملية لبدء الدفع.', 'error');
         }
     };
@@ -433,6 +440,11 @@ const PublicApp: React.FC = () => {
         if (!paymentModalIntent || !currentUser || !charityApiResponse) return;
 
         const charityId = charityApiResponse.charity_id;
+
+        // Open modal immediately for better UX
+        if (method === 'CARD') {
+            handleOpenPayment();
+        }
 
         const paymentResult = await processCharityPayment({
             charity_id: charityId,
@@ -450,6 +462,8 @@ const PublicApp: React.FC = () => {
             setPaymentModalIntent(null);
             setCharityApiResponse(null);
         } else {
+            // Close modal if it was opened for card
+            if (method === 'CARD') setIsPaymentFrameOpen(false);
             showToast(paymentResult?.msg || 'فشل إتمام العملية.', 'error');
         }
     };

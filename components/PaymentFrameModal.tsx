@@ -36,19 +36,35 @@ const PaymentFrameModal: React.FC<PaymentFrameModalProps> = ({ isOpen, onClose, 
 
                 {/* Content */}
                 <div className="flex-grow relative bg-slate-50/50">
-                    {isLoading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
-                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-fuchsia-100 border-t-fuchsia-600 mb-4"></div>
-                            <p className="text-sm text-slate-500 font-medium">جاري الاتصال ببوابة الدفع...</p>
+                    {/* Initial Processing State (Before URL) */}
+                    {!url && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent z-20 animate-pulse">
+                            <div className="w-16 h-16 bg-white/50 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                                <LockClosedIcon className="w-8 h-8 text-slate-400 opacity-50" />
+                            </div>
+                            <p className="text-sm font-bold text-slate-600">جاري تأمين الاتصال...</p>
+                            <p className="text-xs text-slate-400 mt-1">يرجى الانتظار قليلاً</p>
                         </div>
                     )}
-                    <iframe
-                        src={url}
-                        className="w-full h-full border-0"
-                        title="Payment Page"
-                        onLoad={() => setIsLoading(false)}
-                        allow="payment"
-                    />
+
+                    {/* Iframe Loading State (URL present but loading) */}
+                    {url && isLoading && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent z-10">
+                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-fuchsia-100 border-t-fuchsia-600 mb-4"></div>
+                            <p className="text-sm text-slate-500 font-medium">جاري تحميل بوابة الدفع...</p>
+                        </div>
+                    )}
+
+                    {url && (
+                        <iframe
+                            src={url}
+                            className="w-full h-full border-0 relative z-0"
+                            title="Payment Page"
+                            onLoad={() => setIsLoading(false)}
+                            allow="payment"
+                            loading="eager"
+                        />
+                    )}
                 </div>
             </div>
         </div>

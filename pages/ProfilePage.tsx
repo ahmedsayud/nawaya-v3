@@ -25,7 +25,7 @@ interface ProfilePageProps {
     onPayForConsultation: (consultation: ConsultationRequest) => void;
     onViewInvoice: (details: { user: User; subscription: Subscription }) => void;
     onViewCertificate: (details: { subscription: Subscription; workshop: Workshop }) => void;
-    onOpenPayment: (url: string) => void;
+    onOpenPayment: (url?: string) => void;
 }
 
 type RecordingStatus = 'AVAILABLE' | 'NOT_YET_AVAILABLE' | 'EXPIRED';
@@ -489,11 +489,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
 
     const handleConsultationPayment = async (consultation: ConsultationRequest) => {
         setIsPaying(consultation.id);
+
+        // Open modal immediately
+        onOpenPayment();
+
         try {
             const result = await payForConsultation(consultation.id);
             if (result.success && result.invoiceUrl) {
-                showToast('جاري توجيهك إلى بوابة الدفع...', 'success');
-                // Redirect to payment gateway
+                // Update with URL
                 onOpenPayment(result.invoiceUrl);
             } else {
                 showToast(result.message || 'حدث خطأ أثناء معالجة الدفع', 'error');

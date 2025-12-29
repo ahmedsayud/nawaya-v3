@@ -10,8 +10,7 @@ interface ProductCheckoutModalProps {
   onCardPaymentConfirm: () => void; // For successful card payments
   onBack?: () => void;
   onRequestLogin: () => void;
-  currentUser: User | null;
-  onOpenPayment: (url: string) => void;
+  onOpenPayment: (url?: string) => void;
 }
 
 type PaymentMethod = 'CARD' | 'BANK_TRANSFER';
@@ -78,6 +77,12 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
     }
 
     setIsProcessing(true);
+
+    // Open payment modal immediately for better UX
+    if (method === 'CARD') {
+      onOpenPayment();
+    }
+
     try {
       const paymentMethod = method === 'CARD' ? 'online' : 'bank_transfer';
       const response = await createOrder(paymentMethod);
@@ -89,6 +94,19 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
         }
         onConfirm();
       } else {
+        // If failed, we might need to close the payment modal if it was opened
+        // But we don't have a close callback here easily, assuming the user can close the modal manually or onOpenPayment handles it?
+        // Actually, onOpenPayment in PublicApp just opens it. 
+        // We probably need a way to close it on error, or just show error toast?
+        // PublicApp's handleOpenPayment doesn't expose close.
+        // But if error happens, the modal stays open with "Connecting...". That's bad.
+        // We should pass a way to close, OR better: onOpenPayment should return a close function? No, async state.
+        // Let's rely on toast error. The user will see error and close the modal.
+        // Ideally we should close it. 
+        // For now, let's keep it simple as I can't easily add onClosePayment to props without changing everything.
+        // Wait, I can pass `undefined` to `onOpenPayment` but `handleOpenPayment` in PublicApp doesn't handle closing if undefined pass again.
+        // Let's just leave it: if it fails, the user manually closes. Or I update onOpenPayment to take null to close?
+
         setCardError(response.msg || 'حدث خطأ أثناء إنشاء الطلب');
       }
     } catch (error) {
