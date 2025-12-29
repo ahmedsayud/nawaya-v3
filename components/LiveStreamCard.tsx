@@ -11,14 +11,14 @@ interface LiveStreamCardProps {
     startTime?: string;
     user: User | null;
     onLoginRequest: () => void;
-    onZoomRedirect: (zoomLink: string, workshopId: number) => void;
+    onPlayLive: (link: string, workshopId: number) => void;
     onShowToast: (message: string, type?: 'success' | 'warning' | 'error') => void;
     onShowHelp: () => void;
 }
 
 const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
     workshopId, workshopTitle, zoomLink, startDate, startTime,
-    user, onLoginRequest, onZoomRedirect, onShowToast, onShowHelp
+    user, onLoginRequest, onPlayLive, onShowToast, onShowHelp
 }) => {
 
     const isSubscribed = user?.subscriptions.some(
@@ -91,7 +91,7 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
                     setTimeLeft(null);
                 }
             } catch (e) {
-                
+
                 setTimeLeft(null);
             }
         };
@@ -112,7 +112,7 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({
             e.preventDefault();
             onShowToast(`عفواً، الوصول إلى بث ورشة "${workshopTitle}" متاح فقط للمشتركين.`, 'warning');
         } else {
-            onZoomRedirect(zoomLink, workshopId);
+            onPlayLive(zoomLink, workshopId);
         }
     };
 

@@ -1455,11 +1455,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
 
-                // Add API workshops to workshops state (merge, don't duplicate)
+                // Add API workshops to workshops state (merge and update, don't just add new ones)
                 setWorkshops(prev => {
                     const merged = [...prev];
                     apiWorkshops.forEach(apiWs => {
-                        if (!merged.find(w => w.id === apiWs.id)) {
+                        const existingIndex = merged.findIndex(w => w.id === apiWs.id);
+                        if (existingIndex !== -1) {
+                            // Update existing workshop with new data (including recordings)
+                            merged[existingIndex] = { ...merged[existingIndex], ...apiWs };
+                        } else {
+                            // Add new workshop
                             merged.push(apiWs);
                         }
                     });

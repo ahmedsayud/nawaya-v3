@@ -13,7 +13,6 @@ import AuthModal from '../components/AuthModal';
 import PaymentModal from '../components/PaymentModal';
 import WorkshopDetailsModal from '../components/WorkshopDetailsModal';
 import UnifiedGiftModal from '../components/UnifiedGiftModal';
-import ZoomRedirectModal from '../components/ZoomRedirectModal';
 import AttachmentViewerModal from '../components/AttachmentViewerModal';
 import VideoModal from '../components/VideoModal';
 import PhotoAlbumModal from '../components/PhotoAlbumModal';
@@ -38,7 +37,7 @@ const PublicApp: React.FC = () => {
     const {
         currentUser, workshops, products, placeOrder, addSubscription, addPendingGift, donateToPayItForward, cart,
         createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop,
-        adminLogin
+        adminLogin, fetchProfile
     } = useUser();
 
     // Navigation State
@@ -73,7 +72,6 @@ const PublicApp: React.FC = () => {
 
 
     const [openedWorkshopId, setOpenedWorkshopId] = useState<number | null>(null);
-    const [zoomRedirectLink, setZoomRedirectLink] = useState<string | null>(null);
     const [attachmentToView, setAttachmentToView] = useState<NoteResource | null>(null);
     const [invoiceToView, setInvoiceToView] = useState<{ user: User; subscription: Subscription } | null>(null);
     const [certificateToView, setCertificateToView] = useState<{ subscription: Subscription; workshop: Workshop } | null>(null);
@@ -209,7 +207,17 @@ const PublicApp: React.FC = () => {
                 : nextLiveWorkshop.zoomLink;
 
             if (bestLink) {
-                setZoomRedirectLink(bestLink);
+                if (earliestWorkshop && earliestWorkshop.online_link && earliestWorkshop.type === 'أونلاين') {
+                    setWatchData({
+                        workshop: { id: earliestWorkshop.id, title: earliestWorkshop.title } as Workshop,
+                        recording: { name: 'بث مباشر', url: earliestWorkshop.online_link } as Recording
+                    });
+                } else {
+                    setWatchData({
+                        workshop: nextLiveWorkshop,
+                        recording: { name: 'بث مباشر', url: bestLink } as Recording
+                    });
+                }
             } else {
                 const sessionInfo = nextLiveWorkshop.startDate && nextLiveWorkshop.startTime
                     ? `ميعاد الجلسة القادمة في ${nextLiveWorkshop.startDate} الساعة ${nextLiveWorkshop.startTime} (UAE)`
@@ -264,7 +272,14 @@ const PublicApp: React.FC = () => {
 
     const handleNavigate = (target: Page | string) => {
         setIsMobileMenuOpen(false);
-        if (target === Page.PROFILE) { if (currentUser) setIsProfileOpen(true); else handleLoginClick(true); }
+        if (target === Page.PROFILE) {
+            if (currentUser) {
+                fetchProfile(); // Sync profile data before opening
+                setIsProfileOpen(true);
+            } else {
+                handleLoginClick(true);
+            }
+        }
         else if (target === Page.REVIEWS) setIsReviewsModalOpen(true);
         else if (target === Page.PARTNERS) setIsPartnersModalOpen(true);
         else if (target === Page.BOUTIQUE) { setBoutiqueInitialView('products'); setIsBoutiqueModalOpen(true); }
@@ -491,20 +506,14 @@ const PublicApp: React.FC = () => {
             />
 
             <main className="min-h-screen pt-24 pb-12">
-                {watchData ? (
-                    <WatchPage workshop={watchData.workshop} recording={watchData.recording} onBack={() => setWatchData(null)} />
-                ) : (
-                    <>
-                        {currentPage === Page.WORKSHOPS && (
-                            <WorkshopsPage
-                                onLiveStreamLoginRequest={handleLiveStreamCardLogin}
-                                onScrollToSection={handleScrollToSection}
-                                onOpenWorkshopDetails={(id) => setOpenedWorkshopId(id)}
-                                onZoomRedirect={(link, id) => { setZoomRedirectLink(link); }}
-                                showToast={showToast}
-                            />
-                        )}
-                    </>
+                {currentPage === Page.WORKSHOPS && (
+                    <WorkshopsPage
+                        onLiveStreamLoginRequest={handleLiveStreamCardLogin}
+                        onScrollToSection={handleScrollToSection}
+                        onOpenWorkshopDetails={(id) => setOpenedWorkshopId(id)}
+                        onPlayRecording={(w, r) => setWatchData({ workshop: w, recording: r as Recording })}
+                        showToast={showToast}
+                    />
                 )}
             </main>
 
@@ -583,7 +592,7 @@ const PublicApp: React.FC = () => {
                     currentUser={currentUser}
                 />
             )}
-            {isProfileOpen && <ProfilePage isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={currentUser} onZoomRedirect={(link) => setZoomRedirectLink(link)} onPlayRecording={(w, r) => setWatchData({ workshop: w, recording: r })} onViewAttachment={(note) => setAttachmentToView(note)} onViewRecommendedWorkshop={(id) => { setIsProfileOpen(false); setOpenedWorkshopId(id); }} showToast={showToast} onPayForConsultation={() => { }} onViewInvoice={(details) => setInvoiceToView(details)} onViewCertificate={(details) => setCertificateToView(details)} />}
+            {isProfileOpen && <ProfilePage isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={currentUser} onPlayRecording={(w, r) => setWatchData({ workshop: w, recording: r as Recording })} onViewAttachment={(note) => setAttachmentToView(note)} onViewRecommendedWorkshop={(id) => { setIsProfileOpen(false); setOpenedWorkshopId(id); }} showToast={showToast} onPayForConsultation={() => { }} onViewInvoice={(details) => setInvoiceToView(details)} onViewCertificate={(details) => setCertificateToView(details)} />}
 
             {isVideoModalOpen && <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} />}
             {isPhotoAlbumModalOpen && <PhotoAlbumModal isOpen={isPhotoAlbumModalOpen} onClose={() => setIsPhotoAlbumModalOpen(false)} />}
@@ -592,7 +601,7 @@ const PublicApp: React.FC = () => {
             {isReviewsModalOpen && <ReviewsModal isOpen={isReviewsModalOpen} onClose={() => setIsReviewsModalOpen(false)} />}
             {isPartnersModalOpen && <PartnersModal isOpen={isPartnersModalOpen} onClose={() => setIsPartnersModalOpen(false)} />}
             {attachmentToView && <AttachmentViewerModal note={attachmentToView} onClose={() => setAttachmentToView(null)} />}
-            {zoomRedirectLink && <ZoomRedirectModal isOpen={!!zoomRedirectLink} zoomLink={zoomRedirectLink} onClose={() => setZoomRedirectLink(null)} />}
+            {/* Removed ZoomRedirectModal in favor of in-app player */}
             {invoiceToView && <InvoiceModal isOpen={!!invoiceToView} onClose={() => setInvoiceToView(null)} user={invoiceToView.user} subscription={invoiceToView.subscription} workshop={workshops.find(w => Number(w.id) === Number(invoiceToView.subscription.workshopId))!} />}
             {certificateToView && currentUser && <CertificateModal isOpen={!!certificateToView} onClose={() => setCertificateToView(null)} user={currentUser} subscription={certificateToView.subscription} workshop={certificateToView.workshop} />}
             {isCvModalOpen && <CvModal isOpen={isCvModalOpen} onClose={() => setIsCvModalOpen(false)} />}
@@ -628,6 +637,13 @@ const PublicApp: React.FC = () => {
             <Chatbot />
             <WhatsAppButton />
             <MusicPlayer />
+            {watchData && (
+                <WatchPage
+                    workshop={watchData.workshop}
+                    recording={watchData.recording}
+                    onBack={() => setWatchData(null)}
+                />
+            )}
             {toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => setToasts(prev => prev.filter(item => item.id !== t.id))} />)}
         </div>
     );

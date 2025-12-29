@@ -2,11 +2,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useUser } from '../context/UserContext';
 import { isWorkshopExpired, parseWorkshopDateTime } from '../utils';
+import { Workshop } from '../types';
 
 interface HeroProps {
     onExploreClick: () => void;
     onOpenWorkshopDetails: (workshopId: number) => void;
     onLoginRequest: () => void;
+    onPlayRecording: (workshop: Workshop, recording: { name?: string, url: string }) => void;
     workshop?: any;
 }
 
@@ -19,7 +21,7 @@ const CountdownUnit: React.FC<{ value: number; label: string }> = ({ value, labe
     </div>
 );
 
-const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLoginRequest, workshop: passedWorkshop }) => {
+const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLoginRequest, onPlayRecording, workshop: passedWorkshop }) => {
     const { workshops, earliestWorkshop } = useUser();
 
     const displayWorkshop = useMemo(() => {
@@ -114,8 +116,9 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
     }, [displayWorkshop]);
 
     const handleAction = () => {
-        if (displayWorkshop.is_subscribed && (displayWorkshop as any).online_link) {
-            window.open((displayWorkshop as any).online_link, '_blank');
+        if (displayWorkshop.is_subscribed && ((displayWorkshop as any).online_link || displayWorkshop.zoomLink)) {
+            const link = (displayWorkshop as any).online_link || displayWorkshop.zoomLink;
+            onPlayRecording(displayWorkshop, { name: 'بث مباشر', url: link });
         } else if (displayWorkshop.requires_authentication) {
             onLoginRequest();
         } else if (displayWorkshop.id) {

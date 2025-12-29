@@ -16,8 +16,7 @@ import RecordingStatsModal from '../components/RecordingStatsModal';
 interface ProfilePageProps {
     isOpen: boolean;
     onClose: () => void;
-    onZoomRedirect: (zoomLink: string, workshopId: number) => void;
-    onPlayRecording: (workshop: Workshop, recording: Recording, index: number) => void;
+    onPlayRecording: (workshop: Workshop, recording: Partial<Recording> & { name?: string, url: string }, index?: number) => void;
     onViewAttachment: (note: NoteResource) => void;
     onViewRecommendedWorkshop: (workshopId: number) => void;
     user?: User | null;
@@ -336,7 +335,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                         name: r.title,
                         url: r.link,
                         accessStartDate: undefined,
-                        accessEndDate: undefined
+                        accessEndDate: undefined,
+                        availability: r.availability
                     })) || [],
                     mediaFiles: sub.attachments?.map((a: any) => ({
                         type: a.type as 'audio' | 'video',
@@ -479,7 +479,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
     const handleLiveStreamClick = (workshop: Workshop, e?: React.MouseEvent) => {
         e?.stopPropagation(); // Prevent toggling accordion
         if (workshop.zoomLink) {
-            onZoomRedirect(workshop.zoomLink, workshop.id);
+            onPlayRecording(workshop, { name: 'بث مباشر', url: workshop.zoomLink } as Recording);
         } else {
             setComingSoonModalWorkshop(workshop);
         }
@@ -762,21 +762,27 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                                         }
 
                                                                         return (
-                                                                            <div key={index} className="space-y-2">
+                                                                            <div key={index} className="w-full">
                                                                                 <button
                                                                                     onClick={() => setPendingRecording({ workshop, recording: rec, index })}
                                                                                     disabled={disabled}
-                                                                                    className="w-full flex items-center gap-x-4 p-4 text-right rounded-lg bg-slate-800/70 hover:bg-slate-800 border border-transparent hover:border-purple-500/50 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed group"
+                                                                                    className="w-full flex items-center gap-x-4 p-4 text-right rounded-lg bg-slate-800/70 hover:bg-slate-800 border border-transparent hover:border-purple-500/50 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed group shadow-lg"
                                                                                 >
-                                                                                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-purple-500/10 text-purple-400 flex-shrink-0 group-hover:bg-purple-500/20 transition-colors"><VideoIcon className="w-6 h-6" /></div>
-                                                                                    <div className="flex-grow"><span className="font-bold text-white text-base group-hover:text-purple-300 transition-colors">مشاهدة: {rec.name}</span></div>
-                                                                                </button>
-                                                                                {dateString && (
-                                                                                    <div className="mt-2 text-xs text-yellow-400 flex items-center gap-x-2 pr-16">
-                                                                                        <CalendarIcon className="w-4 h-4 flex-shrink-0" />
-                                                                                        <span className="font-semibold">{dateString}</span>
+                                                                                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-purple-500/10 text-purple-400 flex-shrink-0 group-hover:bg-purple-500/20 transition-colors">
+                                                                                        <VideoIcon className="w-6 h-6" />
                                                                                     </div>
-                                                                                )}
+                                                                                    <div className="flex-grow flex flex-col items-start text-right">
+                                                                                        <span className="font-bold text-white text-base group-hover:text-purple-300 transition-colors">
+                                                                                            مشاهدة: {rec.name}
+                                                                                        </span>
+                                                                                        {dateString && (
+                                                                                            <div className="mt-1.5 text-[11px] text-yellow-400/90 flex items-center gap-x-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                                                                                                <CalendarIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                                                                                                <span className="font-medium">{dateString}</span>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </button>
                                                                             </div>
                                                                         );
                                                                     })}

@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Workshop } from '../types';
+import { Workshop, Recording } from '../types';
 import WorkshopCard from '../components/WorkshopCard';
 import LiveStreamCard from '../components/LiveStreamCard';
 import Hero from '../components/Hero';
@@ -12,7 +12,7 @@ interface WorkshopsPageProps {
   onLiveStreamLoginRequest: () => void;
   onScrollToSection: (sectionId: string) => void;
   onOpenWorkshopDetails: (workshopId: number | null) => void;
-  onZoomRedirect: (zoomLink: string, workshopId: number) => void;
+  onPlayRecording: (workshop: Workshop, recording: Partial<Recording> & { name?: string, url: string }, index?: number) => void;
   showToast: (message: string, type?: 'success' | 'warning' | 'error') => void;
 }
 
@@ -20,7 +20,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
   onLiveStreamLoginRequest,
   onScrollToSection,
   onOpenWorkshopDetails,
-  onZoomRedirect,
+  onPlayRecording,
   showToast
 }) => {
   const { currentUser: user, workshops, fetchWorkshops, paginationMeta, earliestWorkshop } = useUser();
@@ -156,6 +156,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
         onExploreClick={() => onScrollToSection('workshops_section')}
         onOpenWorkshopDetails={onOpenWorkshopDetails}
         onLoginRequest={onLiveStreamLoginRequest}
+        onPlayRecording={onPlayRecording}
         workshop={liveStreamWorkshop}
       />
 
@@ -173,7 +174,10 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
               address={liveStreamWorkshop.address || liveStreamWorkshop.city}
               user={user}
               onLoginRequest={onLiveStreamLoginRequest}
-              onZoomRedirect={onZoomRedirect}
+              onPlayLive={(link, id) => {
+                const ws = workshops.find(w => w.id === id);
+                if (ws) onPlayRecording(ws, { name: 'بث مباشر', url: link } as Recording);
+              }}
               onShowToast={showToast}
               onShowHelp={() => setIsHelpModalOpen(true)}
             />
