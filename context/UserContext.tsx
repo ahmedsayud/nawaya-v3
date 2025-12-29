@@ -91,6 +91,7 @@ interface UserContextType {
     expenses: Expense[];
     broadcastHistory: BroadcastCampaign[];
     countriesDebugInfo?: string;
+    isInitialLoading: boolean;
 
     // Auth & User Actions
     login: (email: string, phone: string) => Promise<{ user?: User; error?: string; message?: string }>;
@@ -226,6 +227,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Server-Side Cart State
     const [cart, setCart] = useState<Cart | null>(null);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     useEffect(() => { localStorage.setItem('currentUser', JSON.stringify(currentUser)); }, [currentUser]);
     // Removed localStorage caching for other data types as requested
@@ -1874,34 +1876,39 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const fetchCountries = async () => {
+        try {
+            const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.COUNTRIES}`;
+            const response = await axios.get(url);
+            const data = response.data;
+
+            if (data.key === 'success' && Array.isArray(data.data)) {
+                setCountries(data.data);
+                setCountriesDebugInfo(`Success (${data.data.length})`);
+            } else {
+                setCountriesDebugInfo(`Invalid Data Key: ${data.key}`);
+            }
+        } catch (error: any) {
+            setCountriesDebugInfo(`Fetch Error: ${error.message}`);
+        }
+    };
+
     // Initial Data Fetching
     useEffect(() => {
-        const fetchCountries = async () => {
+        const bootstrap = async () => {
+            setIsInitialLoading(true);
             try {
-                const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.COUNTRIES}`;
-
-
-                const response = await axios.get(url);
-                const data = response.data;
-
-
-                if (data.key === 'success' && Array.isArray(data.data)) {
-                    setCountries(data.data);
-                    setCountriesDebugInfo(`Success (${data.data.length})`);
-
-                } else {
-                    setCountriesDebugInfo(`Invalid Data Key: ${data.key}`);
-
-                }
-            } catch (error: any) {
-                setCountriesDebugInfo(`Fetch Error: ${error.message}`);
-
+                await Promise.allSettled([
+                    fetchCountries(),
+                    fetchSettings(),
+                    fetchWorkshops(),
+                    fetchDrHopeContent()
+                ]);
+            } finally {
+                setIsInitialLoading(false);
             }
         };
-        fetchCountries();
-        fetchSettings();
-        fetchWorkshops(); // Fetch workshops from API
-        fetchDrHopeContent();
+        bootstrap();
     }, []);
 
     // Re-fetch earliest workshop when auth state might have changed
@@ -1989,8 +1996,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Charity Actions
         buyCharitySeats,
-        processCharityPayment
-    }), [currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, pendingGifts, expenses, broadcastHistory, cart, paginationMeta, countries, countriesDebugInfo, createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop, fetchEarliestWorkshop, fetchDrHopeContent]);
+        processCharityPayment,
+        isInitialLoading
+    }), [currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, pendingGifts, expenses, broadcastHistory, cart, paginationMeta, countries, countriesDebugInfo, createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop, fetchEarliestWorkshop, fetchDrHopeContent, isInitialLoading]);
 
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

@@ -37,14 +37,14 @@ const PublicApp: React.FC = () => {
     const {
         currentUser, workshops, products, placeOrder, addSubscription, addPendingGift, donateToPayItForward, cart,
         createSubscription, processSubscriptionPayment, buyCharitySeats, processCharityPayment, earliestWorkshop,
-        adminLogin, fetchProfile
+        adminLogin, fetchProfile, isInitialLoading
     } = useUser();
 
     // Navigation State
     const [currentPage, setCurrentPage] = useState<Page>(Page.WORKSHOPS);
 
     // UI State
-    const [showIntro, setShowIntro] = useState(true);
+    const [introStage, setIntroStage] = useState<'loading' | 'welcome' | 'done'>('loading');
     const [toasts, setToasts] = useState<{ id: string, message: string, type: 'success' | 'warning' | 'error' }[]>([]);
 
     // Modals & Menus State
@@ -97,13 +97,29 @@ const PublicApp: React.FC = () => {
 
     // --- Effects ---
 
-    useEffect(() => { const timer = setTimeout(() => setShowIntro(false), 3500); return () => clearTimeout(timer); }, []);
+    // Intro Logic: loading -> welcome -> done
     useEffect(() => {
-        if (!showIntro && !initialHubOpenRef.current) {
+        if (!isInitialLoading && introStage === 'loading') {
+            setIntroStage('welcome');
+        }
+    }, [isInitialLoading, introStage]);
+
+    useEffect(() => {
+        if (introStage === 'welcome') {
+            const timer = setTimeout(() => {
+                setIntroStage('done');
+            }, 1500); // Show welcome message for 1.5 seconds
+
+            return () => clearTimeout(timer);
+        }
+    }, [introStage]);
+
+    useEffect(() => {
+        if (introStage === 'done' && !initialHubOpenRef.current) {
             setIsNavigationHubOpen(true);
             initialHubOpenRef.current = true;
         }
-    }, [showIntro]);
+    }, [introStage]);
 
     useEffect(() => {
         if (currentUser) {
@@ -486,7 +502,7 @@ const PublicApp: React.FC = () => {
 
     return (
         <div className={`min-h-screen font-sans selection:bg-fuchsia-500/30 ${isHomePage ? 'bg-white text-slate-900' : 'bg-theme-gradient text-slate-200'}`}>
-            {showIntro && <IntroAnimation />}
+            {introStage !== 'done' && <IntroAnimation stage={introStage === 'loading' ? 'loading' : 'welcome'} />}
 
             <Header
                 onLoginClick={handleLoginClick}
@@ -502,7 +518,7 @@ const PublicApp: React.FC = () => {
                 onRequestConsultationClick={() => setIsConsultationRequestModalOpen(true)}
                 onOpenNavigationHub={() => setIsNavigationHubOpen(true)}
                 isHomePage={isHomePage}
-                isVisible={!showIntro}
+                isVisible={introStage === 'done'}
             />
 
             <main className="min-h-screen pt-24 pb-12">
