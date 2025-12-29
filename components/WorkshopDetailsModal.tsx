@@ -160,7 +160,7 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                         <>
                             <div className="mt-6 text-center border-t border-white/20 pt-4">
                                 <p className="text-sm text-slate-400">السعر</p>
-                                {activeWorkshop.isFree ? (
+                                {(activeWorkshop.isFree || activeWorkshop.price === 0) ? (
                                     <span className="block text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-300 to-fuchsia-400 my-2">مجاناً</span>
                                 ) : (
                                     <>
@@ -270,19 +270,21 @@ const WorkshopDetailsModal: React.FC<WorkshopDetailsModalProps> = ({ workshop, o
                     </div>
 
                 </div>
-                <footer className="p-4 border-t border-violet-500/30 flex-shrink-0 bg-black/10 grid grid-cols-2 gap-4">
-                    <button
-                        onClick={handleGiftClick}
-                        className="flex items-center justify-center gap-x-2 bg-fuchsia-900/30 hover:bg-fuchsia-500/30 border border-fuchsia-500/50 text-fuchsia-300 font-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02]"
-                    >
-                        <GiftIcon className="w-5 h-5" />
-                        <span>إهداء مقعد</span>
-                    </button>
+                <footer className={`p-4 border-t border-violet-500/30 flex-shrink-0 bg-black/10 ${(activeWorkshop.isFree || activeWorkshop.price === 0) ? 'flex justify-center' : 'grid grid-cols-2 gap-4'}`}>
+                    {!(activeWorkshop.isFree || activeWorkshop.price === 0) && (
+                        <button
+                            onClick={handleGiftClick}
+                            className="flex items-center justify-center gap-x-2 bg-fuchsia-900/30 hover:bg-fuchsia-500/30 border border-fuchsia-500/50 text-fuchsia-300 font-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02]"
+                        >
+                            <GiftIcon className="w-5 h-5" />
+                            <span>إهداء مقعد</span>
+                        </button>
+                    )}
                     <button
                         onClick={handleEnrollClick}
-                        className="bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-900/30 hover:shadow-pink-500/50 text-sm border border-fuchsia-500/20"
+                        className={`bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-purple-900/30 hover:shadow-pink-500/50 text-sm border border-fuchsia-500/20 ${(activeWorkshop.isFree || activeWorkshop.price === 0) ? 'w-full max-w-md' : ''}`}
                     >
-                        {activeWorkshop.isFree ? 'اشتراك مجاني' : 'إهداء الورشة لنفسي'}
+                        {(activeWorkshop.isFree || activeWorkshop.price === 0) ? 'اشتراك مجاني' : 'إهداء الورشة لنفسي'}
                     </button>
                 </footer>
             </div>
