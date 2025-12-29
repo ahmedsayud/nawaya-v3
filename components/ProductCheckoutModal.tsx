@@ -11,11 +11,12 @@ interface ProductCheckoutModalProps {
   onBack?: () => void;
   onRequestLogin: () => void;
   currentUser: User | null;
+  onOpenPayment: (url: string) => void;
 }
 
 type PaymentMethod = 'CARD' | 'BANK_TRANSFER';
 
-const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onClose, onConfirm, onCardPaymentConfirm, onBack, onRequestLogin, currentUser }) => {
+const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onClose, onConfirm, onCardPaymentConfirm, onBack, onRequestLogin, currentUser, onOpenPayment }) => {
   const { products, cart, createOrder, fetchOrderSummary } = useUser();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('CARD');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -83,7 +84,7 @@ const ProductCheckoutModal: React.FC<ProductCheckoutModalProps> = ({ isOpen, onC
       if (response.key === 'success' || (response as any).status === 'success') {
         const data = response.data as any;
         if (paymentMethod === 'online' && data?.invoice_url) {
-          window.open(data.invoice_url, '_blank');
+          onOpenPayment(data.invoice_url);
           return;
         }
         onConfirm();

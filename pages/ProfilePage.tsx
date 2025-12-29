@@ -25,6 +25,7 @@ interface ProfilePageProps {
     onPayForConsultation: (consultation: ConsultationRequest) => void;
     onViewInvoice: (details: { user: User; subscription: Subscription }) => void;
     onViewCertificate: (details: { subscription: Subscription; workshop: Workshop }) => void;
+    onOpenPayment: (url: string) => void;
 }
 
 type RecordingStatus = 'AVAILABLE' | 'NOT_YET_AVAILABLE' | 'EXPIRED';
@@ -199,7 +200,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
 };
 
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoomRedirect, onPlayRecording, onViewAttachment, onViewRecommendedWorkshop, showToast, onPayForConsultation, onViewInvoice, onViewCertificate }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoomRedirect, onPlayRecording, onViewAttachment, onViewRecommendedWorkshop, showToast, onPayForConsultation, onViewInvoice, onViewCertificate, onOpenPayment }) => {
     // REMOVED updateSubscription from destructuring as it's no longer available in UserContextType
     const { workshops, currentUser: loggedInUser, addReview, consultationRequests, globalCertificateTemplate, fetchProfile, payForConsultation } = useUser();
 
@@ -493,7 +494,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
             if (result.success && result.invoiceUrl) {
                 showToast('جاري توجيهك إلى بوابة الدفع...', 'success');
                 // Redirect to payment gateway
-                window.open(result.invoiceUrl, '_blank');
+                onOpenPayment(result.invoiceUrl);
             } else {
                 showToast(result.message || 'حدث خطأ أثناء معالجة الدفع', 'error');
             }

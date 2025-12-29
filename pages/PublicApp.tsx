@@ -29,6 +29,7 @@ import ReviewsModal from '../components/ReviewsModal';
 import PartnersModal from '../components/PartnersModal';
 import BoutiqueModal from '../components/BoutiqueModal';
 import ProductCheckoutModal from '../components/ProductCheckoutModal';
+import PaymentFrameModal from '../components/PaymentFrameModal';
 import LegalModal from '../components/LegalModal';
 import { PrivacyPolicyContent, TermsContent, ShippingPolicyContent, AboutContent } from '../components/LegalContent';
 import { isWorkshopExpired } from '../utils';
@@ -79,6 +80,10 @@ const PublicApp: React.FC = () => {
     const [watchData, setWatchData] = useState<{ workshop: Workshop, recording: Recording } | null>(null);
     const [paymentModalIntent, setPaymentModalIntent] = useState<PaymentIntent | null>(null);
     const [giftModalIntent, setGiftModalIntent] = useState<{ workshop: Workshop, pkg: Package | null, initialData?: any } | null>(null);
+
+    // Payment Frame State
+    const [isPaymentFrameOpen, setIsPaymentFrameOpen] = useState(false);
+    const [paymentFrameUrl, setPaymentFrameUrl] = useState('');
 
     // Dynamic Payment Info from Subscription API
     const [subscriptionApiResponse, setSubscriptionApiResponse] = useState<SubscriptionCreateResponse | null>(null);
@@ -197,6 +202,11 @@ const PublicApp: React.FC = () => {
         setAuthModalInitialView('register');
         setAuthModalHideRegister(false);
         setIsAuthModalOpen(true);
+    };
+
+    const handleOpenPayment = (url: string) => {
+        setPaymentFrameUrl(url);
+        setIsPaymentFrameOpen(true);
     };
 
     // Helper to process Live Stream Access Logic
@@ -406,7 +416,7 @@ const PublicApp: React.FC = () => {
 
         if (paymentResult?.key === 'success') {
             if (method === 'CARD' && paymentResult.data.invoice_url) {
-                window.open(paymentResult.data.invoice_url, '_blank');
+                handleOpenPayment(paymentResult.data.invoice_url);
                 return;
             }
 
@@ -431,7 +441,7 @@ const PublicApp: React.FC = () => {
 
         if (paymentResult?.key === 'success') {
             if (method === 'CARD' && paymentResult.data.invoice_url) {
-                window.open(paymentResult.data.invoice_url, '_blank');
+                handleOpenPayment(paymentResult.data.invoice_url);
                 return;
             }
 
@@ -614,9 +624,11 @@ const PublicApp: React.FC = () => {
                     onCardPaymentConfirm={() => handleProductOrderConfirm(true)}
                     onRequestLogin={() => { setIsProductCheckoutOpen(false); handleLoginClick(false); }}
                     currentUser={currentUser}
+                    onOpenPayment={handleOpenPayment}
                 />
             )}
-            {isProfileOpen && <ProfilePage isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={currentUser} onPlayRecording={(w, r) => setWatchData({ workshop: w, recording: r as Recording })} onViewAttachment={(note) => setAttachmentToView(note)} onViewRecommendedWorkshop={(id) => { setIsProfileOpen(false); setOpenedWorkshopId(id); }} showToast={showToast} onPayForConsultation={() => { }} onViewInvoice={(details) => setInvoiceToView(details)} onViewCertificate={(details) => setCertificateToView(details)} />}
+            {isProfileOpen && <ProfilePage isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={currentUser} onPlayRecording={(w, r) => setWatchData({ workshop: w, recording: r as Recording })} onViewAttachment={(note) => setAttachmentToView(note)} onViewRecommendedWorkshop={(id) => { setIsProfileOpen(false); setOpenedWorkshopId(id); }} showToast={showToast} onPayForConsultation={() => { }} onViewInvoice={(details) => setInvoiceToView(details)} onViewCertificate={(details) => setCertificateToView(details)} onOpenPayment={handleOpenPayment} />}
+            {isPaymentFrameOpen && <PaymentFrameModal isOpen={isPaymentFrameOpen} onClose={() => setIsPaymentFrameOpen(false)} url={paymentFrameUrl} />}
 
             {isVideoModalOpen && <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} />}
             {isPhotoAlbumModalOpen && <PhotoAlbumModal isOpen={isPhotoAlbumModalOpen} onClose={() => setIsPhotoAlbumModalOpen(false)} />}
