@@ -233,17 +233,8 @@ const PublicApp: React.FC = () => {
                 : nextLiveWorkshop.zoomLink;
 
             if (bestLink) {
-                if (earliestWorkshop && earliestWorkshop.online_link && earliestWorkshop.type === 'أونلاين') {
-                    setWatchData({
-                        workshop: { id: earliestWorkshop.id, title: earliestWorkshop.title } as Workshop,
-                        recording: { name: 'بث مباشر', url: earliestWorkshop.online_link } as Recording
-                    });
-                } else {
-                    setWatchData({
-                        workshop: nextLiveWorkshop,
-                        recording: { name: 'بث مباشر', url: bestLink } as Recording
-                    });
-                }
+                // Redirect directly to Zoom/Live link in the same window
+                window.location.href = bestLink;
             } else {
                 const sessionInfo = nextLiveWorkshop.startDate && nextLiveWorkshop.startTime
                     ? `ميعاد الجلسة القادمة في ${nextLiveWorkshop.startDate} الساعة ${nextLiveWorkshop.startTime} (UAE)`
