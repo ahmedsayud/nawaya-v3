@@ -106,17 +106,6 @@ const WatchPage: React.FC<WatchPageProps> = ({ workshop, recording, onBack }) =>
                 title={recording.name || workshop.title}
                 sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
               ></iframe>
-              <div className="absolute bottom-4 left-4 right-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <a
-                  href={recording.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs flex items-center gap-2 hover:bg-white/20 transition-all border border-white/10"
-                >
-                  <ExternalLinkIcon className="w-3.5 h-3.5" />
-                  فتح في نافذة مستقلة
-                </a>
-              </div>
             </div>
           </div>
         );
