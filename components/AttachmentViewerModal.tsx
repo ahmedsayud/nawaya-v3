@@ -6,7 +6,11 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
 // Configure PDF worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Configure PDF worker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 interface AttachmentViewerModalProps {
   note: NoteResource | null;
@@ -17,6 +21,7 @@ const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({ note, onC
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState(1.0);
+  const [errorInfo, setErrorInfo] = useState<string | null>(null);
 
   if (!note) return null;
 
@@ -27,6 +32,12 @@ const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({ note, onC
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
     setPageNumber(1);
+    setErrorInfo(null);
+  };
+
+  const onDocumentLoadError = (error: Error) => {
+    console.error('PDF Load Error:', error);
+    setErrorInfo(error.message);
   };
 
   const changePage = (offset: number) => {
@@ -44,8 +55,15 @@ const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({ note, onC
             <Document
               file={note.value}
               onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
               loading={<div className="flex items-center justify-center p-12 text-white"><div className="w-8 h-8 border-4 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div></div>}
-              error={<div className="text-red-400 p-8">فشل تحميل ملف PDF. ربما يكون الرابط غير صالح.</div>}
+              error={
+                <div className="text-red-400 p-8 text-center bg-slate-800 rounded-lg max-w-md mx-auto">
+                  <p className="font-bold mb-2">فشل تحميل ملف PDF</p>
+                  <p className="text-sm text-red-300 dir-ltr">{errorInfo || 'خطأ غير معروف'}</p>
+                  {errorInfo?.includes('Network') && <p className="text-xs text-slate-400 mt-2">قد يكون السبب مشكلة في الاتصال أو صلاحيات الوصول للملف (CORS).</p>}
+                </div>
+              }
             >
               <Page
                 pageNumber={pageNumber}
