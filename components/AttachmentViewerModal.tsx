@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CloseIcon, DownloadIcon, PrintIcon } from './icons';
+import { CloseIcon, DownloadIcon } from './icons';
 import { NoteResource } from '../types';
 
 interface AttachmentViewerModalProps {
@@ -12,38 +12,6 @@ const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({ note, onC
   const displayUrl = note.value;
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName) || displayUrl.startsWith('data:image');
   const isPdf = /\.pdf$/i.test(fileName) || fileName.toLowerCase().includes('pdf');
-
-  // For direct print/download
-  const handlePrint = () => {
-    if (displayUrl) {
-      const pureUrl = displayUrl.split('#')[0];
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '-1000px';
-      iframe.style.bottom = '-1000px';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.src = pureUrl;
-
-      iframe.onload = () => {
-        setTimeout(() => {
-          try {
-            iframe.contentWindow?.focus();
-            iframe.contentWindow?.print();
-          } catch (e) {
-            window.open(pureUrl, '_blank');
-          }
-          setTimeout(() => {
-            if (document.body.contains(iframe)) {
-              document.body.removeChild(iframe);
-            }
-          }, 2000);
-        }, 500);
-      };
-      document.body.appendChild(iframe);
-    }
-  };
 
   const handleDownload = (e?: React.MouseEvent) => {
     if (!displayUrl) return;
@@ -81,20 +49,6 @@ const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({ note, onC
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-x-2 py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-all border border-white/10"
-            >
-              <PrintIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">طباعة</span>
-            </button>
-            <button
-              onClick={() => handleDownload()}
-              className="flex items-center gap-x-2 py-1.5 px-3 rounded-lg bg-theme-gradient-btn text-white font-bold text-sm transition-all shadow-lg shadow-fuchsia-500/20"
-            >
-              <DownloadIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">تحميل</span>
-            </button>
             <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"
