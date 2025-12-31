@@ -65,6 +65,15 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                         const blob = await response.blob();
                         const url = URL.createObjectURL(blob);
                         setInvoiceUrl(url);
+
+                        // Trigger immediate download and close as requested
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `invoice-${subscription.id}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        onClose();
                     } else {
                         // Fallback for text/html (legacy) or if header is missing but it's actually binary
                         const blob = await response.blob();
