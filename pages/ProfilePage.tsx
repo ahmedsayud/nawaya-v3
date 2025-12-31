@@ -792,7 +792,23 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                                         );
                                                                     })}
                                                                     {workshop.notes?.map((note, index) => (
-                                                                        <button key={index} onClick={() => onViewAttachment(note)} className="w-full flex items-center gap-x-4 p-4 text-right rounded-lg bg-slate-800/70 hover:bg-slate-800 border border-transparent hover:border-green-500/50 transition-all duration-300 transform hover:scale-[1.02] group">
+                                                                        <button
+                                                                            key={index}
+                                                                            onClick={() => {
+                                                                                const isPdf = /\.pdf$/i.test(note.name) || note.name.toLowerCase().includes('pdf');
+                                                                                if (isPdf) {
+                                                                                    const link = document.createElement('a');
+                                                                                    link.href = note.value;
+                                                                                    link.download = note.name;
+                                                                                    document.body.appendChild(link);
+                                                                                    link.click();
+                                                                                    document.body.removeChild(link);
+                                                                                } else {
+                                                                                    onViewAttachment(note);
+                                                                                }
+                                                                            }}
+                                                                            className="w-full flex items-center gap-x-4 p-4 text-right rounded-lg bg-slate-800/70 hover:bg-slate-800 border border-transparent hover:border-green-500/50 transition-all duration-300 transform hover:scale-[1.02] group"
+                                                                        >
                                                                             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-green-500/10 text-green-400 flex-shrink-0 group-hover:bg-green-500/20 transition-colors"><DocumentTextIcon className="w-6 h-6" /></div>
                                                                             <div className="flex-grow"><span className="font-bold text-white text-base group-hover:text-green-300 transition-colors">{note.name}</span></div>
                                                                         </button>

@@ -70,6 +70,15 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                         const blob = await response.blob();
                         const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
                         setInvoiceUrl(url);
+
+                        // Trigger immediate download and close as requested
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `invoice-${subscription.id}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        onClose();
                     }
                 } else {
                     // For any error (400, 404, 500 etc), show a friendly message
@@ -94,38 +103,17 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
 
     if (!isOpen) return null;
 
-    const handlePrint = () => {
-        if (invoiceUrl) {
-            const printWindow = window.open(invoiceUrl);
-            if (printWindow) {
-                printWindow.print();
-            }
-        }
-    };
-
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[100] p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-4xl border border-fuchsia-500/50 h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-md border border-fuchsia-500/50 flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <header className="p-3 bg-slate-800 flex justify-between items-center flex-shrink-0 rounded-t-lg">
                     <h2 className="text-lg font-bold text-white">تفاصيل الفاتورة</h2>
-                    <div className="flex items-center gap-x-3">
-                        {invoiceUrl && (
-                            <a
-                                href={invoiceUrl}
-                                download={`invoice-${subscription.id}.pdf`}
-                                className="flex items-center gap-x-2 py-2 px-3 rounded-md bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold text-sm shadow-lg shadow-purple-500/30 transition-all transform hover:scale-105 border border-fuchsia-500/20"
-                            >
-                                <PrintIcon className="w-5 h-5" />
-                                <span>تحميل PDF</span>
-                            </a>
-                        )}
-                        <button onClick={onClose} className="p-2 rounded-full text-white hover:bg-white/10">
-                            <CloseIcon className="w-6 h-6" />
-                        </button>
-                    </div>
+                    <button onClick={onClose} className="p-2 rounded-full text-white hover:bg-white/10">
+                        <CloseIcon className="w-6 h-6" />
+                    </button>
                 </header>
 
-                <div className="flex-grow bg-slate-100 relative h-full">
+                <div className="bg-slate-100 relative min-h-[300px] rounded-b-lg">
                     {isLoading ? (
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
@@ -135,7 +123,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                         </div>
                     ) : error ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
-                            <div className="text-center p-8 max-w-md">
+                            <div className="text-center p-8">
                                 <div className="w-24 h-24 bg-fuchsia-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
                                     <svg className="w-12 h-12 text-fuchsia-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -146,11 +134,16 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                             </div>
                         </div>
                     ) : (
-                        <iframe
-                            src={invoiceUrl}
-                            className="w-full h-full rounded-b-lg border-0"
-                            title="Invoice Preview"
-                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
+                            <div className="text-center p-8">
+                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <p className="text-lg font-bold text-slate-800">تم تحميل الفاتورة بنجاح</p>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
