@@ -40,7 +40,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
             try {
                 const token = localStorage.getItem('auth_token');
                 if (!token) {
-                    setError('???? ????? ?????? ????');
+                    setError('يرجى تسجيل الدخول أولاً');
                     setIsLoading(false);
                     return;
                 }
@@ -67,18 +67,16 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                         setInvoiceUrl(url);
                     } else {
                         // Fallback for text/html (legacy) or if header is missing but it's actually binary
-                        // Ideally we should try to detect if it's binary content starting with %PDF
                         const blob = await response.blob();
-                        // Simple check: create URL anyway, iframe can usually handle it or download it
                         const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
                         setInvoiceUrl(url);
                     }
                 } else {
-                    setError(`??? ????? ???????? (${response.status})`);
+                    // For any error (400, 404, 500 etc), show a friendly message
+                    setError('الفاتورة غير متوفرة حالياً، يرجى مراجعتها لاحقاً.');
                 }
             } catch (err) {
-                
-                setError('??? ??? ????? ????? ????????');
+                setError('الفاتورة غير متوفرة حالياً، يرجى مراجعتها لاحقاً.');
             } finally {
                 setIsLoading(false);
             }
@@ -109,7 +107,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[100] p-4" onClick={(e) => e.stopPropagation()}>
             <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-4xl border border-fuchsia-500/50 h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <header className="p-3 bg-slate-800 flex justify-between items-center flex-shrink-0 rounded-t-lg">
-                    <h2 className="text-lg font-bold text-white">???????? ????????</h2>
+                    <h2 className="text-lg font-bold text-white">تفاصيل الفاتورة</h2>
                     <div className="flex items-center gap-x-3">
                         {invoiceUrl && (
                             <a
@@ -118,7 +116,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                                 className="flex items-center gap-x-2 py-2 px-3 rounded-md bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white font-bold text-sm shadow-lg shadow-purple-500/30 transition-all transform hover:scale-105 border border-fuchsia-500/20"
                             >
                                 <PrintIcon className="w-5 h-5" />
-                                <span>????? PDF</span>
+                                <span>تحميل PDF</span>
                             </a>
                         )}
                         <button onClick={onClose} className="p-2 rounded-full text-white hover:bg-white/10">
@@ -132,14 +130,19 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, use
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
                                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-fuchsia-500"></div>
-                                <p className="mt-4 text-slate-700">???? ????? ????????...</p>
+                                <p className="mt-4 text-slate-700 font-bold">جاري تحميل الفاتورة...</p>
                             </div>
                         </div>
                     ) : error ? (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-center text-red-600">
-                                <p className="text-xl mb-2">??</p>
-                                <p>{error}</p>
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
+                            <div className="text-center p-8 max-w-md">
+                                <div className="w-24 h-24 bg-fuchsia-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                    <svg className="w-12 h-12 text-fuchsia-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">{error}</h3>
+                                <p className="text-slate-500 text-sm">سيتم توفير تفاصيل الفاتورة فور اكتمال معالجة البيانات. يمكنك المحاولة مرة أخرى لاحقاً.</p>
                             </div>
                         </div>
                     ) : (
