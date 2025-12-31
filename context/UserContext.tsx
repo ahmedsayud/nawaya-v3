@@ -1457,21 +1457,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
 
-                // Add API workshops to workshops state (merge and update, don't just add new ones)
-                setWorkshops(prev => {
-                    const merged = [...prev];
-                    apiWorkshops.forEach(apiWs => {
-                        const existingIndex = merged.findIndex(w => w.id === apiWs.id);
-                        if (existingIndex !== -1) {
-                            // Update existing workshop with new data (including recordings)
-                            merged[existingIndex] = { ...merged[existingIndex], ...apiWs };
-                        } else {
-                            // Add new workshop
-                            merged.push(apiWs);
-                        }
-                    });
-                    return merged;
-                });
+                // Removed merging profile workshops into global workshops state to separate subscribed vs public catalog
 
                 // Map API subscriptions to our Subscription type
                 const subscriptions: Subscription[] = (profileData.active_subscriptions || [])
