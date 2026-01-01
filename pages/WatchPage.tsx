@@ -66,7 +66,7 @@ const WatchPage: React.FC<WatchPageProps> = ({ workshop, recording, onBack }) =>
                 src={embedUrl}
                 className="w-full h-full border-0"
                 title={recording.name || workshop.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                 allowFullScreen
               ></iframe>
             </div>
@@ -104,7 +104,9 @@ const WatchPage: React.FC<WatchPageProps> = ({ workshop, recording, onBack }) =>
                 src={embedUrl}
                 className="w-full h-full border-0"
                 title={recording.name || workshop.title}
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                allow="fullscreen"
+                allowFullScreen
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
               ></iframe>
             </div>
           </div>
