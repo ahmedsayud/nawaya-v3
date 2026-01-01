@@ -44,7 +44,7 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
 
         const now = new Date();
         const upcoming = workshops
-            .filter(w => w.isVisible && !w.isRecorded)
+            .filter(w => w.isVisible && !w.isRecorded && (w.location === 'أونلاين' || w.location === 'أونلاين وحضوري'))
             .map(w => ({ ...w, targetDate: getWorkshopDate(w) }))
             .filter(w => w.targetDate.getTime() + (4 * 60 * 60 * 1000) > now.getTime()) // Still live if started < 4h ago
             .sort((a, b) => a.targetDate.getTime() - b.targetDate.getTime());

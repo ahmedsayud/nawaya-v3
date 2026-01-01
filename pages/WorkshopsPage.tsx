@@ -105,7 +105,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
 
   // Sort by Date Ascending for "Next Up" Logic
   const upcomingSortedByDate = [...visibleWorkshops]
-    .filter(w => !w.isRecorded && !isWorkshopExpired(w))
+    .filter(w => !w.isRecorded && !isWorkshopExpired(w) && (w.location === 'أونلاين' || w.location === 'أونلاين وحضوري'))
     .sort((a, b) => {
       const dateA = parseWorkshopDateTime(a.startDate, a.startTime).getTime();
       const dateB = parseWorkshopDateTime(b.startDate, b.startTime).getTime();
