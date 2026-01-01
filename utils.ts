@@ -18,7 +18,7 @@ export const formatArabicDate = (dateString: string | undefined): string => {
 
   // Check for validity. An invalid date string (e.g., from an empty field) results in `NaN`.
   if (isNaN(date.getTime())) {
-    
+
     return ''; // Return empty string for invalid dates to prevent crashes.
   }
 
@@ -181,7 +181,7 @@ export const timeSince = (dateString: string): string => {
 export const downloadHtmlAsPdf = async (htmlContent: string, filename: string = 'report.pdf', orientation: 'portrait' | 'landscape' = 'landscape') => {
   if (typeof jspdf === 'undefined' || typeof html2canvas === 'undefined') {
     alert('مكتبات إنشاء الشهادة غير متاحة. يرجى المحاولة مرة أخرى أو تحديث الصفحة.');
-    
+
     return;
   }
 
@@ -269,7 +269,7 @@ export const downloadHtmlAsPdf = async (htmlContent: string, filename: string = 
 
     pdf.save(filename);
   } catch (error) {
-    
+
     alert("حدث خطأ أثناء إنشاء ملف PDF. قد يكون بسبب صورة معطوبة أو مشكلة في الشبكة. يرجى المحاولة مرة أخرى.");
   } finally {
     document.body.removeChild(tempContainer);
@@ -349,7 +349,7 @@ export const parseArabicDateRange = (range: string | undefined): { startDate: st
       }
     }
   } catch (error) {
-    
+
   }
 
   return fallback;
@@ -384,4 +384,33 @@ export const parseWorkshopDateTime = (dateStr: string, timeStr?: string): Date =
   // Create Date in local context (browser/server timezone)
   // To be truly precise about UAE, we'd need more logic, but this is better than what was there.
   return new Date(year, month - 1, day, hours, minutes);
+};
+
+/**
+ * Converts common video platform links (YouTube, Vimeo) into their embeddable iframe counterparts.
+ */
+export const getEmbedUrl = (url: string | undefined): string => {
+  if (!url) return '';
+
+  let embedUrl = url;
+
+  // YouTube
+  if (url.includes('youtube.com/watch?v=')) {
+    embedUrl = url.replace('youtube.com/watch?v=', 'youtube.com/embed/');
+  } else if (url.includes('youtu.be/')) {
+    embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+  }
+
+  // Vimeo
+  if (url.includes('vimeo.com/') && !url.includes('player.vimeo.com')) {
+    const vimeoId = url.split('/').pop();
+    embedUrl = `https://player.vimeo.com/video/${vimeoId}`;
+  }
+
+  // Handle YouTube Shorts
+  if (url.includes('youtube.com/shorts/')) {
+    embedUrl = url.replace('youtube.com/shorts/', 'youtube.com/embed/');
+  }
+
+  return embedUrl;
 };

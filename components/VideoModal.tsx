@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CloseIcon } from './icons';
 import { useUser } from '../context/UserContext';
+import { getEmbedUrl } from '../utils';
 
 interface VideoModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen && drhopeData.videos && drhopeData.videos.length > 0) {
-      setSelectedVideoUrl(drhopeData.videos[0].url);
+      setSelectedVideoUrl(getEmbedUrl(drhopeData.videos[0].url));
     } else {
       setSelectedVideoUrl(null);
     }
@@ -64,8 +65,8 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose }) => {
               {drhopeData.videos.map(video => (
                 <button
                   key={video.id}
-                  onClick={() => setSelectedVideoUrl(video.url)}
-                  className={`py-2 px-4 rounded-md text-sm font-bold transition-colors ${selectedVideoUrl === video.url ? 'bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white' : 'bg-slate-700 hover:bg-slate-600'}`}
+                  onClick={() => setSelectedVideoUrl(getEmbedUrl(video.url))}
+                  className={`py-2 px-4 rounded-md text-sm font-bold transition-colors ${selectedVideoUrl === getEmbedUrl(video.url) ? 'bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white' : 'bg-slate-700 hover:bg-slate-600'}`}
                 >
                   {video.title}
                 </button>
