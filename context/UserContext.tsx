@@ -512,20 +512,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchSettings = async () => {
         try {
             const url = `${API_BASE_URL}${API_ENDPOINTS.GENERAL.SETTINGS}`;
+            console.log('🔍 Fetching settings from:', url);
 
             const response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
 
             const data = await response.json();
+            console.log('📦 Settings API Response:', data);
+            console.log('📱 WhatsApp from API:', data?.data?.whatsapp);
+            console.log('☎️ Phone from API:', data?.data?.phone);
+
             if (data.key === 'success' && data.data) {
                 const settings = data.data;
-
 
                 setDrhopeData(prev => ({
                     ...prev,
                     introText: settings.welcome_message || prev.introText,
                     logoUrl: settings.logo || prev.logoUrl,
-                    whatsappNumber: settings.whatsapp || prev.whatsappNumber,
+                    whatsappNumber: settings.whatsapp || settings.phone || prev.whatsappNumber || '966581234567',
+                    companyPhone: settings.phone || prev.companyPhone,
+                    companyAddress: settings.address || prev.companyAddress,
                     socialMediaLinks: {
                         ...prev.socialMediaLinks,
                         facebook: settings.facebook || prev.socialMediaLinks.facebook,
@@ -535,9 +541,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         tiktok: settings.tiktok || prev.socialMediaLinks.tiktok,
                     }
                 }));
+            } else {
+                console.warn('⚠️ Settings API returned unsuccessful key or missing data');
             }
         } catch (error) {
-
+            console.error('❌ Error fetching settings:', error);
         }
     };
 

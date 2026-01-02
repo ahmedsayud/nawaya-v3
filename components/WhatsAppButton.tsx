@@ -15,13 +15,16 @@ const WhatsAppButton: React.FC = () => {
     trackEvent('contact_whatsapp', {}, currentUser || undefined);
   };
 
+  // Clean the number: remove all non-digits
+  const cleanNumber = whatsappNumber.replace(/\D/g, '');
+
   return (
     <a
-      href={`https://wa.me/${whatsappNumber}`}
+      href={`https://wa.me/${cleanNumber}`}
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}
-      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-green-500 text-white w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shadow-lg transform hover:scale-125 transition-transform duration-300 z-40"
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-green-500 text-white w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shadow-lg transform hover:scale-125 transition-transform duration-300 z-50"
       aria-label="Contact us on WhatsApp"
     >
       <WhatsAppIcon className="w-7 h-7 sm:w-8 sm:h-8" />
