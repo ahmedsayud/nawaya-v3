@@ -385,20 +385,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
         return nextLiveSub ? apiWorkshops.find(w => w.id === nextLiveSub.workshopId) : null;
     }, [nextLiveSub, apiWorkshops]);
 
-    const sortedSubscriptions = useMemo(() => {
-        return [...subscriptions].sort((a, b) => {
-            const wA = apiWorkshops.find(wk => wk.id === a.workshopId);
-            const wB = apiWorkshops.find(wk => wk.id === b.workshopId);
-
-            if (!wA || !wB) return 0;
-
-            const timeA = parseWorkshopDateTime(wA.startDate, wA.startTime).getTime();
-            const timeB = parseWorkshopDateTime(wB.startDate, wB.startTime).getTime();
-
-            // Sort by Date Descending (Newest First)
-            return timeB - timeA;
-        });
-    }, [subscriptions, apiWorkshops]);
+    const sortedSubscriptions = subscriptions;
 
     // Auto-expand the first upcoming live workshop
     useEffect(() => {
