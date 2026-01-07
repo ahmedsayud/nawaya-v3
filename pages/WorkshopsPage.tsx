@@ -25,7 +25,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
 }) => {
   const { currentUser: user, workshops, fetchWorkshops, paginationMeta, earliestWorkshop } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'أونلاين' | 'حضوري' | 'مسجلة'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'أونلاين' | 'حضوري' | 'أونلاين وحضوري' | 'مسجلة'>('all');
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,6 +34,7 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
     'all': '',
     'أونلاين': 'online',
     'حضوري': 'onsite',
+    'أونلاين وحضوري': 'hybrid',
     'مسجلة': 'recorded'
   };
 
@@ -141,11 +142,12 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
     return candidate;
   }, [upcomingSortedByDate, earliestWorkshop]);
 
-  const filters: Array<'all' | 'أونلاين' | 'حضوري' | 'مسجلة'> = ['all', 'أونلاين', 'حضوري', 'مسجلة'];
+  const filters: Array<'all' | 'أونلاين' | 'حضوري' | 'أونلاين وحضوري' | 'مسجلة'> = ['all', 'أونلاين', 'حضوري', 'أونلاين وحضوري', 'مسجلة'];
   const filterLabels = {
     'all': 'الكل',
     'أونلاين': 'أونلاين',
     'حضوري': 'حضوري',
+    'أونلاين وحضوري': 'أونلاين وحضوري',
     'مسجلة': 'مسجلة'
   };
 
