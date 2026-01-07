@@ -85,7 +85,6 @@ interface UserContextType {
     drhopeData: DrhopeData;
     activeTheme: ThemeColors;
     notifications: Notification[];
-    globalCertificateTemplate: any | null;
     consultationRequests: ConsultationRequest[];
     pendingGifts: PendingGift[];
     expenses: Expense[];
@@ -1948,7 +1947,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [currentUser, logout]); // Dependencies ensure it runs when user logs in
 
     const value: UserContextType = useMemo(() => ({
-        currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, globalCertificateTemplate: null, pendingGifts, expenses,
+        currentUser, users, workshops, products, partners, drhopeData, activeTheme, notifications, consultationRequests, pendingGifts, expenses,
         broadcastHistory,
         countries,
         countriesDebugInfo,
