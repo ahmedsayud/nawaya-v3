@@ -20,13 +20,15 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
     ? `من ${formatArabicDate(workshop.startDate)} إلى ${formatArabicDate(workshop.endDate)} `
     : formatArabicDate(workshop.startDate);
 
-  let locationDisplay;
+  let locationDisplay = '';
   if (workshop.location === 'حضوري' || workshop.location === 'أونلاين وحضوري') {
-    locationDisplay = [workshop.hotelName, workshop.city, workshop.country].filter(Boolean).join(', ');
+    locationDisplay = [workshop.hotelName, workshop.city, workshop.country].filter(s => s && s.trim()).join(', ');
   } else if (workshop.location === 'أونلاين') {
-    locationDisplay = workshop.application ? `أونلاين عبر ${workshop.application} ` : 'أونلاين';
-  } else { // مسجلة
-    locationDisplay = `${workshop.location}, ${workshop.country} `;
+    locationDisplay = workshop.application ? `أونلاين عبر ${workshop.application}` : 'أونلاين';
+  } else if (workshop.location === 'مسجلة') {
+    locationDisplay = [workshop.location, workshop.country].filter(s => s && s.trim()).join(', ');
+  } else {
+    locationDisplay = [workshop.location, workshop.country].filter(s => s && s.trim()).join(', ');
   }
 
   const isSubscribed = user?.subscriptions.some(sub =>
@@ -78,7 +80,7 @@ const WorkshopCard: React.FC<WorkshopCardProps> = ({ workshop, user, onEnroll, o
         <div className="space-y-3 text-xs sm:text-sm">
           <div className="flex items-start gap-x-3 text-slate-600">
             <GlobeAltIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColorClass} flex-shrink-0 mt-0.5`} />
-            <span className="font-medium leading-tight">{workshop.address || locationDisplay}</span>
+            <span className="font-medium leading-tight">{(workshop.address && workshop.address.trim()) || locationDisplay}</span>
           </div>
           {!workshop.isRecorded && (
             <>

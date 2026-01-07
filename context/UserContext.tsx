@@ -274,7 +274,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 (w.type_label === 'حضوري' ? 'حضوري' :
                                     (isRecorded ? 'مسجلة' : 'أونلاين'))),
                         type_label: w.type_label,
-                        country: 'المملكة العربية السعودية', // Defaults as API only sends address for Riyadh/Saudi items currently
+                        country: isRecorded ? (w.country || '') : 'المملكة العربية السعودية', // Live workshops use Saudi default, recorded use API only
                         city: w.address || '',
                         address: w.address,
                         isRecorded: isRecorded,

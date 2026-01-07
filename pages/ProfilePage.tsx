@@ -332,6 +332,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                     isRecorded: sub.workshop.type_label === 'مسجلة',
                     zoomLink: sub.online_link || undefined,
                     city: sub.workshop.address || undefined,
+                    country: sub.workshop.type_label === 'مسجلة' ? (sub.workshop.country || '') : 'المملكة العربية السعودية',
                     notes: sub.files?.map((f: any) => ({ type: 'file' as const, name: f.title, value: f.file })) || [],
                     recordings: sub.recordings?.filter((r: any) => r.is_available).map((r: any) => ({
                         name: r.title,
