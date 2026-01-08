@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User, Subscription, Workshop } from '../types';
 import { CloseIcon, PrintIcon, DownloadIcon } from './icons';
-import { API_BASE_URL, API_ENDPOINTS } from '../constants';
+import DynamicCertificateRenderer, {
+    getProcessedCertificateTemplate,
+    generateUserWorkshopCertificate
+} from './DynamicCertificateRenderer';
 
 interface CertificateModalProps {
     isOpen: boolean;
@@ -11,144 +14,150 @@ interface CertificateModalProps {
     workshop?: Workshop;
 }
 
-// Function to sanitize HTML - remove scripts and dangerous elements
-const sanitizeHtml = (html: string): string => {
-    // Remove script tags and their content
-    let sanitized = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-    // Remove onclick and other event handlers
-    sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
-    // Remove javascript: URLs
-    sanitized = sanitized.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"');
-    // Remove target="_blank" to prevent opening new tabs
-    sanitized = sanitized.replace(/target\s*=\s*["']_blank["']/gi, '');
-    return sanitized;
-};
-
 export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onClose, user, subscription, workshop }) => {
-    const [certificateUrl, setCertificateUrl] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [error, setError] = useState<string>('');
+    const [processedTemplate, setProcessedTemplate] = useState<any>(null);
+    const [previewWorkshop, setPreviewWorkshop] = useState<Workshop | null>(null);
 
     useEffect(() => {
-        const fetchCertificate = async () => {
+        const preparePreview = async () => {
             if (!isOpen) return;
 
             setIsLoading(true);
             setError('');
-            setCertificateUrl('');
 
             try {
-                const token = localStorage.getItem('auth_token');
-                if (!token) {
-                    setError('يرجى تسجيل الدخول أولا');
+                const targetWorkshop = workshop || (subscription as any).workshop;
+                if (!targetWorkshop) {
+                    setError('بيانات الورشة غير متوفرة');
                     setIsLoading(false);
                     return;
                 }
 
-                // Handle both "sub-123" format and raw numeric ID
-                const rawId = String(subscription.id);
-                const subscriptionId = rawId.startsWith('sub-') ? rawId.replace('sub-', '') : rawId;
+                // Prepare the template and workshop data once
+                const template = getProcessedCertificateTemplate(targetWorkshop);
 
-                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE.CERTIFICATE(subscriptionId)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/pdf, text/html'
-                    }
-                });
+                // Ensure location is formatted nicely for the renderer
+                const enhancedWorkshop = {
+                    ...targetWorkshop,
+                    location: targetWorkshop.location === 'حضوري' && targetWorkshop.city
+                        ? `${targetWorkshop.city}, ${targetWorkshop.country}`
+                        : targetWorkshop.location
+                };
 
-                if (response.ok) {
-                    const contentType = response.headers.get('content-type');
-
-                    if (contentType?.includes('application/pdf')) {
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        setCertificateUrl(url);
-
-                        // Trigger immediate download and close as requested
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `Certificate-${user.fullName.replace(/\s/g, '_')}.pdf`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        onClose();
-                    } else {
-                        // Fallback for text/html or generic binary
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-                        setCertificateUrl(url);
-
-                        // Trigger immediate download and close as requested
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `Certificate-${user.fullName.replace(/\s/g, '_')}.pdf`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        onClose();
-                    }
-                } else {
-                    setError(`فشل تحميل الشهادة (${response.status})`);
-                }
+                setProcessedTemplate(template);
+                setPreviewWorkshop(enhancedWorkshop);
+                setIsLoading(false);
             } catch (err) {
-
-                setError('حدث خطأ أثناء تحميل الشهادة');
-            } finally {
+                console.error('Certificate preview preparation error:', err);
+                setError('حدث خطأ أثناء تحضير معاينة الشهادة');
                 setIsLoading(false);
             }
         };
 
-        fetchCertificate();
+        preparePreview();
+    }, [isOpen, subscription.id, user, workshop]);
 
-        return () => {
-            if (certificateUrl) {
-                URL.revokeObjectURL(certificateUrl);
+    const handleDownload = async () => {
+        if (!previewWorkshop || isDownloading) return;
+
+        setIsDownloading(true);
+        try {
+            const result = await generateUserWorkshopCertificate(user, previewWorkshop);
+            if (!result.success) {
+                alert('حدث خطأ أثناء تحميل الملف');
             }
-        };
-    }, [isOpen, subscription.id]);
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('حدث خطأ غير متوقع');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[100] p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-slate-900 text-black rounded-lg shadow-2xl w-full max-w-md border border-yellow-500/50 flex flex-col" onClick={(e) => e.stopPropagation()}>
-                <header className="p-3 bg-slate-800 flex justify-between items-center flex-shrink-0 rounded-t-lg">
-                    <h2 className="text-lg font-bold text-white">شهادة إتمام الورشة</h2>
-                    <button onClick={onClose} className="p-2 rounded-full text-white hover:bg-white/10">
-                        <CloseIcon className="w-6 h-6" />
-                    </button>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[100] p-4" onClick={onClose}>
+            <div className="bg-slate-900 border border-yellow-500/50 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-chatbot-in" onClick={(e) => e.stopPropagation()}>
+                <header className="p-4 bg-slate-800 border-b border-yellow-500/20 flex justify-between items-center flex-shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-yellow-500/10 rounded-lg">
+                            <PrintIcon className="w-6 h-6 text-yellow-500" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-white leading-tight">معاينة الشهادة</h2>
+                            <p className="text-xs text-slate-400">يمكنك مراجعة البيانات قبل التحميل</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 ">
+                        {!isLoading && !error && (
+                            <button
+                                onClick={handleDownload}
+                                disabled={isDownloading}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-lg ${isDownloading
+                                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                    : 'bg-yellow-600 hover:bg-yellow-500 text-white hover:scale-105 active:scale-95'
+                                    }`}
+                            >
+                                {isDownloading ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <span>جاري التحميل...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <DownloadIcon className="w-4 h-4" />
+                                        <span>تحميل PDF</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+                        <button onClick={onClose} className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                            <CloseIcon className="w-6 h-6" />
+                        </button>
+                    </div>
                 </header>
 
-                <div className="bg-slate-700 relative min-h-[300px] rounded-b-lg">
+                <div className="flex-grow overflow-auto bg-slate-800/50 p-4 md:p-8 flex justify-center items-center custom-scrollbar ">
                     {isLoading ? (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-center">
-                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
-                                <p className="mt-4 text-slate-300">جاري تحميل الشهادة...</p>
-                            </div>
+                        <div className="text-center ">
+                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-yellow-500/20 border-t-yellow-500"></div>
+                            <p className="mt-4 text-slate-400 font-bold">جاري تجهيز الشهادة...</p>
                         </div>
                     ) : error ? (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-center text-red-400 p-8">
-                                <p className="text-xl mb-2">⚠️</p>
-                                <p>{error}</p>
+                        <div className="text-center text-red-400 max-w-xs">
+                            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-3xl">⚠️</span>
                             </div>
+                            <p className="font-bold">{error}</p>
+                            <button onClick={onClose} className="mt-4 text-sm text-slate-400 underline">إغلاق</button>
                         </div>
                     ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
-                            <div className="text-center p-8">
-                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <p className="text-lg font-bold text-white">تم تحميل الشهادة بنجاح</p>
+                        <div className="w-full max-w-3xl shadow-[0_40px_80px_rgba(0,0,0,0.6)] border border-white/5 relative bg-black/20 mt-32">
+                            <div style={{ aspectRatio: `${processedTemplate.imageWidth} / ${processedTemplate.imageHeight}` }}>
+                                <DynamicCertificateRenderer
+                                    template={processedTemplate}
+                                    workshop={previewWorkshop!}
+                                    user={user}
+                                />
                             </div>
                         </div>
                     )}
                 </div>
+
+                <footer className="p-3 bg-slate-900/80 border-t border-white/5 text-center">
+                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Nawaya Events Certification System</p>
+                </footer>
             </div>
+            <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+            `}</style>
         </div>
     );
 };

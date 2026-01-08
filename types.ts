@@ -387,6 +387,7 @@ export interface CertificateFieldConfig {
     color: string;
     textAlign: 'left' | 'center' | 'right';
     fontFamily: string;
+    fontWeight?: string | number;
     maxWidth: number;
 }
 
