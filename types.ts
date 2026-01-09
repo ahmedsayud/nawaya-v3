@@ -227,6 +227,7 @@ export interface Subscription {
     gifterPhone?: string;
     attended?: boolean;
     attendanceType?: 'أونلاين' | 'حضوري';
+    apiData?: any; // Raw API data including workshop.date_range
 }
 
 export interface PendingGift {

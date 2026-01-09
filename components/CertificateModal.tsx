@@ -65,7 +65,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
 
         setIsDownloading(true);
         try {
-            const result = await generateUserWorkshopCertificate(user, previewWorkshop);
+            const result = await generateUserWorkshopCertificate(user, previewWorkshop, subscription);
             if (!result.success) {
                 alert('حدث خطأ أثناء تحميل الملف');
             }
@@ -142,6 +142,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
                                     template={processedTemplate}
                                     workshop={previewWorkshop!}
                                     user={user}
+                                    subscription={subscription}
                                 />
                             </div>
                         </div>

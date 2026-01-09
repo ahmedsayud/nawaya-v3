@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Workshop, User, CertificateTemplate, CertificateFieldConfig } from '../types';
+import { Workshop, User, CertificateTemplate, CertificateFieldConfig, Subscription } from '../types';
 import { formatArabicDate } from '../utils';
 
 declare const jspdf: any;
@@ -18,8 +18,8 @@ export const NEW_CERTIFICATE_TEMPLATE: CertificateTemplate = {
     { id: 'user_congrats', text: 'نبارك لـ {{USER_NAME}}', x: 1000, y: 670, fontSize: 52, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', fontFamily: "'Noto Sans Arabic'", maxWidth: 1600 },
     { id: 'workshop_participation', text: 'حضورها ورشة {{WORKSHOP_TITLE}}', x: 1000, y: 760, fontSize: 45, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', fontFamily: "'Noto Sans Arabic'", maxWidth: 1600 },
     { id: 'instructor_info', text: 'تقديم {{INSTRUCTOR_NAME}}', x: 1000, y: 840, fontSize: 40, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', fontFamily: "'Noto Sans Arabic'", maxWidth: 1600 },
-    { id: 'instructor_title', text: 'مستشار فن إدارة الذات والحياة', x: 1000, y: 910, fontSize: 34, fontWeight: 400, color: '#FFFFFF', textAlign: 'center', fontFamily: "'Noto Sans Arabic'", maxWidth: 1600 },
-    { id: 'date_location', text: '{{WORKSHOP_DATE}}\n{{WORKSHOP_LOCATION}}', x: 1000, y: 1100, fontSize: 34, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', fontFamily: "'Noto Sans Arabic'", maxWidth: 1000 },
+    { id: 'instructor_title', text: 'مستشار فن إدارة الذات والحياة', x: 1000, y: 910, fontSize: 34, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', fontFamily: "'Noto Sans Arabic'", maxWidth: 1600 },
+    { id: 'date_location', text: '{{WORKSHOP_DATE}}\n{{WORKSHOP_LOCATION}}', x: 1000, y: 1050, fontSize: 34, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', fontFamily: "'Noto Sans Arabic'", maxWidth: 1000 },
   ],
 };
 
@@ -56,6 +56,7 @@ interface DynamicCertificateRendererProps {
   template: CertificateTemplate;
   workshop: Workshop;
   user: User;
+  subscription?: Subscription;
 }
 
 const TextField: React.FC<{ config: CertificateFieldConfig; text: string; template: CertificateTemplate }> = ({ config, text, template }) => {
@@ -81,10 +82,74 @@ const TextField: React.FC<{ config: CertificateFieldConfig; text: string; templa
   return <div style={style}>{text}</div>;
 };
 
-const DynamicCertificateRenderer: React.FC<DynamicCertificateRendererProps> = ({ template, workshop, user }) => {
-  const workshopDate = workshop.endDate
-    ? `من ${formatArabicDate(workshop.startDate)} إلى ${formatArabicDate(workshop.endDate)}`
-    : formatArabicDate(workshop.startDate);
+const DynamicCertificateRenderer: React.FC<DynamicCertificateRendererProps> = ({ template, workshop, user, subscription }) => {
+  // Priority 1: Use recording.availability (already formatted in Arabic from API)
+  let workshopDate = '';
+
+  if (workshop.recordings && workshop.recordings.length > 0) {
+    const firstRecording = workshop.recordings[0];
+    if (firstRecording.availability) {
+      // The availability field is already formatted like "متاح من 27 ديسمبر 2025 إلى 27 يناير 2026"
+      // Extract just the date part (remove "متاح من" prefix if present)
+      workshopDate = firstRecording.availability.replace(/^متاح من\s+/i, '');
+    }
+  }
+
+  // Priority 2: Use date_range from subscription API data
+  if (!workshopDate && subscription?.apiData?.workshop?.date_range) {
+    workshopDate = subscription.apiData.workshop.date_range;
+  }
+
+  // Priority 3: Use recording availability dates from subscription overrides
+  if (!workshopDate && subscription?.recordingAccessOverrides && workshop.recordings && workshop.recordings.length > 0) {
+    const firstRecording = workshop.recordings[0];
+    const override = subscription.recordingAccessOverrides[firstRecording.url];
+
+    if (override?.accessStartDate && override?.accessEndDate) {
+      const startDateFormatted = formatArabicDate(override.accessStartDate);
+      const endDateFormatted = formatArabicDate(override.accessEndDate);
+      if (startDateFormatted && endDateFormatted) {
+        workshopDate = `من ${startDateFormatted} إلى ${endDateFormatted}`;
+      }
+    } else if (override?.accessStartDate) {
+      const startDateFormatted = formatArabicDate(override.accessStartDate);
+      if (startDateFormatted) {
+        workshopDate = startDateFormatted;
+      }
+    }
+  }
+
+  // Priority 4: Use recording availability dates from workshop
+  if (!workshopDate && workshop.recordings && workshop.recordings.length > 0) {
+    const firstRecording = workshop.recordings[0];
+    if (firstRecording.accessStartDate && firstRecording.accessEndDate) {
+      const startDateFormatted = formatArabicDate(firstRecording.accessStartDate);
+      const endDateFormatted = formatArabicDate(firstRecording.accessEndDate);
+      if (startDateFormatted && endDateFormatted) {
+        workshopDate = `من ${startDateFormatted} إلى ${endDateFormatted}`;
+      }
+    } else if (firstRecording.accessStartDate) {
+      const startDateFormatted = formatArabicDate(firstRecording.accessStartDate);
+      if (startDateFormatted) {
+        workshopDate = startDateFormatted;
+      }
+    }
+  }
+
+  // Priority 5: Fall back to workshop start/end dates
+  if (!workshopDate && workshop.startDate) {
+    const startDateFormatted = formatArabicDate(workshop.startDate);
+    if (workshop.endDate) {
+      const endDateFormatted = formatArabicDate(workshop.endDate);
+      if (startDateFormatted && endDateFormatted) {
+        workshopDate = `من ${startDateFormatted} إلى ${endDateFormatted}`;
+      } else if (startDateFormatted) {
+        workshopDate = startDateFormatted;
+      }
+    } else if (startDateFormatted) {
+      workshopDate = startDateFormatted;
+    }
+  }
 
   let workshopLocation = workshop.location === 'حضوري' && workshop.city
     ? `${workshop.city}, ${workshop.country}`
@@ -126,7 +191,7 @@ const DynamicCertificateRenderer: React.FC<DynamicCertificateRendererProps> = ({
   );
 };
 
-export const generateCertificate = async (template: CertificateTemplate, workshop: Workshop, user: User) => {
+export const generateCertificate = async (template: CertificateTemplate, workshop: Workshop, user: User, subscription?: Subscription) => {
   if (typeof jspdf === 'undefined' || typeof html2canvas === 'undefined') {
     alert('مكتبات إنشاء الشهادة غير متاحة. يرجى المحاولة مرة أخرى أو تحديث الصفحة.');
     return;
@@ -142,7 +207,7 @@ export const generateCertificate = async (template: CertificateTemplate, worksho
   document.body.appendChild(certificateElement);
 
   const root = ReactDOM.createRoot(certificateElement);
-  root.render(React.createElement(DynamicCertificateRenderer, { template, workshop, user }));
+  root.render(React.createElement(DynamicCertificateRenderer, { template, workshop, user, subscription }));
 
   await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -177,7 +242,7 @@ export const generateCertificate = async (template: CertificateTemplate, worksho
 /**
  * High-level helper to generate a certificate for a user and workshop.
  */
-export const generateUserWorkshopCertificate = async (user: User, workshop: Workshop) => {
+export const generateUserWorkshopCertificate = async (user: User, workshop: Workshop, subscription?: Subscription) => {
   // Create a modified workshop object
   const enhancedWorkshop = {
     ...workshop,
@@ -189,7 +254,7 @@ export const generateUserWorkshopCertificate = async (user: User, workshop: Work
   const template = getProcessedCertificateTemplate(workshop);
 
   try {
-    await generateCertificate(template, enhancedWorkshop as Workshop, user);
+    await generateCertificate(template, enhancedWorkshop as Workshop, user, subscription);
     return { success: true };
   } catch (error) {
     console.error('Error generating certificate:', error);

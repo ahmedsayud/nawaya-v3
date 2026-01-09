@@ -60,9 +60,9 @@ const Footer: React.FC<FooterProps> = ({ onShippingClick, onTermsClick, onAboutC
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={platform.ariaLabel}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center bg-white/5 text-white backdrop-blur-sm transition-all duration-300 border border-white/10 hover:-translate-y-1 ${platform.hoverClasses}`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center bg-white/5 text-white backdrop-blur-sm transition-all duration-300 border border-white/10 hover:-translate-y-1 ${platform.hoverClasses}`}
                     >
-                      <Icon className="w-3 h-3" />
+                      <Icon className="w-4 h-4" />
                     </a>
                   );
                 }
