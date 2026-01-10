@@ -136,7 +136,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ isOpen, onCl
                             <button onClick={onClose} className="mt-4 text-sm text-slate-400 underline">إغلاق</button>
                         </div>
                     ) : (
-                        <div className="w-full max-w-3xl shadow-[0_40px_80px_rgba(0,0,0,0.6)] border border-white/5 relative bg-black/20 mt-32">
+                        <div className="w-full max-w-3xl shadow-[0_40px_80px_rgba(0,0,0,0.6)] border border-white/5 relative">
                             <div style={{ aspectRatio: `${processedTemplate.imageWidth} / ${processedTemplate.imageHeight}` }}>
                                 <DynamicCertificateRenderer
                                     template={processedTemplate}

@@ -83,81 +83,94 @@ const TextField: React.FC<{ config: CertificateFieldConfig; text: string; templa
 };
 
 const DynamicCertificateRenderer: React.FC<DynamicCertificateRendererProps> = ({ template, workshop, user, subscription }) => {
-  // Priority 1: Use recording.availability (already formatted in Arabic from API)
-  let workshopDate = '';
+  // Defensive check for required props
+  if (!template || !workshop || !user) {
+    return <div className="text-white p-4 text-center">بيانات غير مكتملة</div>;
+  }
 
-  if (workshop.recordings && workshop.recordings.length > 0) {
-    const firstRecording = workshop.recordings[0];
-    if (firstRecording.availability) {
-      // The availability field is already formatted like "متاح من 27 ديسمبر 2025 إلى 27 يناير 2026"
-      // Extract just the date part (remove "متاح من" prefix if present)
-      workshopDate = firstRecording.availability.replace(/^متاح من\s+/i, '');
+  // --- Date Logic (Robust Selection) ---
+  const getDisplayDate = (): string => {
+    try {
+      // Priority 1: Use workshop creation date from subscription (created_at)
+      // The user specifically requested this (sub.workshop.created_at)
+      const apiData = (subscription as any)?.apiData;
+      const apiCreatedAt = apiData?.workshop?.created_at || apiData?.created_at;
+
+      if (apiCreatedAt && typeof apiCreatedAt === 'string') {
+        const hasArabic = /[\u0600-\u06FF]/.test(apiCreatedAt);
+        const hasSpace = apiCreatedAt.includes(' ');
+        if (hasArabic || hasSpace) {
+          return apiCreatedAt; // It's likely already formatted (e.g., "29 ديسمبر 2025")
+        }
+        const formatted = formatArabicDate(apiCreatedAt);
+        if (formatted) return formatted;
+      }
+
+      // Priority 2: Use date_range from subscription API data
+      if (apiData?.workshop?.date_range) {
+        return apiData.workshop.date_range;
+      }
+
+      // Priority 3: Use recording.availability (pre-formatted "متاح من ...")
+      if (workshop.recordings && workshop.recordings.length > 0) {
+        const firstRec = workshop.recordings[0];
+        if (firstRec.availability) {
+          return firstRec.availability.replace(/^متاح من\s+/i, '');
+        }
+      }
+
+      // Priority 4: Use recording access overrides
+      if (subscription?.recordingAccessOverrides && workshop.recordings && workshop.recordings.length > 0) {
+        const firstRec = workshop.recordings[0];
+        const override = subscription.recordingAccessOverrides[firstRec.url];
+        if (override?.accessStartDate) {
+          const start = formatArabicDate(override.accessStartDate);
+          const end = override.accessEndDate ? formatArabicDate(override.accessEndDate) : '';
+          return end ? `من ${start} إلى ${end}` : start;
+        }
+      }
+
+      // Priority 5: Fallback to recording original dates
+      if (workshop.recordings && workshop.recordings.length > 0) {
+        const firstRec = workshop.recordings[0];
+        if (firstRec.accessStartDate) {
+          const start = formatArabicDate(firstRec.accessStartDate);
+          const end = firstRec.accessEndDate ? formatArabicDate(firstRec.accessEndDate) : '';
+          return end ? `من ${start} إلى ${end}` : start;
+        }
+      }
+
+      // Priority 6: Absolute fallback to workshop dates
+      if (workshop.startDate) {
+        const start = formatArabicDate(workshop.startDate);
+        const end = workshop.endDate ? formatArabicDate(workshop.endDate) : '';
+        return end ? `من ${start} إلى ${end}` : start;
+      }
+    } catch (err) {
+      console.error("Error determining certificate date:", err);
     }
-  }
+    return '';
+  };
 
-  // Priority 2: Use date_range from subscription API data
-  if (!workshopDate && subscription?.apiData?.workshop?.date_range) {
-    workshopDate = subscription.apiData.workshop.date_range;
-  }
+  const workshopDate = getDisplayDate();
 
-  // Priority 3: Use recording availability dates from subscription overrides
-  if (!workshopDate && subscription?.recordingAccessOverrides && workshop.recordings && workshop.recordings.length > 0) {
-    const firstRecording = workshop.recordings[0];
-    const override = subscription.recordingAccessOverrides[firstRecording.url];
+  // --- Location Logic ---
+  const getDisplayLocation = (): string => {
+    try {
+      let loc = workshop.location === 'حضوري' && workshop.city
+        ? `${workshop.city}, ${workshop.country || ''}`
+        : `${workshop.location || ''}`;
 
-    if (override?.accessStartDate && override?.accessEndDate) {
-      const startDateFormatted = formatArabicDate(override.accessStartDate);
-      const endDateFormatted = formatArabicDate(override.accessEndDate);
-      if (startDateFormatted && endDateFormatted) {
-        workshopDate = `من ${startDateFormatted} إلى ${endDateFormatted}`;
+      if (workshop.hotelName) {
+        loc = `${workshop.hotelName}, ${loc}`;
       }
-    } else if (override?.accessStartDate) {
-      const startDateFormatted = formatArabicDate(override.accessStartDate);
-      if (startDateFormatted) {
-        workshopDate = startDateFormatted;
-      }
+      return loc;
+    } catch (err) {
+      return workshop.location || '';
     }
-  }
+  };
 
-  // Priority 4: Use recording availability dates from workshop
-  if (!workshopDate && workshop.recordings && workshop.recordings.length > 0) {
-    const firstRecording = workshop.recordings[0];
-    if (firstRecording.accessStartDate && firstRecording.accessEndDate) {
-      const startDateFormatted = formatArabicDate(firstRecording.accessStartDate);
-      const endDateFormatted = formatArabicDate(firstRecording.accessEndDate);
-      if (startDateFormatted && endDateFormatted) {
-        workshopDate = `من ${startDateFormatted} إلى ${endDateFormatted}`;
-      }
-    } else if (firstRecording.accessStartDate) {
-      const startDateFormatted = formatArabicDate(firstRecording.accessStartDate);
-      if (startDateFormatted) {
-        workshopDate = startDateFormatted;
-      }
-    }
-  }
-
-  // Priority 5: Fall back to workshop start/end dates
-  if (!workshopDate && workshop.startDate) {
-    const startDateFormatted = formatArabicDate(workshop.startDate);
-    if (workshop.endDate) {
-      const endDateFormatted = formatArabicDate(workshop.endDate);
-      if (startDateFormatted && endDateFormatted) {
-        workshopDate = `من ${startDateFormatted} إلى ${endDateFormatted}`;
-      } else if (startDateFormatted) {
-        workshopDate = startDateFormatted;
-      }
-    } else if (startDateFormatted) {
-      workshopDate = startDateFormatted;
-    }
-  }
-
-  let workshopLocation = workshop.location === 'حضوري' && workshop.city
-    ? `${workshop.city}, ${workshop.country}`
-    : `${workshop.location}`;
-
-  if (workshop.hotelName) {
-    workshopLocation = `${workshop.hotelName}, ${workshopLocation}`;
-  }
+  const workshopLocation = getDisplayLocation();
 
   const replacePlaceholders = (text: string): string => {
     return text
