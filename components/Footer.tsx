@@ -40,9 +40,11 @@ const Footer: React.FC<FooterProps> = ({ onShippingClick, onTermsClick, onAboutC
           <div className="col-span-2 md:col-span-5 space-y-2 flex flex-col items-center md:items-start text-center md:text-right">
             <div className="flex flex-col items-center md:items-start">
               {drhopeData.logoUrl ? (
-                <img src={drhopeData.logoUrl} alt="Nawaya Logo" className="h-10 w-auto mb-1.5 opacity-100 drop-shadow-xl filter brightness-110" />
+                <div className="bg-white/95 p-2 rounded-xl shadow-lg mb-3">
+                  <img src={drhopeData.logoUrl} alt="Nawaya Logo" className="h-12 md:h-16 w-auto opacity-100 drop-shadow-2xl filter brightness-110" />
+                </div>
               ) : (
-                <h2 className="text-lg font-black text-white tracking-widest mb-1 bg-clip-text text-transparent bg-gradient-to-r from-white to-fuchsia-300">NAWAYA</h2>
+                <h2 className="text-xl font-black text-white tracking-widest mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-fuchsia-300">NAWAYA</h2>
               )}
               <p className="text-[10px] leading-relaxed text-slate-300 font-medium max-w-sm opacity-90">
                 منصة رائدة لإدارة الندوات والفعاليات وورش العمل التطويرية.

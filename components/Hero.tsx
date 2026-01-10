@@ -22,7 +22,7 @@ const CountdownUnit: React.FC<{ value: number; label: string }> = ({ value, labe
 );
 
 const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLoginRequest, onPlayRecording, workshop: passedWorkshop }) => {
-    const { workshops, earliestWorkshop } = useUser();
+    const { workshops, earliestWorkshop, drhopeData } = useUser();
 
     const displayWorkshop = useMemo(() => {
         // Higher priority: Use the workshop passed from parent (synced with LiveStreamCard)
@@ -44,7 +44,7 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
 
         const now = new Date();
         const upcoming = workshops
-            .filter(w => w.isVisible && !w.isRecorded && (w.location === 'أونلاين' || w.location === 'أونلاين وحضوري'|| w.location === 'حضوري'))
+            .filter(w => w.isVisible && !w.isRecorded && (w.location === 'أونلاين' || w.location === 'أونلاين وحضوري' || w.location === 'حضوري'))
             .map(w => ({ ...w, targetDate: getWorkshopDate(w) }))
             .filter(w => w.targetDate.getTime() + (4 * 60 * 60 * 1000) > now.getTime()) // Still live if started < 4h ago
             .sort((a, b) => a.targetDate.getTime() - b.targetDate.getTime());
@@ -138,7 +138,16 @@ const Hero: React.FC<HeroProps> = ({ onExploreClick, onOpenWorkshopDetails, onLo
                         <div className="relative z-10">
                             {displayWorkshop && (
                                 <>
-                                    <div className="inline-block mb-4">
+                                    <div className="flex flex-col items-center mb-6">
+                                        {drhopeData.logoUrl ? (
+                                            <div className="bg-white p-2 rounded-2xl shadow-xl border border-pink-400/20 mb-4 transform hover:scale-110 transition-transform duration-500">
+                                                <img
+                                                    src={drhopeData.logoUrl}
+                                                    alt="Nawaya Logo"
+                                                    className="h-12 sm:h-16 w-auto object-contain drop-shadow-md"
+                                                />
+                                            </div>
+                                        ) : null}
                                         <span className="bg-fuchsia-100/50 text-fuchsia-600 text-[10px] font-extrabold px-3 py-1 rounded-full border border-fuchsia-100 uppercase tracking-widest flex items-center gap-1.5">
                                             ✨ الورشة القادمة
                                         </span>

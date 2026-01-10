@@ -70,7 +70,7 @@ type Recommendation = {
 };
 
 const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onReviewAdded: () => void }> = ({ workshopId, subscriptionId, onReviewAdded }) => {
-    const { currentUser, addReview } = useUser();
+    const { currentUser, addReview, drhopeData } = useUser();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
     const [error, setError] = useState('');
@@ -202,7 +202,7 @@ const AddReviewForm: React.FC<{ workshopId: number; subscriptionId: string; onRe
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoomRedirect, onPlayRecording, onViewAttachment, onViewRecommendedWorkshop, showToast, onPayForConsultation, onViewInvoice, onViewCertificate, onOpenPayment }) => {
     // REMOVED updateSubscription from destructuring as it's no longer available in UserContextType
-    const { workshops, currentUser: loggedInUser, addReview, consultationRequests, globalCertificateTemplate, fetchProfile, payForConsultation } = useUser();
+    const { workshops, currentUser: loggedInUser, addReview, consultationRequests, globalCertificateTemplate, fetchProfile, payForConsultation, drhopeData } = useUser();
 
     const [activeView, setActiveView] = useState<ProfileView>('my_workshops');
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -531,7 +531,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] p-4 transition-opacity duration-300" onClick={onClose}>
             <div className="bg-theme-gradient text-slate-200 rounded-lg shadow-2xl w-full max-w-4xl border border-violet-500/50 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <header className="p-4 flex justify-between items-center border-b border-violet-500/30 flex-shrink-0">
-                    <h2 className="text-xl font-bold text-white">الملف الشخصي</h2>
+                    <div className="flex items-center gap-3">
+                        {drhopeData.logoUrl ? (
+                            <div className="bg-white/90 p-1.5 rounded-xl shadow-md border border-pink-400/20">
+                                <img src={drhopeData.logoUrl} alt="Nawaya Logo" className="h-8 w-auto object-contain" />
+                            </div>
+                        ) : (
+                            <div className="w-8 h-8 bg-fuchsia-500 rounded-lg flex items-center justify-center text-white font-black text-xs">N</div>
+                        )}
+                        <h2 className="text-xl font-bold text-white">الملف الشخصي</h2>
+                    </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10"><CloseIcon className="w-6 h-6" /></button>
                 </header>
 

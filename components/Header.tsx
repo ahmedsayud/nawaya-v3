@@ -23,8 +23,8 @@ interface HeaderProps {
 }
 
 const LogoButton: React.FC<{ logoUrl?: string; onClick: () => void; isMobile?: boolean }> = ({ logoUrl, onClick, isMobile }) => {
-  const sizeClasses = isMobile ? 'w-16 h-16' : 'w-16 h-16 md:w-20 md:h-20';
-  const btnClasses = `group ${sizeClasses} flex items-center justify-center rounded-full transition-all duration-500 transform hover:scale-105 focus:outline-none shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] bg-white border-2 border-pink-400/30 hover:border-pink-400/50 overflow-hidden`;
+  const sizeClasses = isMobile ? 'min-w-[70px] h-[70px]' : 'min-w-[80px] h-[80px] md:min-w-[110px] md:h-[110px]';
+  const btnClasses = `group ${sizeClasses} flex items-center justify-center rounded-2xl transition-all duration-500 transform hover:scale-110 focus:outline-none shadow-[0_10px_30px_rgba(236,72,153,0.3)] hover:shadow-[0_15px_40px_rgba(236,72,153,0.5)] bg-white/95 border-2 border-pink-400/30 hover:border-pink-400/60 overflow-hidden px-2`;
 
   return (
     <button
@@ -33,15 +33,15 @@ const LogoButton: React.FC<{ logoUrl?: string; onClick: () => void; isMobile?: b
       aria-label="الصفحة الرئيسية"
     >
       {logoUrl ? (
-        <div className="w-full h-full p-0.5 flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center">
           <img
             src={logoUrl}
             alt="Nawaya Logo"
-            className="w-full h-full object-contain transition-all duration-500 group-hover:scale-110 drop-shadow-md"
+            className="w-full h-full object-contain transition-all duration-500 group-hover:scale-105 drop-shadow-xl"
           />
         </div>
       ) : (
-        <span className="text-xl font-bold tracking-wider text-pink-400">NAWAYA</span>
+        <span className="text-2xl font-black tracking-widest text-pink-500">NAWAYA</span>
       )}
     </button>
   );

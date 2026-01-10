@@ -16,7 +16,7 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
   isOpen, onClose, onCheckout, onRequestLogin, initialView = 'products'
 }) => {
   const [view, setView] = useState<'products' | 'cart'>(initialView);
-  const { products, cart, addToCart, updateCartItem, removeFromCart, currentUser, fetchDrHopeContent } = useUser();
+  const { products, cart, addToCart, updateCartItem, removeFromCart, currentUser, fetchDrHopeContent, drhopeData } = useUser();
   const visibleProducts = products.filter(p => !p.isDeleted);
 
   React.useEffect(() => {
@@ -65,8 +65,14 @@ const BoutiqueModal: React.FC<BoutiqueModalProps> = ({
         {/* Header */}
         <header className="flex-shrink-0 flex justify-between items-center p-5 border-b border-fuchsia-500/20 bg-black/20">
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="text-fuchsia-400">🛍️</span>
+            <h2 className="text-xl font-bold text-white flex items-center gap-3">
+              {drhopeData.logoUrl ? (
+                <div className="bg-white/90 p-1 rounded-lg shadow-sm">
+                  <img src={drhopeData.logoUrl} alt="Nawaya Logo" className="h-6 w-auto object-contain" />
+                </div>
+              ) : (
+                <span className="text-fuchsia-400">🛍️</span>
+              )}
               {view === 'products' ? 'بوتيك دكتور هوب' : 'سلة المشتريات'}
             </h2>
             {view === 'products' && <p className="text-xs text-fuchsia-300 mt-0.5">منتجات مختارة لدعم رحلتك</p>}
