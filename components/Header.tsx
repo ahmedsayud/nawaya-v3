@@ -23,8 +23,8 @@ interface HeaderProps {
 }
 
 const LogoButton: React.FC<{ logoUrl?: string; onClick: () => void; isMobile?: boolean }> = ({ logoUrl, onClick, isMobile }) => {
-  const sizeClasses = isMobile ? 'w-12 h-12' : 'w-16 h-16 md:w-20 md:h-20';
-  const btnClasses = `group ${sizeClasses} flex items-center justify-center rounded-full transition-all duration-500 transform hover:scale-105 focus:outline-none shadow-[0_0_15px_rgba(0,0,0,0.2)] hover:shadow-[0_0_25px_rgba(236,72,153,0.4)] bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden`;
+  const sizeClasses = isMobile ? 'w-16 h-16' : 'w-16 h-16 md:w-20 md:h-20';
+  const btnClasses = `group ${sizeClasses} flex items-center justify-center rounded-full transition-all duration-500 transform hover:scale-105 focus:outline-none shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] bg-white border-2 border-pink-400/30 hover:border-pink-400/50 overflow-hidden`;
 
   return (
     <button
@@ -33,11 +33,11 @@ const LogoButton: React.FC<{ logoUrl?: string; onClick: () => void; isMobile?: b
       aria-label="الصفحة الرئيسية"
     >
       {logoUrl ? (
-        <div className="w-full h-full p-1.5 flex items-center justify-center">
+        <div className="w-full h-full p-0.5 flex items-center justify-center">
           <img
             src={logoUrl}
             alt="Nawaya Logo"
-            className="w-full h-full object-contain transition-all duration-500 group-hover:scale-110 group-hover:rotate-3"
+            className="w-full h-full object-contain transition-all duration-500 group-hover:scale-110 drop-shadow-md"
           />
         </div>
       ) : (
@@ -162,18 +162,9 @@ const Header: React.FC<HeaderProps> = ({
         </div>
         <div>
           <h4 className="text-white font-bold text-sm mb-1">خاص بالمشتركين</h4>
-          <p className="text-slate-300 text-xs leading-relaxed mb-3">
+          <p className="text-slate-300 text-xs leading-relaxed">
             هذه الميزة متاحة فقط للأعضاء المسجلين لمتابعة تحديثات الورش.
           </p>
-          <button
-            onClick={() => {
-              setShowGuestNotificationMessage(false);
-              onLoginClick();
-            }}
-            className="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold py-2 rounded-lg transition-colors"
-          >
-            تسجيل الدخول
-          </button>
         </div>
       </div>
       {/* Arrow */}
