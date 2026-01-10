@@ -177,8 +177,8 @@ const WorkshopsPage: React.FC<WorkshopsPageProps> = ({
               user={user}
               onLoginRequest={onLiveStreamLoginRequest}
               onPlayLive={(link, id) => {
-                // Redirect directly to Zoom/Live link in the same window
-                if (link) window.location.href = link;
+                // Open in-app player instead of redirecting
+                if (link) onPlayRecording(liveStreamWorkshop!, { name: 'بث مباشر', url: link });
               }}
               onShowToast={showToast}
               onShowHelp={() => setIsHelpModalOpen(true)}

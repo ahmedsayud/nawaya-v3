@@ -121,13 +121,27 @@ const WatchPage: React.FC<WatchPageProps> = ({ workshop, recording, onBack }) =>
           <h1 className="text-base sm:text-lg font-bold text-white truncate">{workshop.title}</h1>
           <p className="text-xs sm:text-sm text-slate-400 truncate">{recording.name || 'محتوى الورشة'}</p>
         </div>
-        <button
-          onClick={onBack}
-          className="flex items-center gap-x-2 py-2 px-6 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-all border border-white/10 active:scale-95 flex-shrink-0"
-        >
-          <ArrowLeftIcon className="w-4 h-4 ml-1 rotate-180" />
-          <span>العودة</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {mediaType === 'iframe' && (
+            <a
+              href={recording.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-x-2 py-2 px-4 rounded-full bg-pink-600 hover:bg-pink-500 text-white font-bold text-sm transition-all shadow-lg active:scale-95 flex-shrink-0"
+              title="فتح في نافذة جديدة"
+            >
+              <ExternalLinkIcon className="w-4 h-4 ml-1" />
+              <span className="hidden sm:inline">فتح في نافذة جديدة</span>
+            </a>
+          )}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-x-2 py-2 px-6 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-all border border-white/10 active:scale-95 flex-shrink-0"
+          >
+            <ArrowLeftIcon className="w-4 h-4 ml-1 rotate-180" />
+            <span>العودة</span>
+          </button>
+        </div>
       </header>
 
       <main className="flex-grow flex items-center justify-center relative bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-black to-black">

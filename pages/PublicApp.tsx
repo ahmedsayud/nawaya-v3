@@ -233,8 +233,8 @@ const PublicApp: React.FC = () => {
                 : nextLiveWorkshop.zoomLink;
 
             if (bestLink) {
-                // Redirect directly to Zoom/Live link in the same window
-                window.location.href = bestLink;
+                // Open in-app player instead of redirecting
+                setWatchData({ workshop: nextLiveWorkshop, recording: { name: 'بث مباشر', url: bestLink } as Recording });
             } else {
                 const sessionInfo = nextLiveWorkshop.startDate && nextLiveWorkshop.startTime
                     ? `ميعاد الجلسة القادمة في ${nextLiveWorkshop.startDate} الساعة ${nextLiveWorkshop.startTime} (UAE)`
