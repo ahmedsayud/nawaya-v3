@@ -766,7 +766,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ isOpen, onClose, user, onZoom
                                                                                     </div>
                                                                                     <div className="flex-grow flex flex-col items-start text-right">
                                                                                         <span className="font-bold text-white text-base group-hover:text-purple-300 transition-colors">
-                                                                                            تشغيل: {rec.name}
+                                                                                        مشاهدة: {rec.name}
                                                                                         </span>
                                                                                         {dateString && (
                                                                                             <div className="mt-1.5 text-[11px] text-yellow-400/90 flex items-center gap-x-1.5 opacity-90 group-hover:opacity-100 transition-opacity">

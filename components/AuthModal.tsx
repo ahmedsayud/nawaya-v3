@@ -213,7 +213,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
 
   const phoneInputSection = (
     <div>
-      <label className="block mb-2 text-sm font-medium">رقم الهاتف</label>
+      <label className="block mb-1.5 text-sm font-medium">رقم الهاتف</label>
       <div className="space-y-2">
         <select
           value={selectedCountryCode}
@@ -225,7 +225,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
             handleCredentialBlur('phone', currentFullPhoneNumber);
           }}
           style={{ color: 'black', backgroundColor: 'white' }}
-          className="w-full p-3 bg-white border border-slate-600 rounded-md text-black"
+          className="w-full p-2.5 bg-white border border-slate-600 rounded-md text-black"
         >
           <option value="" disabled className="text-gray-500 bg-white" style={{ color: '#6b7280', backgroundColor: 'white' }}>
             {countriesLoading ? 'جاري التحميل...' : `اختر الدولة (${countries.length})`}
@@ -244,7 +244,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
             setLoginHint(null); // Reset hint while typing
           }}
           onBlur={() => handleCredentialBlur('phone', fullPhoneNumber)}
-          className={`w-full p-3 bg-slate-700/50 border border-slate-600 rounded-md ltr-input disabled:cursor-not-allowed`}
+          className={`w-full p-2.5 bg-slate-700/50 border border-slate-600 rounded-md ltr-input disabled:cursor-not-allowed`}
           required
           disabled={isPhoneDisabled}
           placeholder={isPhoneDisabled ? "اختر الدولة أولاً" : (isOtherCountrySelected ? "2XXXXXX" : "5XXXXXXX")}
@@ -264,20 +264,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
     const isRegister = view === 'register';
     return (
       <>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">{loginOnlyTitle ? loginOnlyTitle : (isRegister ? 'إنشاء حساب جديد' : 'تسجيل الدخول')}</h2>
           {isClosable && <button onClick={onClose} className="p-2 -m-2 rounded-full hover:bg-white/10"><CloseIcon className="w-6 h-6" /></button>}
         </div>
 
-        <form onSubmit={isRegister ? handleRegister : handleLogin} className="space-y-4">
+        <form onSubmit={isRegister ? handleRegister : handleLogin} className="space-y-3">
           {isRegister && (
             <div>
-              <label className="block mb-2 text-sm font-medium flex items-center gap-x-2"><UserIcon className="w-5 h-5" /> الاسم الكامل</label>
-              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full p-3 bg-slate-700/50 border border-slate-600 rounded-md" required />
+              <label className="block mb-1.5 text-sm font-medium flex items-center gap-x-2"><UserIcon className="w-5 h-5" /> الاسم الكامل</label>
+              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full p-2.5 bg-slate-700/50 border border-slate-600 rounded-md" required />
             </div>
           )}
           <div>
-            <label className="block mb-2 text-sm font-medium flex items-center gap-x-2"><EnvelopeIcon className="w-5 h-5" /> البريد الإلكتروني</label>
+            <label className="block mb-1.5 text-sm font-medium flex items-center gap-x-2"><EnvelopeIcon className="w-5 h-5" /> البريد الإلكتروني</label>
             <input
               type="email"
               value={email}
@@ -286,12 +286,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
                 setLoginHint(null); // Reset hint while typing
               }}
               onBlur={() => handleCredentialBlur('email', email)}
-              className={`w-full p-3 bg-slate-700/50 border border-slate-600 rounded-md ltr-input ${emailWarning ? 'border-red-500' : ''}`}
+              className={`w-full p-2.5 bg-slate-700/50 border border-slate-600 rounded-md ltr-input ${emailWarning ? 'border-red-500' : ''}`}
               required
             />
             {emailWarning && <p className="text-xs text-red-400 mt-1">الرجاء استخدام الأحرف الإنجليزية فقط في هذا الحقل.</p>}
             {loginHint?.type === 'phone' && (
-              <div className="mt-2 p-2 bg-slate-800/50 rounded-md text-xs text-slate-300 flex items-center gap-x-2">
+              <div className="mt-1.5 p-2 bg-slate-800/50 rounded-md text-xs text-slate-300 flex items-center gap-x-2">
                 <InformationCircleIcon className="w-4 h-4 text-theme-secondary-accent" />
                 <span>هل رقم هاتفك هو: <strong className="font-mono text-theme-secondary-accent opacity-90">{loginHint.value}</strong>؟</span>
               </div>
@@ -308,7 +308,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
 
 
           {isRegister && (
-            <div className="pt-2">
+            <div>
               <label className="captcha-checkbox-container">
                 <input type="checkbox" checked={isVerified} onChange={() => setIsVerified(!isVerified)} />
                 <div className="checkbox-visual">
@@ -319,8 +319,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
             </div>
           )}
 
-          {error && <p className="text-pink-400 font-bold text-center mt-4 bg-pink-500/10 p-3 rounded-md border border-pink-500/30 flex items-center gap-x-2"><ExclamationCircleIcon className="w-5 h-5" /> {error}</p>}
-          {info && <p className="text-sky-300 font-bold text-center mt-4 bg-sky-500/10 p-3 rounded-md border border-sky-500/30">{info}</p>}
+          {error && <p className="text-pink-400 font-bold text-center mt-3 bg-pink-500/10 p-2.5 rounded-md border border-pink-500/30 flex items-center gap-x-2"><ExclamationCircleIcon className="w-5 h-5" /> {error}</p>}
+          {info && <p className="text-sky-300 font-bold text-center mt-3 bg-sky-500/10 p-2.5 rounded-md border border-sky-500/30">{info}</p>}
 
           <button
             type="submit"
@@ -331,14 +331,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
           </button>
         </form>
         {isRegister ? (
-          <p className="mt-6 text-center text-sm">
+          <p className="mt-4 text-center text-sm">
             لديك حساب بالفعل؟
             <button type="button" onClick={() => { setView('login'); setIsVerified(false); setLoginHint(null); }} className="font-bold text-fuchsia-400 hover:underline mx-2">
               سجل الدخول
             </button>
           </p>
         ) : showRegisterView && (
-          <p className="mt-6 text-center text-sm">
+          <p className="mt-4 text-center text-sm">
             ليس لديك حساب؟
             <button type="button" onClick={() => { setView('register'); setIsVerified(false); setLoginHint(null); }} className="font-bold text-fuchsia-400 hover:underline mx-2">
               أنشئ حساباً
@@ -352,12 +352,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[200] p-4">
       <div className="bg-theme-gradient backdrop-blur-2xl text-slate-200 rounded-lg shadow-2xl w-full max-w-md border border-violet-500/50 relative">
-        <div className="p-8">
+        <div className="p-6">
           {onBack && (
             <button onClick={onBack} className="absolute top-4 left-4 p-2 text-slate-400 hover:text-white">&larr; عودة</button>
           )}
 
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             <ShieldCheckIcon className="w-12 h-12 text-fuchsia-400 mx-auto" />
           </div>
 
