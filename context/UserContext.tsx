@@ -538,6 +538,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         twitter: settings.twitter || prev.socialMediaLinks.twitter,
                         snapchat: settings.snapchat || prev.socialMediaLinks.snapchat,
                         tiktok: settings.tiktok || prev.socialMediaLinks.tiktok,
+                    },
+                    consultationSettings: {
+                        ...prev.consultationSettings,
+                        defaultDurationMinutes: prev.consultationSettings?.defaultDurationMinutes || 50,
+                        defaultFee: prev.consultationSettings?.defaultFee || 450,
+                        consultationsEnabled: settings.is_consultation_enabled === "1" || settings.is_consultation_enabled === 1
                     }
                 }));
             } else {

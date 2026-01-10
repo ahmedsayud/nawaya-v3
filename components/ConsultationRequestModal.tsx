@@ -10,11 +10,11 @@ interface ConsultationRequestModalProps {
 }
 
 const ConsultationRequestModal: React.FC<ConsultationRequestModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { currentUser, addConsultationRequest } = useUser();
+  const { currentUser, addConsultationRequest, drhopeData } = useUser();
   const [subject, setSubject] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showClosedMessage, setShowClosedMessage] = useState(false);
+  const [showClosedMessage, setShowClosedMessage] = useState(!drhopeData.consultationSettings?.consultationsEnabled);
 
   if (!isOpen) return null;
 
