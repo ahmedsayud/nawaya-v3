@@ -52,7 +52,7 @@ const maskPhoneNumber = (phone: string): string => {
 };
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClosable = true, onBack, showRegisterView = true, loginOnlyTitle, loginButtonText = 'دخول', initialView = 'login' }) => {
-  const { login, register, checkRegistrationAvailability, findUserByCredential, checkAndClaimPendingGifts, drhopeData } = useUser();
+  const { login, register, checkRegistrationAvailability, findUserByCredential, checkAndClaimPendingGifts } = useUser();
   const [view, setView] = useState<AuthView>(initialView);
 
   // Local countries state
@@ -357,15 +357,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, isClo
             <button onClick={onBack} className="absolute top-4 left-4 p-2 text-slate-400 hover:text-white">&larr; عودة</button>
           )}
 
-          <div className="text-center mb-6">
-            {drhopeData.logoUrl ? (
-              <div className="inline-block bg-white/95 p-3 rounded-2xl shadow-xl border border-pink-400/20 mb-2 transform hover:scale-105 transition-transform duration-500">
-                <img src={drhopeData.logoUrl} alt="Nawaya Logo" className="h-16 md:h-20 w-auto object-contain drop-shadow-lg" />
-              </div>
-            ) : (
-              <ShieldCheckIcon className="w-16 h-16 text-fuchsia-400 mx-auto" />
-            )}
-            <p className="text-fuchsia-400 font-bold text-xs uppercase tracking-widest mt-2">{view === 'login' ? 'مرحباً بك مجدداً' : 'انضم إلينا الآن'}</p>
+          <div className="text-center mb-4">
+            <ShieldCheckIcon className="w-12 h-12 text-fuchsia-400 mx-auto" />
           </div>
 
           {view === 'login' && renderLoginRegisterView()}
