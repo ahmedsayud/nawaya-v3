@@ -33,7 +33,7 @@ const LogoButton: React.FC<{ logoUrl?: string; onClick: () => void; isMobile?: b
       aria-label="الصفحة الرئيسية"
     >
       {logoUrl ? (
-        <div className="w-full h-full flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center rounded-full overflow-hidden">
           <img
             src={logoUrl}
             alt="Nawaya Logo"
