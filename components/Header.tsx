@@ -24,16 +24,17 @@ interface HeaderProps {
 
 const LogoButton: React.FC<{ logoUrl?: string; onClick: () => void; isMobile?: boolean }> = ({ logoUrl, onClick, isMobile }) => {
   const sizeClasses = isMobile ? 'w-16 h-16' : 'w-16 h-16 md:w-20 md:h-20';
-  const btnClasses = `group ${sizeClasses} flex items-center justify-center rounded-full transition-all duration-500 transform hover:scale-105 focus:outline-none shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] bg-white border-2 border-pink-400/30 hover:border-pink-400/50 overflow-hidden`;
+  const btnClasses = `group ${sizeClasses} flex items-center justify-center rounded-full transition-all duration-500 transform hover:scale-105 focus:outline-none shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] bg-white border-2 border-pink-400/30 hover:border-pink-400/50 overflow-hidden isolate`;
 
   return (
     <button
       onClick={onClick}
       className={btnClasses}
       aria-label="الصفحة الرئيسية"
+      style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
     >
       {logoUrl ? (
-        <div className="w-full h-full flex items-center justify-center rounded-full overflow-hidden">
+        <div className="w-full h-full flex items-center justify-center rounded-full overflow-hidden" style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}>
           <img
             src={logoUrl}
             alt="Nawaya Logo"
